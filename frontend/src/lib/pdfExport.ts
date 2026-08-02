@@ -94,16 +94,29 @@ export async function exportSinglePagePdf(
           clonedBody.style.padding = '0';
           clonedBody.style.overflow = 'hidden';
         }
-        // Normalize letter spacing on all cloned elements to prevent font kerning overlap in html2canvas
+        // Normalize letter spacing & sanitize oklch colors for html2canvas compatibility
         const allElements = clonedDoc.querySelectorAll('*');
         allElements.forEach((el) => {
           const htmlEl = el as HTMLElement;
           if (htmlEl.style) {
             (htmlEl.style as any).webkitFontSmoothing = 'antialiased';
-            // Replace em letter-spacing with pixel spacing for html2canvas text accuracy
             if (htmlEl.style.letterSpacing && htmlEl.style.letterSpacing.includes('em')) {
               htmlEl.style.letterSpacing = '0.5px';
             }
+          }
+          try {
+            const comp = window.getComputedStyle(htmlEl);
+            if (comp.color && comp.color.includes('oklch')) {
+              htmlEl.style.color = comp.color.startsWith('oklch') ? '#0f172a' : comp.color;
+            }
+            if (comp.backgroundColor && comp.backgroundColor.includes('oklch')) {
+              htmlEl.style.backgroundColor = comp.backgroundColor.startsWith('oklch') ? '#ffffff' : comp.backgroundColor;
+            }
+            if (comp.borderColor && comp.borderColor.includes('oklch')) {
+              htmlEl.style.borderColor = comp.borderColor.startsWith('oklch') ? '#e2e8f0' : comp.borderColor;
+            }
+          } catch {
+            // Ignore style computation errors on detached elements
           }
         });
       }
