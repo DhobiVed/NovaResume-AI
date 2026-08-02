@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+
+# Build outputs
+dist/
+build/
+*.pdf
+
+# Environment files and secrets
+.env
+*.env
+backend/.env
+
+# Local Databases
+*.db
+backend/*.db
+
+# Logs & IDE
+*.log
+.vscode/
+.idea/
