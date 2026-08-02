@@ -168,7 +168,7 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery }) => 
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900 z-50 flex flex-col font-sans select-none overflow-hidden animate-fade-in">
+    <div className="fixed inset-0 bg-slate-900 z-50 flex flex-col font-sans overflow-hidden animate-fade-in">
       {/* Top Action Navbar */}
       <header className="h-16 px-4 md:px-6 bg-slate-900 border-b border-slate-800 flex items-center justify-between z-20 text-white flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -209,7 +209,7 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery }) => 
       </header>
 
       {/* Mobile Top View Switcher (Edit vs Preview) */}
-      <div className="flex md:hidden bg-slate-950 p-2 border-b border-slate-800 gap-2">
+      <div className="flex md:hidden bg-slate-950 p-2 border-b border-slate-800 gap-2 flex-shrink-0">
         <button
           onClick={() => setMobileViewMode('edit')}
           className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all min-h-[44px] ${
@@ -231,7 +231,7 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery }) => 
       {/* Main Studio Area */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
         {/* Left Controls Panel */}
-        <div className={`w-full md:w-[420px] bg-white border-r border-slate-200 flex flex-col flex-shrink-0 z-10 ${
+        <div className={`w-full md:w-[420px] bg-white border-r border-slate-200 flex flex-col flex-shrink-0 z-10 overflow-y-auto min-h-0 ${
           mobileViewMode === 'edit' ? 'flex flex-1' : 'hidden md:flex'
         }`}>
           {/* Top 5 Control Tabs */}

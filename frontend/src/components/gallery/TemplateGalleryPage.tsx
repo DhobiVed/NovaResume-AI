@@ -427,22 +427,22 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-6">
               {filteredTemplates.map((t) => {
                 const palette = PALETTES.find(p => p.id === t.defaultPaletteId) || PALETTES[0];
                 return (
                   <div
                     key={t.id}
-                    className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col group relative gpu-accelerated"
+                    className="bg-white rounded-xl sm:rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col group relative gpu-accelerated"
                   >
                     {/* ATS Badge Overlay */}
-                    <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1 pointer-events-none">
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/95 text-emerald-800 shadow-md border border-emerald-200 flex items-center gap-1">
-                        <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-10 flex flex-wrap gap-1 pointer-events-none">
+                      <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold bg-white/95 text-emerald-800 shadow-md border border-emerald-200 flex items-center gap-1">
+                        <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600" />
                         <span>{t.atsScore}% ATS</span>
                       </span>
                       {t.isPopular && (
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500 text-white shadow-sm flex items-center gap-0.5">
+                        <span className="hidden sm:flex px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500 text-white shadow-sm items-center gap-0.5">
                           <Star className="w-2.5 h-2.5 fill-current" />
                           <span>Popular</span>
                         </span>
@@ -450,11 +450,13 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                     </div>
 
                     {/* Centered Thumbnail Preview */}
-                    <ResumeThumbnailPreview
-                      template={t}
-                      height={310}
-                      onClick={() => { setPreviewModalTemplate(t); setModalZoom(0.70); }}
-                    />
+                    <div className="h-[200px] sm:h-[310px] w-full overflow-hidden bg-slate-100 relative flex items-center justify-center">
+                      <ResumeThumbnailPreview
+                        template={t}
+                        height={310}
+                        onClick={() => { setPreviewModalTemplate(t); setModalZoom(0.70); }}
+                      />
+                    </div>
 
                     {/* Card Information Footer */}
                     <div className="p-3.5 sm:p-4 space-y-2.5 flex-1 flex flex-col justify-between bg-white">
