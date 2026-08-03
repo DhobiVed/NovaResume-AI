@@ -215,9 +215,10 @@ export const AppContent: React.FC = () => {
               <video
                 src="/promo.mp4"
                 autoPlay
-                controls
-                onEnded={() => setShowIntroVideo(false)}
-                className="w-full h-[126%] object-cover -mt-[13%] transform origin-bottom"
+                muted
+                playsInline
+                loop
+                className="w-full h-[126%] object-cover -mt-[13%] transform origin-bottom pointer-events-none"
               />
               
               {/* Floating Bottom-Right Quick Skip Pill */}

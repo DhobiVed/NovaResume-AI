@@ -15,7 +15,7 @@ import { ElegantTemplate } from '../templates/ElegantTemplate';
 import { PALETTES, FONTS, type ResumeData, type ThemeConfig } from '../../lib/resumeTypes';
 import {
   Search, Sparkles, ShieldCheck, Eye, ArrowRight, X, ZoomIn, ZoomOut,
-  Heart, Filter, SlidersHorizontal, RefreshCw, Grid, Check, Play, Film
+  Heart, Filter, SlidersHorizontal, RefreshCw, Grid, Check, Film
 } from 'lucide-react';
 
 const PREVIEW_SAMPLE_DATA: ResumeData = {
@@ -398,12 +398,12 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent flex items-end justify-between p-2.5">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                  <Play className="w-3 h-3 fill-current text-white ml-0.5" />
+                <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center shadow-md">
+                  <Film className="w-3 h-3 text-white" />
                 </div>
                 <div>
-                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-wider block">Video Tour</span>
-                  <h4 className="text-[11px] font-extrabold text-white">Watch Platform Demo</h4>
+                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-wider block font-mono">Platform Showcase</span>
+                  <h4 className="text-[11px] font-extrabold text-white">NovaResume AI Video</h4>
                 </div>
               </div>
             </div>
@@ -804,9 +804,11 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
             <div className="relative aspect-video bg-black flex items-center justify-center">
               <video
                 src="/promo.mp4"
-                controls
                 autoPlay
-                className="w-full h-full object-contain"
+                muted
+                playsInline
+                loop
+                className="w-full h-full object-contain pointer-events-none"
               />
             </div>
           </div>
