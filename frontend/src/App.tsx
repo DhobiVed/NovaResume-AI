@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import { TemplateGalleryPage } from './components/gallery/TemplateGalleryPage';
 import { ResumeEditor } from './components/editor/ResumeEditor';
@@ -13,7 +13,36 @@ import { Plus, ShieldCheck, Briefcase, Globe, Menu, X } from 'lucide-react';
 export const AppContent: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateDefinition | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showIntroVideo, setShowIntroVideo] = useState(true);
+  
+  // Intro Video Splash State (Only shows on FIRST session visit, never repeatedly on refresh)
+  const [showIntroVideo, setShowIntroVideo] = useState(() => {
+    try {
+      return !sessionStorage.getItem('nova_intro_seen');
+    } catch {
+      return true;
+    }
+  });
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const closeIntroVideo = () => {
+    setShowIntroVideo(false);
+    try {
+      sessionStorage.setItem('nova_intro_seen', 'true');
+    } catch {
+      // Ignore storage errors
+    }
+  };
+
+  // Force guaranteed native HTML5 video autoplay
+  useEffect(() => {
+    if (showIntroVideo && videoRef.current) {
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(err => {
+        console.warn("Autoplay play() error:", err);
+      });
+    }
+  }, [showIntroVideo]);
 
   // Modals
   const [isAtsOpen, setIsAtsOpen] = useState(false);
@@ -202,7 +231,7 @@ export const AppContent: React.FC = () => {
 
               {/* Skip Intro CTA */}
               <button
-                onClick={() => setShowIntroVideo(false)}
+                onClick={closeIntroVideo}
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg flex items-center gap-2 transition-transform active:scale-95 min-h-[40px]"
               >
                 <span>Skip Intro</span>
@@ -213,17 +242,19 @@ export const AppContent: React.FC = () => {
             {/* Video Box - Cropped top 12% to hide watermark */}
             <div className="relative aspect-video bg-black overflow-hidden flex items-center justify-center">
               <video
+                ref={videoRef}
                 src="/promo.mp4"
                 autoPlay
                 muted
                 playsInline
                 loop
+                onEnded={closeIntroVideo}
                 className="w-full h-[126%] object-cover -mt-[13%] transform origin-bottom pointer-events-none"
               />
               
               {/* Floating Bottom-Right Quick Skip Pill */}
               <button
-                onClick={() => setShowIntroVideo(false)}
+                onClick={closeIntroVideo}
                 className="absolute bottom-4 right-4 px-4 py-2 bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-extrabold rounded-xl backdrop-blur-md border border-slate-700 shadow-xl flex items-center gap-1.5 z-20 transition-transform active:scale-95"
               >
                 <span>Skip & Start Building ➔</span>
