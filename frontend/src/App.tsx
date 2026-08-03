@@ -13,6 +13,7 @@ import { Plus, ShieldCheck, Briefcase, Globe, Menu, X } from 'lucide-react';
 export const AppContent: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateDefinition | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showIntroVideo, setShowIntroVideo] = useState(true);
 
   // Modals
   const [isAtsOpen, setIsAtsOpen] = useState(false);
@@ -182,6 +183,54 @@ export const AppContent: React.FC = () => {
       <CoverLetterModal isOpen={isCoverLetterOpen} onClose={() => setIsCoverLetterOpen(false)} resumeData={activeResumeData} />
       <PortfolioModal isOpen={isPortfolioOpen} onClose={() => setIsPortfolioOpen(false)} resumeData={activeResumeData} />
       <ResumeImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} onImportComplete={handleImportComplete} />
+
+      {/* ── INTRO VIDEO SPLASH OVERLAY WITH TOP WATERMARK CROP & SKIP OPTION ── */}
+      {showIntroVideo && (
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[999999] flex items-center justify-center p-3 sm:p-6 animate-fadeIn">
+          <div className="bg-slate-900 rounded-3xl max-w-4xl w-full overflow-hidden shadow-2xl border border-slate-800 relative flex flex-col">
+            {/* Top Bar with Skip Button */}
+            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 z-20">
+              <div className="flex items-center gap-2.5 text-white">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center font-black text-lg shadow-md">
+                  N
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-white">NovaResume AI Showcase</h3>
+                  <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block">Platform Introduction</span>
+                </div>
+              </div>
+
+              {/* Skip Intro CTA */}
+              <button
+                onClick={() => setShowIntroVideo(false)}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg flex items-center gap-2 transition-transform active:scale-95 min-h-[40px]"
+              >
+                <span>Skip Intro</span>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Video Box - Cropped top 12% to hide watermark */}
+            <div className="relative aspect-video bg-black overflow-hidden flex items-center justify-center">
+              <video
+                src="/promo.mp4"
+                autoPlay
+                controls
+                onEnded={() => setShowIntroVideo(false)}
+                className="w-full h-[126%] object-cover -mt-[13%] transform origin-bottom"
+              />
+              
+              {/* Floating Bottom-Right Quick Skip Pill */}
+              <button
+                onClick={() => setShowIntroVideo(false)}
+                className="absolute bottom-4 right-4 px-4 py-2 bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-extrabold rounded-xl backdrop-blur-md border border-slate-700 shadow-xl flex items-center gap-1.5 z-20 transition-transform active:scale-95"
+              >
+                <span>Skip & Start Building ➔</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
