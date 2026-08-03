@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { TemplateDefinition, ResumeData, ThemeConfig, LayoutType } from '../../lib/resumeTypes';
 import { PALETTES, FONTS } from '../../lib/resumeTypes';
 import { exportToPdf, exportSinglePagePdf, triggerPrintPdf } from '../../lib/pdfExport';
@@ -24,11 +24,31 @@ interface Props {
 
 export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const [previewScale, setPreviewScale] = useState(0.85);
   const [editorTab, setEditorTab] = useState<'content' | 'design' | 'colors' | 'layout' | 'ai'>('content');
   const [contentSection, setContentSection] = useState<'personal' | 'experience' | 'education' | 'skills' | 'projects' | 'custom'>('personal');
   const [mobileViewMode, setMobileViewMode] = useState<'edit' | 'preview'>('edit');
   const [isExporting, setIsExporting] = useState(false);
   const [aiNotice, setAiNotice] = useState<string | null>(null);
+
+  // Auto-calculate exact zoom scale so canvas fits preview area with zero border clipping
+  useEffect(() => {
+    const updateScale = () => {
+      if (previewContainerRef.current) {
+        const containerWidth = previewContainerRef.current.clientWidth - 32;
+        const targetScale = Math.min(1, Math.max(0.35, containerWidth / 794));
+        setPreviewScale(targetScale);
+      }
+    };
+    updateScale();
+    const timer = setTimeout(updateScale, 100);
+    window.addEventListener('resize', updateScale);
+    return () => {
+      window.removeEventListener('resize', updateScale);
+      clearTimeout(timer);
+    };
+  }, [mobileViewMode]);
 
   // Default theme state based on template selection
   const defaultPalette = PALETTES.find(p => p.id === template.defaultPaletteId) || PALETTES[0];
@@ -909,14 +929,32 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery }) => 
         </div>
 
         {/* Right Live Canvas Preview Area */}
-        <div className={`flex-1 bg-slate-950 p-2 sm:p-4 md:p-8 overflow-y-auto flex justify-center items-start ${
-          mobileViewMode === 'preview' ? 'flex flex-1' : 'hidden md:flex'
-        }`}>
-          <div className="w-full flex justify-center py-4 overflow-x-hidden">
-            <div className="transform scale-[0.42] sm:scale-[0.62] md:scale-90 lg:scale-100 origin-top shadow-2xl rounded-sm overflow-hidden flex-shrink-0" style={{ width: 794, minHeight: 1123 }}>
-              <div ref={canvasRef} style={{ width: 794, minHeight: 1123, margin: 0, padding: 0, backgroundColor: '#ffffff' }}>
-                {renderCanvasTemplate()}
-              </div>
+        <div
+          ref={previewContainerRef}
+          className={`flex-1 bg-slate-950 p-2 sm:p-4 md:p-6 overflow-auto flex justify-center items-start min-h-0 ${
+            mobileViewMode === 'preview' ? 'flex flex-1' : 'hidden md:flex'
+          }`}
+        >
+          <div
+            className="shadow-2xl rounded-sm overflow-hidden flex-shrink-0 my-3 transition-all duration-150"
+            style={{
+              width: `${794 * previewScale}px`,
+              height: `${1123 * previewScale}px`,
+            }}
+          >
+            <div
+              ref={canvasRef}
+              style={{
+                width: 794,
+                minHeight: 1123,
+                margin: 0,
+                padding: 0,
+                backgroundColor: '#ffffff',
+                transform: `scale(${previewScale})`,
+                transformOrigin: 'top left',
+              }}
+            >
+              {renderCanvasTemplate()}
             </div>
           </div>
         </div>
