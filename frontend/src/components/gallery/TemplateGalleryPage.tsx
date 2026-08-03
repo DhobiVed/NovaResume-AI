@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, memo } from 'react';
 import { createPortal } from 'react-dom';
-import { ALL_TEMPLATES, TEMPLATE_CATEGORIES, type TemplateCategoryFilter } from '../../lib/templateData';
+import { ALL_TEMPLATES, TEMPLATE_CATEGORIES } from '../../lib/templateData';
 import type { TemplateDefinition } from '../../lib/resumeTypes';
 import { ModernSidebarTemplate } from '../templates/ModernSidebarTemplate';
 import { ExecutiveHeaderTemplate } from '../templates/ExecutiveHeaderTemplate';
@@ -14,10 +14,9 @@ import { StartupTemplate } from '../templates/StartupTemplate';
 import { ElegantTemplate } from '../templates/ElegantTemplate';
 import { PALETTES, FONTS, type ResumeData, type ThemeConfig } from '../../lib/resumeTypes';
 import {
-  Search, Sparkles, ShieldCheck, Star, Eye, ArrowRight, CheckCircle2,
-  Layers, Award, ChevronLeft, ChevronRight, X, Play, ZoomIn, ZoomOut, Maximize2, Download
+  Search, Sparkles, ShieldCheck, Eye, ArrowRight, X, ZoomIn, ZoomOut,
+  Heart, Filter, SlidersHorizontal, RefreshCw, Grid, Check
 } from 'lucide-react';
-import { exportSinglePagePdf } from '../../lib/pdfExport';
 
 const PREVIEW_SAMPLE_DATA: ResumeData = {
   fullName: 'Alex Vance',
@@ -47,6 +46,21 @@ const PREVIEW_SAMPLE_DATA: ResumeData = {
     { title: 'Publications & Research', content: 'Co-authored paper: "Optimizing Context Retrieval Overhead in Agentic Workflows" (2025)' }
   ]
 };
+
+const QUICK_CATEGORY_CHIPS = [
+  { id: 'All', label: 'All Templates' },
+  { id: 'Modern', label: '✨ Modern' },
+  { id: 'ATS Professional', label: '🛡️ ATS Safe' },
+  { id: 'Student', label: '🎓 Student' },
+  { id: 'Executive', label: '💼 Executive' },
+  { id: 'Software Engineer', label: '💻 Software' },
+  { id: 'AI Engineer', label: '🤖 AI & ML' },
+  { id: 'Corporate', label: '🏢 Corporate' },
+  { id: 'Creative', label: '🎨 Creative' },
+  { id: 'Minimal', label: '🌿 Minimal' },
+  { id: 'Finance', label: '📈 Finance' },
+  { id: 'Marketing', label: '🚀 Marketing' }
+] as const;
 
 const TemplateRenderer: React.FC<{ template: TemplateDefinition }> = memo(({ template }) => {
   const palette = PALETTES.find(p => p.id === template.defaultPaletteId) || PALETTES[0];
@@ -80,13 +94,13 @@ const TemplateRenderer: React.FC<{ template: TemplateDefinition }> = memo(({ tem
 });
 
 /** 60FPS Pure CSS GPU-Accelerated Centered Thumbnail Component */
-const ResumeThumbnailPreview: React.FC<{ template: TemplateDefinition; height?: number; onClick?: () => void }> = memo(({ template, height = 310, onClick }) => {
-  const scale = height === 260 ? 0.23 : 0.265;
+const ResumeThumbnailPreview: React.FC<{ template: TemplateDefinition; height?: number; onClick?: () => void }> = memo(({ template, height = 300, onClick }) => {
+  const scale = height <= 220 ? 0.20 : 0.255;
 
   return (
     <div
       onClick={onClick}
-      className="w-full bg-slate-100 flex items-center justify-center overflow-hidden relative p-2 border-b border-slate-200/80 cursor-pointer gpu-accelerated select-none"
+      className="w-full bg-slate-100/80 flex items-center justify-center overflow-hidden relative p-1.5 cursor-pointer gpu-accelerated select-none"
       style={{ height: `${height}px` }}
     >
       <div
@@ -109,270 +123,257 @@ interface Props {
 }
 
 export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
-  const [selectedCategory, setSelectedCategory] = useState<TemplateCategoryFilter>('All');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [layoutFilter, setLayoutFilter] = useState<'all' | 'one_col' | 'two_col'>('all');
-  const [previewModalTemplate, setPreviewModalTemplate] = useState<TemplateDefinition | null>(null);
-  const [showPromoModal, setShowPromoModal] = useState(false);
-  const [modalZoom, setModalZoom] = useState(0.70);
+  const [atsFilter, setAtsFilter] = useState<'all' | '98' | '100'>('all');
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
+  // Favorites Local State
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('fav_templates') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  // Modal State
+  const [previewModalTemplate, setPreviewModalTemplate] = useState<TemplateDefinition | null>(null);
+  const [modalZoom, setModalZoom] = useState(0.70);
   const previewModalRef = useRef<HTMLDivElement>(null);
 
-  // Auto-slide carousel state & refs
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const [isCarouselHovered, setIsCarouselHovered] = useState(false);
-  const [isPageScrolling, setIsPageScrolling] = useState(false);
+  // Virtualized Incremental Pagination State
+  const [visibleCount, setVisibleCount] = useState(16);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const featuredTemplates = ALL_TEMPLATES.filter(t => t.isPopular || t.isNew).slice(0, 10);
-
-  // Scroll detection to pause auto-slider during active page scrolling
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    const handleScroll = () => {
-      setIsPageScrolling(true);
-      clearTimeout(timer);
-      timer = setTimeout(() => setIsPageScrolling(false), 800);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      clearTimeout(timer);
-    };
-  }, []);
-
-  // Automatic Smooth Auto-Slide Effect every 3.5 seconds (paused when user is scrolling)
-  useEffect(() => {
-    if (isCarouselHovered || isPageScrolling) return;
-    const interval = setInterval(() => {
-      if (carouselRef.current) {
-        const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
-        const maxScroll = scrollWidth - clientWidth;
-        if (scrollLeft >= maxScroll - 10) {
-          carouselRef.current.scrollTo({ left: 0, behavior: 'smooth' });
-        } else {
-          carouselRef.current.scrollBy({ left: 240, behavior: 'smooth' });
-        }
+  const toggleFavorite = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setFavorites(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      try {
+        localStorage.setItem('fav_templates', JSON.stringify(next));
+      } catch (err) {
+        console.error(err);
       }
-    }, 3500);
-    return () => clearInterval(interval);
-  }, [isCarouselHovered, isPageScrolling]);
-
-  const scrollCarousel = (direction: 'left' | 'right') => {
-    if (carouselRef.current) {
-      carouselRef.current.scrollBy({
-        left: direction === 'left' ? -240 : 240,
-        behavior: 'smooth'
-      });
-    }
+      return next;
+    });
   };
 
-  const handleDownloadSample = async () => {
-    if (previewModalRef.current && previewModalTemplate) {
-      await exportSinglePagePdf(previewModalRef.current, `${previewModalTemplate.name}_Sample`);
-    }
-  };
-
+  // Filter Logic
   const filteredTemplates = ALL_TEMPLATES.filter(t => {
-    const matchesCategory = selectedCategory === 'All' || t.category === selectedCategory;
-    const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const matchesCategory = selectedCategory === 'All' || 
+                            t.category.toLowerCase().includes(selectedCategory.toLowerCase()) ||
+                            (selectedCategory === 'ATS Professional' && t.atsScore >= 98);
+
+    const matchesSearch = searchQuery === '' || 
+                          t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           t.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
     const matchesLayout = layoutFilter === 'all' || 
                           (layoutFilter === 'one_col' && t.layout === 'one_col') ||
                           (layoutFilter === 'two_col' && t.layout !== 'one_col');
-    return matchesCategory && matchesSearch && matchesLayout;
+
+    const matchesAts = atsFilter === 'all' ||
+                       (atsFilter === '98' && t.atsScore >= 98) ||
+                       (atsFilter === '100' && t.atsScore === 100);
+
+    const matchesColor = !selectedColor || t.defaultPaletteId === selectedColor;
+
+    const matchesFav = !showFavoritesOnly || favorites.includes(t.id);
+
+    return matchesCategory && matchesSearch && matchesLayout && matchesAts && matchesColor && matchesFav;
   });
 
+  // Infinite Scroll Handler inside Right Grid Container
+  const handleGridScroll = () => {
+    if (!scrollContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+    if (scrollTop + clientHeight >= scrollHeight - 300) {
+      setVisibleCount(prev => Math.min(prev + 12, filteredTemplates.length));
+    }
+  };
+
+  // Reset pagination count on filter change
+  useEffect(() => {
+    setVisibleCount(16);
+  }, [selectedCategory, searchQuery, layoutFilter, atsFilter, selectedColor, showFavoritesOnly]);
+
+  const resetAllFilters = () => {
+    setSelectedCategory('All');
+    setSearchQuery('');
+    setLayoutFilter('all');
+    setAtsFilter('all');
+    setSelectedColor(null);
+    setShowFavoritesOnly(false);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans animate-fade-in gpu-accelerated">
-      {/* Hero Section with Embedded Promo Video Showcase */}
-      <div className="bg-gradient-to-b from-white via-slate-50 to-emerald-50/30 border-b border-slate-200/80 py-8 sm:py-12 px-4 md:px-12 text-center relative overflow-hidden">
-        <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 relative z-10">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-100/80 border border-emerald-200 text-emerald-800 text-[11px] sm:text-xs font-extrabold shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Next-Generation Career Platform & Resume Engine</span>
-          </div>
+    <div className="h-[calc(100vh-64px)] w-full bg-slate-50 text-slate-900 flex flex-col font-sans overflow-hidden animate-fade-in">
+      
+      {/* ── MAIN TWO-PANEL MARKETPLACE LAYOUT ── */}
+      <div className="flex-1 flex overflow-hidden relative">
 
-          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-tight">
-            Craft Exceptional Resumes.<br />
-            <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-green-700 bg-clip-text text-transparent">
-              100% ATS Guaranteed.
-            </span>
-          </h1>
-
-          <p className="text-slate-600 text-xs sm:text-sm md:text-base max-w-2xl mx-auto leading-relaxed font-medium">
-            Browse 100+ designer templates with real-time A4 preview, single-page vector export, and 1-click web portfolio generator.
-          </p>
-
-          {/* Embedded Promo Video Showcase */}
-          <div className="max-w-3xl mx-auto pt-2">
-            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-slate-200 shadow-2xl bg-slate-950 group">
-              <video
-                src="/promo.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full h-[220px] sm:h-[360px] object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end justify-between p-4 sm:p-6 text-left">
-                <div>
-                  <span className="px-2.5 py-1 bg-emerald-600 text-white font-extrabold text-[10px] sm:text-xs rounded-lg uppercase tracking-wider shadow">
-                    PROMO SHOWCASE
-                  </span>
-                  <h3 className="text-white font-black text-sm sm:text-xl pt-1">NovaResume AI Platform Overview</h3>
-                </div>
-
-                <button
-                  onClick={() => setShowPromoModal(true)}
-                  className="px-3 py-2 bg-white/90 hover:bg-white text-slate-900 font-extrabold text-xs rounded-xl shadow-lg flex items-center gap-1.5 backdrop-blur-md transition-transform active:scale-95"
-                >
-                  <Play className="w-4 h-4 fill-current text-emerald-600" />
-                  <span className="hidden sm:inline">Expand Video</span>
-                </button>
+        {/* ── LEFT FIXED FILTER SIDEBAR (DESKTOP) ── */}
+        <aside className="hidden lg:flex w-72 flex-shrink-0 bg-white border-r border-slate-200 flex-col h-full overflow-y-auto p-5 space-y-6 z-10 shadow-sm">
+          
+          {/* Marketplace Title & Favorite Counter */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-green-700 flex items-center justify-center text-white font-extrabold shadow-sm">
+                <Grid className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="font-black text-sm text-slate-900 tracking-wide">Template Hub</h2>
+                <p className="text-[10px] text-emerald-700 font-bold tracking-wider uppercase">{ALL_TEMPLATES.length} Designs Live</p>
               </div>
             </div>
+
+            {/* Reset Button */}
+            {(selectedCategory !== 'All' || searchQuery || layoutFilter !== 'all' || atsFilter !== 'all' || selectedColor || showFavoritesOnly) && (
+              <button
+                onClick={resetAllFilters}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-slate-100 transition-colors"
+                title="Reset All Filters"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
-          {/* Stats Badges Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 max-w-3xl mx-auto pt-2">
-            <div className="bg-white p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm text-center">
-              <div className="text-lg sm:text-xl font-black text-emerald-600">99.4%</div>
-              <div className="text-[10px] font-bold text-slate-500 uppercase">ATS Pass Rate</div>
-            </div>
-            <div className="bg-white p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm text-center">
-              <div className="text-lg sm:text-xl font-black text-teal-600">100+</div>
-              <div className="text-[10px] font-bold text-slate-500 uppercase">Designer Templates</div>
-            </div>
-            <div className="bg-white p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm text-center">
-              <div className="text-lg sm:text-xl font-black text-green-700">0.2s</div>
-              <div className="text-[10px] font-bold text-slate-500 uppercase">Vector Export</div>
-            </div>
-            <div className="bg-white p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm text-center">
-              <div className="text-lg sm:text-xl font-black text-emerald-700">100%</div>
-              <div className="text-[10px] font-bold text-slate-500 uppercase">Offline Web</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Featured Templates Auto-Sliding Showcase */}
-      <div className="max-w-7xl mx-auto w-full px-3 sm:px-6 md:px-8 py-4 sm:py-6 space-y-3">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Award className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
-            <h2 className="text-sm sm:text-base font-extrabold text-slate-900">Featured Showcase</h2>
-            <span className="text-[9px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold animate-pulse">
-              ⚡ Auto-Sliding
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => scrollCarousel('left')}
-              className="p-1 sm:p-1.5 rounded-lg sm:rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 shadow-sm"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => scrollCarousel('right')}
-              className="p-1 sm:p-1.5 rounded-lg sm:rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 shadow-sm"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Horizontal Slider */}
-        <div
-          ref={carouselRef}
-          onMouseEnter={() => setIsCarouselHovered(true)}
-          onMouseLeave={() => setIsCarouselHovered(false)}
-          className="flex gap-4 overflow-x-auto pb-3 pt-1 snap-x scrollbar-none scroll-smooth gpu-accelerated"
-        >
-          {featuredTemplates.map(t => (
-            <div
-              key={`feat-${t.id}`}
-              className="w-[200px] sm:w-[250px] flex-shrink-0 snap-start bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden group gpu-accelerated"
-            >
-              <ResumeThumbnailPreview
-                template={t}
-                height={260}
-                onClick={() => { setPreviewModalTemplate(t); setModalZoom(0.70); }}
-              />
-              <div className="p-3 space-y-1 bg-white">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-extrabold text-xs text-slate-900 group-hover:text-emerald-600 truncate">{t.name}</h3>
-                  <span className="text-[9px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">{t.atsScore}% ATS</span>
-                </div>
-                <div className="flex gap-1 pt-1">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); setPreviewModalTemplate(t); setModalZoom(0.70); }}
-                    className="flex-1 py-1 text-[11px] bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-bold rounded-lg flex items-center justify-center gap-1"
-                  >
-                    <Eye className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Preview</span>
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); onSelectTemplate(t); }}
-                    className="flex-1 py-1 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-1 shadow"
-                  >
-                    <span>Use</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Main Grid Section */}
-      <div className="max-w-7xl mx-auto w-full px-3 sm:px-6 md:px-8 py-2 sm:py-4 flex flex-col md:flex-row gap-6 flex-1">
-        {/* Left Filters Sidebar */}
-        <div className="w-full md:w-64 flex-shrink-0 space-y-4">
+          {/* Search Box */}
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search 100+ templates..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+              placeholder="Search templates, tags..."
+              className="w-full pl-9 pr-8 py-2 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
             />
-          </div>
-
-          {/* Mobile Categories scroll */}
-          <div className="md:hidden flex gap-1.5 overflow-x-auto pb-2 scrollbar-none">
-            {TEMPLATE_CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
-                  selectedCategory === cat ? 'bg-emerald-600 text-white' : 'bg-white border border-slate-200 text-slate-700'
-                }`}
-              >
-                {cat}
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+                <X className="w-3.5 h-3.5" />
               </button>
-            ))}
+            )}
           </div>
 
-          {/* Desktop Layout Filter */}
-          <div className="hidden md:block bg-white p-4 rounded-2xl border border-slate-200 space-y-3 shadow-sm">
-            <div className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Layout Format</span>
+          {/* Favorites & Popular Shortcuts */}
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">Quick Filters</span>
+            
+            <button
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                showFavoritesOnly ? 'bg-rose-50 text-rose-700 border border-rose-200 shadow-xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Heart className={`w-3.5 h-3.5 ${showFavoritesOnly ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`} />
+                <span>My Saved Favorites</span>
+              </div>
+              <span className="px-1.5 py-0.5 rounded-full bg-white text-[10px] border border-slate-200 font-extrabold">{favorites.length}</span>
+            </button>
+          </div>
+
+          {/* Categories List with Item Counts */}
+          <div className="space-y-2">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">Categories</span>
+            <div className="space-y-1 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
+              {TEMPLATE_CATEGORIES.map(cat => {
+                const count = cat === 'All' 
+                  ? ALL_TEMPLATES.length 
+                  : ALL_TEMPLATES.filter(t => t.category === cat).length;
+
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                      selectedCategory === cat
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    <span className="truncate">{cat}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${selectedCategory === cat ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-            <div className="space-y-1">
+          </div>
+
+          {/* Color Swatch Filters */}
+          <div className="space-y-2 pt-2 border-t border-slate-100">
+            <div className="flex justify-between items-center px-1">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Color Theme</span>
+              {selectedColor && (
+                <button onClick={() => setSelectedColor(null)} className="text-[10px] text-emerald-600 font-bold">Clear</button>
+              )}
+            </div>
+            <div className="grid grid-cols-5 gap-2 pt-1">
+              {PALETTES.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => setSelectedColor(selectedColor === p.id ? null : p.id)}
+                  className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-transform active:scale-95 ${
+                    selectedColor === p.id ? 'border-emerald-600 ring-2 ring-emerald-300 scale-110 shadow-sm' : 'border-white shadow-xs hover:scale-105'
+                  }`}
+                  style={{ backgroundColor: p.primary }}
+                  title={p.name}
+                >
+                  {selectedColor === p.id && <Check className="w-3.5 h-3.5 text-white" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ATS Compliance Filter */}
+          <div className="space-y-2 pt-2 border-t border-slate-100">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">ATS Parser Score</span>
+            <div className="grid grid-cols-3 gap-1.5">
               {[
-                { id: 'all', label: 'All Formats' },
-                { id: 'one_col', label: 'Single Column (ATS Clean)' },
-                { id: 'two_col', label: 'Two Column (Graphic Sidebar)' }
+                { id: 'all', label: 'All' },
+                { id: '98', label: '98%+' },
+                { id: '100', label: '100% Safe' }
+              ].map(ats => (
+                <button
+                  key={ats.id}
+                  onClick={() => setAtsFilter(ats.id as any)}
+                  className={`py-1.5 rounded-xl text-[10px] font-bold border transition-all text-center ${
+                    atsFilter === ats.id
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  {ats.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Page Layout Structure Filter */}
+          <div className="space-y-2 pt-2 border-t border-slate-100">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">Column Structure</span>
+            <div className="grid grid-cols-3 gap-1.5">
+              {[
+                { id: 'all', label: 'All' },
+                { id: 'one_col', label: '1-Column' },
+                { id: 'two_col', label: '2-Column' }
               ].map(l => (
                 <button
                   key={l.id}
                   onClick={() => setLayoutFilter(l.id as any)}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                    layoutFilter === l.id ? 'bg-emerald-50 text-emerald-800 font-bold' : 'text-slate-600 hover:bg-slate-50'
+                  className={`py-1.5 rounded-xl text-[10px] font-bold border transition-all text-center ${
+                    layoutFilter === l.id
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   {l.label}
@@ -381,160 +382,288 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
             </div>
           </div>
 
-          {/* Desktop Categories */}
-          <div className="hidden md:block bg-white p-4 rounded-2xl border border-slate-200 space-y-2 shadow-sm">
-            <div className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">Categories</div>
-            <div className="space-y-1 max-h-[440px] overflow-y-auto pr-1">
-              {TEMPLATE_CATEGORIES.map((cat) => {
-                const count = cat === 'All' ? ALL_TEMPLATES.length : ALL_TEMPLATES.filter(t => t.category === cat).length;
-                return (
+          {/* Pro Tip Box */}
+          <div className="p-3 bg-gradient-to-tr from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-2xl space-y-1">
+            <div className="flex items-center gap-1.5 text-xs font-black text-emerald-900">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>100% Vector A4 PDF</span>
+            </div>
+            <p className="text-[10px] text-slate-600 leading-relaxed font-medium">
+              Every template exports in single-page crisp vector resolution with zero text distortion.
+            </p>
+          </div>
+        </aside>
+
+        {/* ── RIGHT MAIN MARKETPLACE GRID CONTAINER (ONLY THIS AREA SCROLLS) ── */}
+        <main className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
+
+          {/* TOP FIXED MARKETPLACE BAR */}
+          <div className="bg-white border-b border-slate-200 p-3 sm:p-4 flex flex-col gap-3 flex-shrink-0 shadow-xs z-10">
+            
+            {/* Upper Bar: Title & Mobile Filter Toggle Button */}
+            <div className="flex items-center justify-between gap-2">
+              
+              {/* Quick Category Chips Carousel */}
+              <div className="flex-1 overflow-x-auto scrollbar-none flex items-center gap-2 py-0.5">
+                {QUICK_CATEGORY_CHIPS.map(chip => (
                   <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium flex justify-between items-center transition-colors ${
-                      selectedCategory === cat
-                        ? 'bg-emerald-600 text-white font-bold shadow-sm'
-                        : 'text-slate-700 hover:bg-slate-100'
+                    key={chip.id}
+                    onClick={() => setSelectedCategory(chip.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 ${
+                      selectedCategory === chip.id
+                        ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-200'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/60'
                     }`}
                   >
-                    <span>{cat}</span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${selectedCategory === cat ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'}`}>
-                      {count}
-                    </span>
+                    {chip.label}
                   </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+                ))}
+              </div>
 
-        {/* TEMPLATE CARDS GRID */}
-        <div className="flex-1 space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xs sm:text-sm font-bold text-slate-900">
-              Showing {filteredTemplates.length} Templates
-            </h2>
-          </div>
-
-          {filteredTemplates.length === 0 ? (
-            <div className="bg-white rounded-3xl p-8 border border-slate-200 text-center space-y-3">
-              <p className="text-slate-500 font-medium text-xs">No templates match your filters.</p>
+              {/* Mobile Filter Sheet Trigger */}
               <button
-                onClick={() => { setSelectedCategory('All'); setSearchQuery(''); setLayoutFilter('all'); }}
-                className="px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow"
+                onClick={() => setIsMobileFilterOpen(true)}
+                className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 flex-shrink-0 min-h-[40px]"
               >
-                Reset Filters
+                <SlidersHorizontal className="w-4 h-4 text-emerald-600" />
+                <span>Filters</span>
+                {(selectedCategory !== 'All' || searchQuery || selectedColor || showFavoritesOnly) && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                )}
               </button>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-6">
-              {filteredTemplates.map((t) => {
-                const palette = PALETTES.find(p => p.id === t.defaultPaletteId) || PALETTES[0];
-                return (
-                  <div
-                    key={t.id}
-                    className="bg-white rounded-xl sm:rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col group relative gpu-accelerated"
-                  >
-                    {/* ATS Badge Overlay */}
-                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-10 flex flex-wrap gap-1 pointer-events-none">
-                      <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold bg-white/95 text-emerald-800 shadow-md border border-emerald-200 flex items-center gap-1">
-                        <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600" />
-                        <span>{t.atsScore}% ATS</span>
-                      </span>
-                      {t.isPopular && (
-                        <span className="hidden sm:flex px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500 text-white shadow-sm items-center gap-0.5">
-                          <Star className="w-2.5 h-2.5 fill-current" />
-                          <span>Popular</span>
-                        </span>
-                      )}
-                    </div>
 
-                    {/* Centered Thumbnail Preview */}
-                    <div className="h-[200px] sm:h-[310px] w-full overflow-hidden bg-slate-100 relative flex items-center justify-center">
-                      <ResumeThumbnailPreview
-                        template={t}
-                        height={310}
-                        onClick={() => { setPreviewModalTemplate(t); setModalZoom(0.70); }}
-                      />
-                    </div>
+            {/* Results Count & Search Bar on Mobile */}
+            <div className="flex items-center justify-between text-xs font-bold text-slate-500 px-1">
+              <div className="flex items-center gap-2">
+                <span>Showing <strong className="text-slate-900">{filteredTemplates.length}</strong> templates</span>
+                {showFavoritesOnly && <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px]">Favorites Only</span>}
+                {selectedColor && <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px]">Filtered by Color</span>}
+              </div>
 
-                    {/* Card Information Footer */}
-                    <div className="p-3.5 sm:p-4 space-y-2.5 flex-1 flex flex-col justify-between bg-white">
-                      <div>
-                        <div className="flex justify-between items-center mb-0.5">
-                          <h3 className="font-black text-xs sm:text-sm text-slate-900 group-hover:text-emerald-600 truncate transition-colors">
-                            {t.name}
-                          </h3>
-                          <div className="w-3.5 h-3.5 rounded-full border border-slate-300 shadow-sm flex-shrink-0" style={{ backgroundColor: palette.primary }} title={`Color theme: ${palette.name}`} />
-                        </div>
-                        <p className="text-[10px] sm:text-xs text-slate-500 line-clamp-1 leading-relaxed">{t.description}</p>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            setPreviewModalTemplate(t);
-                            setModalZoom(0.70);
-                          }}
-                          className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-bold text-xs transition-colors flex items-center gap-1.5 shadow-sm"
-                          title="Full Screen Preview"
-                        >
-                          <Eye className="w-4 h-4 text-emerald-600" />
-                          <span>Preview</span>
-                        </button>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            onSelectTemplate(t);
-                          }}
-                          className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow transition-transform active:scale-95"
-                        >
-                          <span>Use Template</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              <div className="hidden sm:flex items-center gap-2 text-[11px]">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="text-emerald-700 font-extrabold">Instant A4 Live Canvas</span>
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+
+          {/* ── SCROLLABLE TEMPLATE CARDS GRID ── */}
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleGridScroll}
+            className="flex-1 overflow-y-auto p-3 sm:p-6 smooth-scroll-container"
+          >
+            {filteredTemplates.length === 0 ? (
+              <div className="bg-white rounded-3xl p-12 border border-slate-200 text-center space-y-4 max-w-md mx-auto my-12 shadow-sm">
+                <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                  <Search className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-slate-900">No matching templates found</h3>
+                  <p className="text-slate-500 font-medium text-xs mt-1">Try clearing your filters or searching for different keywords.</p>
+                </div>
+                <button
+                  onClick={resetAllFilters}
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-transform active:scale-95"
+                >
+                  Reset All Filters
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 pb-20">
+                {filteredTemplates.slice(0, visibleCount).map((t) => {
+                  const palette = PALETTES.find(p => p.id === t.defaultPaletteId) || PALETTES[0];
+                  const isFav = favorites.includes(t.id);
+
+                  return (
+                    <div
+                      key={t.id}
+                      className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-200 overflow-hidden flex flex-col group relative gpu-accelerated"
+                    >
+                      {/* ATS & Favorite Badge Overlay */}
+                      <div className="absolute top-2 left-2 right-2 z-10 flex justify-between items-center pointer-events-none">
+                        <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold bg-white/95 text-emerald-800 shadow-md border border-emerald-200 flex items-center gap-1">
+                          <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600" />
+                          <span>{t.atsScore}% ATS</span>
+                        </span>
+
+                        {/* Favorite Button */}
+                        <button
+                          onClick={(e) => toggleFavorite(t.id, e)}
+                          className="pointer-events-auto w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow-md border border-slate-200/80 flex items-center justify-center transition-transform active:scale-90"
+                          title={isFav ? 'Remove from favorites' : 'Save to favorites'}
+                        >
+                          <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
+                        </button>
+                      </div>
+
+                      {/* Centered Live A4 Thumbnail Preview Container */}
+                      <div className="h-[210px] sm:h-[290px] w-full overflow-hidden bg-slate-100 relative flex items-center justify-center group-hover:bg-slate-200/60 transition-colors">
+                        <ResumeThumbnailPreview
+                          template={t}
+                          height={290}
+                          onClick={() => { setPreviewModalTemplate(t); setModalZoom(0.70); }}
+                        />
+
+                        {/* Hover Overlay Action Bar (Desktop & Mobile Touch) */}
+                        <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-3 z-20">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPreviewModalTemplate(t);
+                              setModalZoom(0.70);
+                            }}
+                            className="px-3 py-2 rounded-xl bg-white text-slate-900 font-extrabold text-xs shadow-lg hover:bg-slate-100 transition-transform active:scale-95 flex items-center gap-1.5"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Preview</span>
+                          </button>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectTemplate(t);
+                            }}
+                            className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-lg transition-transform active:scale-95 flex items-center gap-1.5"
+                          >
+                            <span>Use</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Card Information Footer */}
+                      <div className="p-3 sm:p-4 space-y-2 flex-1 flex flex-col justify-between bg-white border-t border-slate-100">
+                        <div>
+                          <div className="flex justify-between items-center mb-0.5">
+                            <h3 className="font-black text-xs sm:text-sm text-slate-900 group-hover:text-emerald-600 truncate transition-colors">
+                              {t.name}
+                            </h3>
+                            <div
+                              className="w-3.5 h-3.5 rounded-full border border-slate-300 shadow-xs flex-shrink-0"
+                              style={{ backgroundColor: palette.primary }}
+                              title={`Color theme: ${palette.name}`}
+                            />
+                          </div>
+                          <p className="text-[10px] sm:text-xs text-slate-500 line-clamp-1 font-medium">{t.description}</p>
+                        </div>
+
+                        {/* Action Buttons Row */}
+                        <div className="flex items-center gap-2 pt-2 border-t border-slate-100/80">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPreviewModalTemplate(t);
+                              setModalZoom(0.70);
+                            }}
+                            className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-extrabold text-[11px] transition-colors flex items-center gap-1 min-h-[36px]"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Preview</span>
+                          </button>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectTemplate(t);
+                            }}
+                            className="flex-1 py-1.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-transform active:scale-95 min-h-[36px]"
+                          >
+                            <span>Use Template</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </main>
       </div>
 
-      {/* Developer Branding Footer */}
-      <footer className="bg-slate-900 text-white border-t border-slate-800 py-10 px-6 text-center mt-12">
-        <div className="max-w-4xl mx-auto space-y-4">
-          <div className="flex justify-center items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center font-black text-white text-sm shadow-md">
-              VD
+      {/* ── MOBILE BOTTOM SHEET FILTER PANEL ── */}
+      {isMobileFilterOpen && (
+        <div
+          onClick={() => setIsMobileFilterOpen(false)}
+          className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 lg:hidden flex justify-end flex-col animate-fadeIn"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto space-y-5 shadow-2xl border-t border-slate-200 animate-slideUp"
+          >
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-emerald-600" />
+                <h3 className="font-black text-base text-slate-900">Filter Templates</h3>
+              </div>
+              <button
+                onClick={() => setIsMobileFilterOpen(false)}
+                className="p-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <h3 className="font-extrabold text-base tracking-wide text-white">NovaResume AI Platform</h3>
-          </div>
-          
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-200 text-xs font-semibold">
-            <span>Designed & Engineered by</span>
-            <span className="text-emerald-400 font-black">VED DHOBI</span>
-          </div>
 
-          <div className="flex justify-center items-center gap-4 text-xs font-bold text-slate-300 pt-1">
-            <a href="mailto:veddhobi252@gmail.com" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700">
-              ✉ veddhobi252@gmail.com
-            </a>
-          </div>
+            {/* Mobile Categories Grid */}
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase text-slate-400">Category</label>
+              <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto pr-1">
+                {TEMPLATE_CATEGORIES.map(cat => (
+                  <button
+                    key={`mob-${cat}`}
+                    onClick={() => { setSelectedCategory(cat); setIsMobileFilterOpen(false); }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold text-left truncate transition-colors ${
+                      selectedCategory === cat ? 'bg-emerald-600 text-white' : 'bg-slate-50 text-slate-700 border border-slate-200'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-          <div className="text-[11px] text-slate-500 font-medium pt-2">
-            © 2026 NovaResume AI SaaS · All Rights Reserved. Created by Ved Dhobi.
+            {/* Mobile Palette Filter */}
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase text-slate-400">Color Palette</label>
+              <div className="flex flex-wrap gap-2">
+                {PALETTES.map(p => (
+                  <button
+                    key={`mob-pal-${p.id}`}
+                    onClick={() => { setSelectedColor(selectedColor === p.id ? null : p.id); }}
+                    className={`w-9 h-9 rounded-full border-2 flex items-center justify-center ${
+                      selectedColor === p.id ? 'border-emerald-600 ring-2 ring-emerald-300' : 'border-slate-200'
+                    }`}
+                    style={{ backgroundColor: p.primary }}
+                  >
+                    {selectedColor === p.id && <Check className="w-4 h-4 text-white" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Apply & Reset Buttons */}
+            <div className="flex gap-2 pt-2 border-t border-slate-100">
+              <button
+                onClick={() => { resetAllFilters(); setIsMobileFilterOpen(false); }}
+                className="flex-1 py-3 rounded-xl bg-slate-100 font-bold text-xs text-slate-700"
+              >
+                Reset All
+              </button>
+              <button
+                onClick={() => setIsMobileFilterOpen(false)}
+                className="flex-1 py-3 rounded-xl bg-emerald-600 font-bold text-xs text-white shadow-md"
+              >
+                Apply Filters ({filteredTemplates.length})
+              </button>
+            </div>
           </div>
         </div>
-      </footer>
+      )}
 
-      {/* FULL-SCREEN HIGH-RES PREVIEW MODAL MOUNTED DIRECTLY TO DOCUMENT.BODY VIA REACT PORTAL */}
+      {/* ── FULL-SCREEN HIGH-RES PREVIEW MODAL (PORTALED TO BODY) ── */}
       {previewModalTemplate && createPortal(
         <div
           onClick={() => setPreviewModalTemplate(null)}
@@ -544,16 +673,15 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
             onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-3xl max-w-4xl w-full max-h-[94vh] flex flex-col overflow-hidden shadow-2xl relative border border-slate-200"
           >
-            {/* Top Toolbar */}
+            {/* Modal Header */}
             <div className="p-4 border-b border-slate-200 flex flex-wrap justify-between items-center bg-slate-50 gap-2 flex-shrink-0">
               <div>
                 <h3 className="font-black text-base text-slate-900">{previewModalTemplate.name}</h3>
                 <p className="text-xs text-emerald-700 font-semibold">{previewModalTemplate.category} Layout · {previewModalTemplate.atsScore}% ATS Compatible</p>
               </div>
 
-              {/* Toolbar Zoom & Download Controls */}
               <div className="flex items-center gap-2">
-                <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
+                <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-xs">
                   <button
                     onClick={() => setModalZoom(z => Math.max(z - 0.1, 0.4))}
                     className="p-1.5 hover:bg-slate-100 text-slate-700 rounded-lg"
@@ -571,114 +699,59 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                   >
                     <ZoomIn className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={() => setModalZoom(0.70)}
-                    className="p-1.5 hover:bg-slate-100 text-slate-700 rounded-lg text-[10px] font-bold px-1.5"
-                    title="Fit to Screen"
-                  >
-                    <Maximize2 className="w-3.5 h-3.5" />
-                  </button>
                 </div>
 
                 <button
-                  onClick={handleDownloadSample}
-                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-sm"
-                  title="Download Sample PDF"
+                  onClick={() => {
+                    onSelectTemplate(previewModalTemplate);
+                    setPreviewModalTemplate(null);
+                  }}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow flex items-center gap-1.5"
                 >
-                  <Download className="w-4 h-4 text-emerald-600" />
-                  <span className="hidden sm:inline">Sample PDF</span>
+                  <span>Use Template</span>
+                  <ArrowRight className="w-4 h-4" />
                 </button>
 
                 <button
                   onClick={() => setPreviewModalTemplate(null)}
-                  className="p-2 bg-slate-200 hover:bg-slate-300 rounded-full text-slate-700 transition-colors"
-                  title="Close preview"
+                  className="p-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
-            {/* High-Resolution Scrollable Viewport */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-950 flex justify-center items-start min-h-0 smooth-scroll-container">
+            {/* Modal Body */}
+            <div className="flex-1 overflow-auto bg-slate-950 p-6 flex justify-center items-start">
               <div
+                className="transform origin-top shadow-2xl rounded-sm overflow-hidden flex-shrink-0 transition-transform duration-150"
                 style={{
                   width: `${794 * modalZoom}px`,
-                  height: `${1123 * modalZoom}px`,
-                  position: 'relative',
-                  flexShrink: 0,
-                  marginTop: '16px',
-                  marginBottom: '32px'
+                  minHeight: `${1123 * modalZoom}px`,
                 }}
               >
-                <div
-                  ref={previewModalRef}
-                  className="bg-white shadow-2xl rounded-sm overflow-hidden gpu-accelerated"
-                  style={{
-                    width: '794px',
-                    minHeight: '1123px',
-                    transform: `scale(${modalZoom})`,
-                    transformOrigin: 'top left',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0
-                  }}
-                >
+                <div ref={previewModalRef} style={{ width: 794, minHeight: 1123, margin: 0, padding: 0, backgroundColor: '#ffffff' }}>
                   <TemplateRenderer template={previewModalTemplate} />
                 </div>
               </div>
             </div>
-
-            {/* Footer Action Bar */}
-            <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-white flex-shrink-0">
-              <button
-                onClick={() => setPreviewModalTemplate(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  const selected = previewModalTemplate;
-                  setPreviewModalTemplate(null);
-                  onSelectTemplate(selected);
-                }}
-                className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-lg flex items-center gap-1.5 transition-transform active:scale-95"
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Use This Template</span>
-              </button>
-            </div>
           </div>
         </div>,
         document.body
       )}
 
-      {/* Expanded Promo Video Modal */}
-      {showPromoModal && createPortal(
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-lg z-[99999] flex items-center justify-center p-4">
-          <div className="bg-slate-900 rounded-3xl max-w-4xl w-full flex flex-col overflow-hidden shadow-2xl border border-slate-800 relative">
-            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
-              <h3 className="text-white font-extrabold text-base">NovaResume AI — Official Promo Video</h3>
-              <button
-                onClick={() => setShowPromoModal(false)}
-                className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full text-slate-300"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-2 bg-black flex justify-center items-center">
-              <video
-                src="/promo.mp4"
-                controls
-                autoPlay
-                className="w-full max-h-[70vh] rounded-2xl object-contain"
-              />
-            </div>
+      {/* Developer Branding Footer */}
+      <footer className="bg-slate-900 text-white border-t border-slate-800 py-3 px-6 text-center flex-shrink-0">
+        <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center text-xs text-slate-400 gap-2">
+          <div className="flex items-center gap-2 font-bold text-slate-200">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span>NovaResume AI Platform</span>
           </div>
-        </div>,
-        document.body
-      )}
+          <div>
+            Designed & Engineered by <span className="text-emerald-400 font-extrabold">VED DHOBI</span> (<a href="mailto:veddhobi252@gmail.com" className="hover:underline">veddhobi252@gmail.com</a>)
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
