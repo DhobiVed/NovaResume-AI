@@ -10,7 +10,9 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
-  getRedirectResult
+  getRedirectResult,
+  setPersistence,
+  browserLocalPersistence
 } from 'firebase/auth';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
@@ -29,6 +31,10 @@ const firebaseConfig = {
 // Initialize Firebase App & Auth
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+
+// Force local storage persistence across browser redirects & multi-tabs
+setPersistence(auth, browserLocalPersistence).catch(() => {});
+
 export const googleProvider = new GoogleAuthProvider();
 
 // Safely initialize Firestore (optional - fallback if not enabled in console)

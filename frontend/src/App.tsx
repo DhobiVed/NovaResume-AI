@@ -20,9 +20,20 @@ export const AppContent: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateDefinition | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // Intro Video Splash State (Only shows on FIRST session visit, never repeatedly on refresh)
+  // Persistent User State with LocalStorage Fallback
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    try {
+      const cached = localStorage.getItem('nova_user_profile');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Intro Video Splash State (Only shows on FIRST session visit if user is not logged in)
   const [showIntroVideo, setShowIntroVideo] = useState(() => {
     try {
+      if (user) return false; // Never show splash to logged-in user
       return !sessionStorage.getItem('nova_intro_seen');
     } catch {
       return true;
@@ -39,6 +50,20 @@ export const AppContent: React.FC = () => {
       // Ignore storage errors
     }
   };
+
+  // Sync user state to LocalStorage
+  useEffect(() => {
+    if (user) {
+      try {
+        localStorage.setItem('nova_user_profile', JSON.stringify(user));
+        setShowIntroVideo(false); // Instantly dismiss splash when user is logged in
+      } catch {}
+    } else {
+      try {
+        localStorage.removeItem('nova_user_profile');
+      } catch {}
+    }
+  }, [user]);
 
   // Force guaranteed native HTML5 video autoplay
   useEffect(() => {
@@ -61,8 +86,6 @@ export const AppContent: React.FC = () => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
-  const [user, setUser] = useState<UserProfile | null>(null);
-
   // Firebase Auth State Subscription & Mobile Redirect Result Check
   useEffect(() => {
     // Check for Google Redirect login result on load (for mobile browsers)
@@ -70,6 +93,7 @@ export const AppContent: React.FC = () => {
       if (redirectUser) {
         setUser(redirectUser);
         setIsAuthOpen(false);
+        setShowIntroVideo(false);
       }
     });
 
@@ -78,6 +102,7 @@ export const AppContent: React.FC = () => {
       setUser(currentUser);
       if (currentUser) {
         setIsAuthOpen(false); // Auto-close modal when user is authenticated
+        setShowIntroVideo(false); // Dismiss splash screen on auth confirmation
       }
     });
     return () => unsubscribe();
@@ -86,11 +111,15 @@ export const AppContent: React.FC = () => {
   const handleLoginSuccess = (loggedInUser: UserProfile) => {
     setUser(loggedInUser);
     setIsAuthOpen(false);
+    setShowIntroVideo(false);
   };
 
   const handleLogout = async () => {
     setUser(null);
     setSelectedTemplate(null);
+    try {
+      localStorage.removeItem('nova_user_profile');
+    } catch {}
     await firebaseAuthService.logout();
   };
 
