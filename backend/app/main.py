@@ -1,7 +1,6 @@
 import sys
 import os
 
-# Force UTF-8 encoding across Windows Python runtime
 os.environ["PYTHONIOENCODING"] = "utf-8"
 os.environ["PYTHONUTF8"] = "1"
 if hasattr(sys.stdout, "reconfigure"):
@@ -17,12 +16,12 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.database.session import engine, Base
-import app.models.schema  # Register all relational database models
+import app.models.schema  # Register all ORM models
 from app.api.v1.endpoints import docgen, resumes, models, auth
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize SQLite tables for NovaResume AI
+    # Auto-create all tables on startup (works for SQLite + PostgreSQL)
     Base.metadata.create_all(bind=engine)
     yield
 
@@ -32,18 +31,28 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# ── CORS ──────────────────────────────────────────────────────────
+# FRONTEND_URL env var: set to your Vercel URL in Railway dashboard
+# e.g. "https://nova-resume-ai.vercel.app"
+# Falls back to "*" for local development.
+origins = (
+    ["*"]
+    if settings.FRONTEND_URL == "*"
+    else [settings.FRONTEND_URL, "http://localhost:5173", "http://127.0.0.1:5173"]
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Authentication"])
+app.include_router(auth.router,    prefix=f"{settings.API_V1_STR}/auth",    tags=["Authentication"])
 app.include_router(resumes.router, prefix=f"{settings.API_V1_STR}/resumes", tags=["Resumes"])
-app.include_router(docgen.router, prefix=f"{settings.API_V1_STR}/docgen", tags=["Document Generation"])
-app.include_router(models.router, prefix=f"{settings.API_V1_STR}/models", tags=["Models"])
+app.include_router(docgen.router,  prefix=f"{settings.API_V1_STR}/docgen",  tags=["Document Generation"])
+app.include_router(models.router,  prefix=f"{settings.API_V1_STR}/models",  tags=["Models"])
 
 @app.get("/")
 def root():
@@ -54,6 +63,6 @@ def root():
         "docs": "/docs"
     }
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+@app.get("/health")
+def health():
+    return {"status": "healthy"}

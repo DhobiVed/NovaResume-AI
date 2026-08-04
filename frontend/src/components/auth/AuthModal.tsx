@@ -18,7 +18,9 @@ interface AuthModalProps {
   onLoginSuccess: (user: UserProfile) => void;
 }
 
-const API = 'http://127.0.0.1:8000/api/v1/auth';
+import { API_BASE } from '../../config';
+
+const API = `${API_BASE}/auth`;
 
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,

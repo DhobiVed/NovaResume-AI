@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   X, Upload, FileText, Sparkles, Check
 } from 'lucide-react';
+import { API_BASE } from '../../config';
 
 interface ResumeImportModalProps {
   isOpen: boolean;
@@ -54,7 +55,7 @@ export const ResumeImportModal: React.FC<ResumeImportModalProps> = ({
 
     try {
       // 1. Attempt Backend High-Accuracy PDF/DOCX LLM Extraction
-      const res = await fetch('http://127.0.0.1:8000/api/v1/resumes/parse-file', {
+      const res = await fetch(`${API_BASE}/resumes/parse-file`, {
         method: 'POST',
         body: formData
       });
@@ -94,7 +95,7 @@ export const ResumeImportModal: React.FC<ResumeImportModalProps> = ({
     setIsParsing(true);
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/v1/resumes/parse-import', {
+      const res = await fetch(`${API_BASE}/resumes/parse-import`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ raw_text: rawText })

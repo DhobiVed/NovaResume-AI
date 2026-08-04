@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, ShieldCheck, CheckCircle, AlertTriangle, Sparkles, RefreshCw, Check, Zap } from 'lucide-react';
+import { API_BASE } from '../../config';
 
 interface AtsAnalyzerModalProps {
   isOpen: boolean;
@@ -34,7 +35,7 @@ export const AtsAnalyzerModal: React.FC<AtsAnalyzerModalProps> = ({ isOpen, onCl
     setIsAnalyzing(true);
     setTailorNotice(null);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/v1/resumes/ats-analyze', {
+      const res = await fetch(`${API_BASE}/resumes/ats-analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

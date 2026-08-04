@@ -14,6 +14,7 @@ import type { UserProfile } from './components/auth/AuthModal';
 import type { TemplateDefinition } from './lib/resumeTypes';
 import { ALL_TEMPLATES } from './lib/templateData';
 import { Plus, ShieldCheck, Briefcase, Globe, Menu, X, Sparkles, History, Upload } from 'lucide-react';
+import { API_BASE } from './config';
 
 export const AppContent: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateDefinition | null>(null);
@@ -75,7 +76,7 @@ export const AppContent: React.FC = () => {
     const verifyOrRefresh = async () => {
       try {
         if (token) {
-          const res = await fetch('http://127.0.0.1:8000/api/v1/auth/me', {
+          const res = await fetch(`${API_BASE}/auth/me`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.ok) {
@@ -87,7 +88,7 @@ export const AppContent: React.FC = () => {
 
         // Attempt Refresh Token Swap if access token is expired
         if (refreshToken) {
-          const refRes = await fetch('http://127.0.0.1:8000/api/v1/auth/refresh', {
+          const refRes = await fetch(`${API_BASE}/auth/refresh`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refresh_token: refreshToken })
@@ -99,7 +100,7 @@ export const AppContent: React.FC = () => {
             localStorage.setItem('nova_refresh_token', refData.refresh_token);
 
             // Re-fetch user profile
-            const meRes = await fetch('http://127.0.0.1:8000/api/v1/auth/me', {
+            const meRes = await fetch(`${API_BASE}/auth/me`, {
               headers: { Authorization: `Bearer ${refData.access_token}` }
             });
             if (meRes.ok) {
@@ -136,7 +137,7 @@ export const AppContent: React.FC = () => {
     localStorage.removeItem('nova_refresh_token');
     setSelectedTemplate(null);
     if (token) {
-      fetch('http://127.0.0.1:8000/api/v1/auth/logout', {
+      fetch(`${API_BASE}/auth/logout`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       }).catch(() => {});
