@@ -14,7 +14,7 @@ import type { UserProfile } from './components/auth/AuthModal';
 import type { TemplateDefinition } from './lib/resumeTypes';
 import { ALL_TEMPLATES } from './lib/templateData';
 import { Plus, ShieldCheck, Briefcase, Globe, Menu, X, Sparkles, History, Upload } from 'lucide-react';
-import { API_BASE } from './config';
+import { firebaseAuthService } from './services/firebaseAuth';
 
 export const AppContent: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateDefinition | null>(null);
@@ -63,85 +63,22 @@ export const AppContent: React.FC = () => {
 
   const [user, setUser] = useState<UserProfile | null>(null);
 
-  // Validate Persistent JWT Access & Refresh Tokens on Load
+  // Firebase Auth State Subscription (Persists across page refresh & multi-device isolation)
   useEffect(() => {
-    const token = localStorage.getItem('nova_auth_token');
-    const refreshToken = localStorage.getItem('nova_refresh_token');
-    
-    if (!token && !refreshToken) {
-      setUser(null);
-      return;
-    }
-
-    const verifyOrRefresh = async () => {
-      try {
-        if (token) {
-          const res = await fetch(`${API_BASE}/auth/me`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (res.ok) {
-            const userData = await res.json();
-            setUser(userData);
-            return;
-          }
-        }
-
-        // Attempt Refresh Token Swap if access token is expired
-        if (refreshToken) {
-          const refRes = await fetch(`${API_BASE}/auth/refresh`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refresh_token: refreshToken })
-          });
-
-          if (refRes.ok) {
-            const refData = await refRes.json();
-            localStorage.setItem('nova_auth_token', refData.access_token);
-            localStorage.setItem('nova_refresh_token', refData.refresh_token);
-
-            // Re-fetch user profile
-            const meRes = await fetch(`${API_BASE}/auth/me`, {
-              headers: { Authorization: `Bearer ${refData.access_token}` }
-            });
-            if (meRes.ok) {
-              const meData = await meRes.json();
-              setUser(meData);
-              return;
-            }
-          }
-        }
-
-        // Expired or invalid -> purge session
-        localStorage.removeItem('nova_auth_token');
-        localStorage.removeItem('nova_refresh_token');
-        setUser(null);
-      } catch (err) {
-        console.warn('Auth verification offline:', err);
-        localStorage.removeItem('nova_auth_token');
-        localStorage.removeItem('nova_refresh_token');
-        setUser(null);
-      }
-    };
-
-    verifyOrRefresh();
+    const unsubscribe = firebaseAuthService.onAuthState((currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
   }, []);
 
   const handleLoginSuccess = (loggedInUser: UserProfile) => {
     setUser(loggedInUser);
   };
 
-  const handleLogout = () => {
-    const token = localStorage.getItem('nova_auth_token');
+  const handleLogout = async () => {
     setUser(null);
-    localStorage.removeItem('nova_auth_token');
-    localStorage.removeItem('nova_refresh_token');
     setSelectedTemplate(null);
-    if (token) {
-      fetch(`${API_BASE}/auth/logout`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      }).catch(() => {});
-    }
+    await firebaseAuthService.logout();
   };
 
   const activeResumeData = {

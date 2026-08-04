@@ -18,9 +18,7 @@ interface AuthModalProps {
   onLoginSuccess: (user: UserProfile) => void;
 }
 
-import { API_BASE } from '../../config';
-
-const API = `${API_BASE}/auth`;
+import { firebaseAuthService } from '../../services/firebaseAuth';
 
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
@@ -109,25 +107,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setIsLoading(true);
     setErrors({});
     try {
-      const res = await fetch(`${API}/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName: fullName.trim(), email: email.toLowerCase().trim(), password })
-      });
-      const data = await res.json();
-      if (!res.ok) return setFieldError('email', data.detail || 'Registration failed');
+      await firebaseAuthService.register(fullName.trim(), email.toLowerCase().trim(), password);
 
-      // DO NOT auto-login — user must sign in manually
-      // Clear passwords and switch to login form
       const registeredEmail = email.toLowerCase().trim();
       setPassword('');
       setConfirmPassword('');
       setFullName('');
-      setSuccessMsg(`✅ Account created! Sign in with ${registeredEmail} to continue.`);
-      setEmail(registeredEmail); // Pre-fill email in login form
+      setSuccessMsg(`✅ Account created in Firebase! Sign in with ${registeredEmail} to continue.`);
+      setEmail(registeredEmail);
       setMode('login');
-    } catch {
-      setFieldError('email', 'Cannot connect to server. Is the backend running?');
+    } catch (err: any) {
+      let msg = 'Registration failed. Please try again.';
+      if (err.code === 'auth/email-already-in-use') {
+        msg = 'An account with this email already exists. Please sign in.';
+      } else if (err.code === 'auth/invalid-email') {
+        msg = 'Invalid email address format.';
+      } else if (err.code === 'auth/weak-password') {
+        msg = 'Password should be at least 6 characters.';
+      } else if (err.message) {
+        msg = err.message;
+      }
+      setFieldError('email', msg);
     } finally {
       setIsLoading(false);
     }
@@ -140,21 +140,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setIsLoading(true);
     setErrors({});
     try {
-      const res = await fetch(`${API}/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.toLowerCase().trim(), password })
-      });
-      const data = await res.json();
-      if (!res.ok) return setFieldError('email', data.detail || 'Invalid email or password');
-
-      if (data.access_token) localStorage.setItem('nova_auth_token', data.access_token);
-      if (data.refresh_token) localStorage.setItem('nova_refresh_token', data.refresh_token);
-
-      onLoginSuccess(data.user);
+      const userProfile = await firebaseAuthService.login(email.toLowerCase().trim(), password);
+      onLoginSuccess(userProfile);
       onClose();
-    } catch {
-      setFieldError('email', 'Cannot connect to server. Is the backend running?');
+    } catch (err: any) {
+      let msg = 'Invalid email address or password.';
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        msg = 'Invalid email or password. Please check your credentials.';
+      } else if (err.code === 'auth/too-many-requests') {
+        msg = 'Too many failed login attempts. Please try again later or reset password.';
+      } else if (err.message) {
+        msg = err.message;
+      }
+      setFieldError('email', msg);
     } finally {
       setIsLoading(false);
     }
@@ -166,54 +164,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setIsLoading(true);
     setErrors({});
     try {
-      const res = await fetch(`${API}/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.toLowerCase().trim() })
-      });
-      const data = await res.json();
-
-      if (data.reset_token) {
-        // Dev mode: token returned in response — pre-fill the reset form
-        setResetToken(data.reset_token);
-        setSuccessMsg('Reset token generated. Enter it below along with your new password (dev mode — in production this would be emailed).');
-        setMode('reset');
-      } else {
-        setSuccessMsg(data.message || 'If an account exists with that email, a reset link has been sent.');
+      await firebaseAuthService.sendPasswordReset(email.toLowerCase().trim());
+      setSuccessMsg(`✅ Password reset email sent to ${email.toLowerCase().trim()}! Check your inbox.`);
+    } catch (err: any) {
+      let msg = 'Failed to send password reset email.';
+      if (err.code === 'auth/user-not-found') {
+        msg = 'No account found with this email address.';
+      } else if (err.message) {
+        msg = err.message;
       }
-    } catch {
-      setFieldError('email', 'Cannot connect to server. Is the backend running?');
+      setFieldError('email', msg);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleResetPassword = async () => {
-    if (!resetToken.trim()) return setFieldError('resetToken', 'Reset token is required');
-    if (!newPassword || newPassword.length < 6) return setFieldError('newPassword', 'New password must be at least 6 characters');
-    if (newPassword !== confirmNewPassword) return setFieldError('confirmNewPassword', 'Passwords do not match');
-
-    setIsLoading(true);
-    setErrors({});
-    try {
-      const res = await fetch(`${API}/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: resetToken.trim(), new_password: newPassword })
-      });
-      const data = await res.json();
-      if (!res.ok) return setFieldError('resetToken', data.detail || 'Invalid or expired token');
-
-      setSuccessMsg('Password reset successfully! Please sign in with your new password.');
-      setNewPassword('');
-      setConfirmNewPassword('');
-      setResetToken('');
-      setTimeout(() => setMode('login'), 2000);
-    } catch {
-      setFieldError('resetToken', 'Cannot connect to server. Is the backend running?');
-    } finally {
-      setIsLoading(false);
-    }
+    setSuccessMsg('A password reset link was sent to your email. Please check your inbox and click the link to reset your password.');
+    setTimeout(() => setMode('login'), 3000);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
