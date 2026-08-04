@@ -171,3 +171,30 @@ def parse_resume_import(req: ImportParseRequest):
                 "skills": "Python, JavaScript, SQL, Management"
             }
         }
+
+@router.post("/parse-file")
+async def parse_resume_file(file: UploadFile = File(...)):
+    content = await file.read()
+    filename = file.filename.lower()
+    extracted_text = ""
+
+    if filename.endswith(".pdf"):
+        try:
+            import io
+            from pypdf import PdfReader
+            reader = PdfReader(io.BytesIO(content))
+            extracted_text = "\n".join([page.extract_text() or "" for page in reader.pages])
+        except Exception:
+            extracted_text = content.decode("latin-1", errors="ignore")
+    elif filename.endswith(".docx") or filename.endswith(".doc"):
+        try:
+            import io
+            import docx
+            doc = docx.Document(io.BytesIO(content))
+            extracted_text = "\n".join([p.text for p in doc.paragraphs])
+        except Exception:
+            extracted_text = content.decode("latin-1", errors="ignore")
+    else:
+        extracted_text = content.decode("utf-8", errors="ignore")
+
+    return parse_resume_import(ImportParseRequest(raw_text=extracted_text))
