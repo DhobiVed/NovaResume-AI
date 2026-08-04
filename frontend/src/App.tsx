@@ -63,16 +63,29 @@ export const AppContent: React.FC = () => {
 
   const [user, setUser] = useState<UserProfile | null>(null);
 
-  // Firebase Auth State Subscription (Persists across page refresh & multi-device isolation)
+  // Firebase Auth State Subscription & Mobile Redirect Result Check
   useEffect(() => {
+    // Check for Google Redirect login result on load (for mobile browsers)
+    firebaseAuthService.checkRedirectResult().then((redirectUser) => {
+      if (redirectUser) {
+        setUser(redirectUser);
+        setIsAuthOpen(false);
+      }
+    });
+
+    // Real-time auth listener across page refreshes & multi-device isolation
     const unsubscribe = firebaseAuthService.onAuthState((currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        setIsAuthOpen(false); // Auto-close modal when user is authenticated
+      }
     });
     return () => unsubscribe();
   }, []);
 
   const handleLoginSuccess = (loggedInUser: UserProfile) => {
     setUser(loggedInUser);
+    setIsAuthOpen(false);
   };
 
   const handleLogout = async () => {

@@ -217,8 +217,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setErrors({});
     try {
       const userProfile = await firebaseAuthService.loginWithGoogle();
-      onLoginSuccess(userProfile);
-      onClose();
+      if (userProfile) {
+        onLoginSuccess(userProfile);
+        onClose();
+      }
     } catch (err: any) {
       let msg = 'Google Sign-In failed.';
       if (err.code === 'auth/popup-closed-by-user') {
