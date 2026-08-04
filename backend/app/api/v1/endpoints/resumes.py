@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
@@ -6,7 +6,7 @@ import json
 import re
 
 from app.database.session import get_db
-from app.database.models import SavedResume, CoverLetter
+from app.database.models import SavedResume, CoverLetterLegacy as CoverLetter
 from app.models.model_manager import model_manager
 
 router = APIRouter()

@@ -8,6 +8,7 @@ def generate_uuid():
 
 class SavedResume(Base):
     __tablename__ = "saved_resumes"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     title = Column(String(255), default="My Professional Resume")
@@ -20,8 +21,12 @@ class SavedResume(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-class CoverLetter(Base):
+class CoverLetterLegacy(Base):
+    """Legacy cover letter model — kept for resumes.py compatibility.
+    The canonical CoverLetter model is in app.models.schema.
+    """
     __tablename__ = "cover_letters"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     resume_id = Column(String, nullable=True)
