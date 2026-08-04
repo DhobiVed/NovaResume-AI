@@ -9,6 +9,8 @@ import { ResumeImportModal } from './components/import/ResumeImportModal';
 import { ResumeMentorModal } from './components/mentor/ResumeMentorModal';
 import { VersionHistoryModal } from './components/history/VersionHistoryModal';
 import { JobTrackerModal } from './components/tracker/JobTrackerModal';
+import { AuthModal } from './components/auth/AuthModal';
+import type { UserProfile } from './components/auth/AuthModal';
 import type { TemplateDefinition } from './lib/resumeTypes';
 import { ALL_TEMPLATES } from './lib/templateData';
 import { Plus, ShieldCheck, Briefcase, Globe, Menu, X, Sparkles, History, Upload } from 'lucide-react';
@@ -55,6 +57,34 @@ export const AppContent: React.FC = () => {
   const [isMentorOpen, setIsMentorOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isJobTrackerOpen, setIsJobTrackerOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    try {
+      const saved = localStorage.getItem('nova_user_session');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      name: 'Ved Dhobi',
+      email: 'veddhobi252@gmail.com',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+    };
+  });
+
+  const handleLoginSuccess = (loggedInUser: UserProfile) => {
+    setUser(loggedInUser);
+    try {
+      localStorage.setItem('nova_user_session', JSON.stringify(loggedInUser));
+    } catch {}
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    try {
+      localStorage.removeItem('nova_user_session');
+    } catch {}
+  };
 
   const activeResumeData = {
     fullName: 'Alex Vance',
@@ -157,6 +187,39 @@ export const AppContent: React.FC = () => {
             <Globe className="w-4 h-4 text-emerald-600" />
             <span>Web Portfolio</span>
           </button>
+
+          {/* User Auth Profile Badge / Login Buttons */}
+          {user ? (
+            <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+              <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full border border-emerald-300 shadow-xs object-cover" />
+              <div className="hidden lg:block text-left">
+                <span className="font-extrabold text-xs text-slate-900 block leading-tight">{user.name}</span>
+                <span className="text-[10px] text-slate-500 font-mono block leading-tight">{user.email}</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="px-2.5 py-1 text-[11px] font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                title="Sign Out"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
+              <button
+                onClick={() => { setAuthMode('login'); setIsAuthOpen(true); }}
+                className="px-3 py-1.5 text-xs font-extrabold text-slate-700 hover:text-emerald-700 hover:bg-slate-100 rounded-xl transition-colors min-h-[36px]"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => { setAuthMode('signup'); setIsAuthOpen(true); }}
+                className="px-3 py-1.5 text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs transition-transform active:scale-95 min-h-[36px]"
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Mobile Hamburger Toggle Button */}
@@ -173,6 +236,37 @@ export const AppContent: React.FC = () => {
       {isMobileMenuOpen && (
         <div className="fixed inset-0 top-16 bg-slate-950/70 backdrop-blur-sm z-50 md:hidden flex flex-col justify-between p-4 animate-fadeIn">
           <div className="bg-white rounded-2xl p-4 shadow-xl border border-slate-200 space-y-2.5 max-h-[85vh] overflow-y-auto">
+            {/* Mobile User Profile Section */}
+            {user ? (
+              <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl mb-2">
+                <div className="flex items-center gap-2.5">
+                  <img src={user.avatarUrl} alt={user.name} className="w-9 h-9 rounded-full border border-emerald-400 object-cover" />
+                  <div>
+                    <span className="font-extrabold text-xs text-slate-900 block">{user.name}</span>
+                    <span className="text-[10px] text-slate-500 font-mono block">{user.email}</span>
+                  </div>
+                </div>
+                <button onClick={handleLogout} className="px-2.5 py-1 text-xs font-bold text-rose-600 bg-rose-50 rounded-lg">
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                <button
+                  onClick={() => { setAuthMode('login'); setIsAuthOpen(true); setIsMobileMenuOpen(false); }}
+                  className="py-2.5 text-xs font-extrabold bg-slate-100 text-slate-800 rounded-xl"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => { setAuthMode('signup'); setIsAuthOpen(true); setIsMobileMenuOpen(false); }}
+                  className="py-2.5 text-xs font-black text-white bg-emerald-600 rounded-xl"
+                >
+                  Sign Up Free
+                </button>
+              </div>
+            )}
+
             <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider mb-2">Navigation Menu</h3>
             
             <button
@@ -254,6 +348,7 @@ export const AppContent: React.FC = () => {
       <ResumeMentorModal isOpen={isMentorOpen} onClose={() => setIsMentorOpen(false)} resumeData={activeResumeData} />
       <VersionHistoryModal isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} currentResumeData={activeResumeData} onRestoreVersion={handleImportComplete} />
       <JobTrackerModal isOpen={isJobTrackerOpen} onClose={() => setIsJobTrackerOpen(false)} />
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} initialMode={authMode} onLoginSuccess={handleLoginSuccess} />
 
       {/* ── INTRO VIDEO SPLASH OVERLAY WITH TOP WATERMARK CROP & SKIP OPTION ── */}
       {showIntroVideo && (
