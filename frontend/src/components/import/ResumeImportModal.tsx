@@ -28,27 +28,18 @@ export const ResumeImportModal: React.FC<ResumeImportModalProps> = ({
     
     // Extracted lines clean up
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-    const candidateName = lines[0] && lines[0].length < 40 ? lines[0].replace(/[^a-zA-Z\s]/g, '') : 'Ved Dhobi';
+    const candidateName = lines[0] && lines[0].length < 40 ? lines[0].replace(/[^a-zA-Z\s]/g, '').trim() : '';
 
     return {
-      fullName: candidateName || 'Ved Dhobi',
-      title: 'Senior Software Engineer',
-      email: emailMatch ? emailMatch[0] : 'veddhobi252@gmail.com',
-      phone: phoneMatch ? phoneMatch[0] : '+91 98765 43210',
-      location: 'Mumbai, India',
-      summary: text.slice(0, 300) || 'Experienced software professional with expertise in scalable web architectures and AI applications.',
-      skills: 'React, TypeScript, Python, FastAPI, Node.js, PostgreSQL, Docker, AWS, Git',
-      experience: [
-        {
-          company: 'Tech Solutions Inc',
-          role: 'Software Engineer',
-          dates: '2022 - Present',
-          bullets: 'Developed high-performance web applications and integrated REST APIs.'
-        }
-      ],
-      education: [
-        { degree: 'B.Tech in Computer Engineering', school: 'Tech University', year: '2022' }
-      ]
+      fullName: candidateName || '',
+      title: '',
+      email: emailMatch ? emailMatch[0] : '',
+      phone: phoneMatch ? phoneMatch[0] : '',
+      location: '',
+      summary: text.slice(0, 300) || '',
+      skills: '',
+      experience: [],
+      education: []
     };
   };
 

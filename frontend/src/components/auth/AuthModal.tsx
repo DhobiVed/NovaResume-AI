@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
   X, Mail, Lock, User, Eye, EyeOff, CheckCircle2, ArrowRight,
-  AlertCircle, KeyRound
+  AlertCircle, KeyRound, ArrowLeft
 } from 'lucide-react';
 
 export interface UserProfile {
+  id?: string;
   name: string;
   email: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
 }
 
 interface AuthModalProps {
@@ -17,20 +18,24 @@ interface AuthModalProps {
   onLoginSuccess: (user: UserProfile) => void;
 }
 
+const API = 'http://127.0.0.1:8000/api/v1/auth';
+
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
   initialMode = 'login',
   onLoginSuccess
 }) => {
-  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>(initialMode);
-  
-  // Form Input States
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot' | 'reset'>('login');
+
+  // Form States
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(true);
+  const [resetToken, setResetToken] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
   // UI States
   const [showPassword, setShowPassword] = useState(false);
@@ -40,21 +45,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [shakingField, setShakingField] = useState<string | null>(null);
 
-  // Sync mode with prop when modal opens
+  // Sync mode on open
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
       setErrors({});
       setSuccessMsg(null);
+      setFullName('');
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setResetToken('');
+      setNewPassword('');
+      setConfirmNewPassword('');
     }
   }, [isOpen, initialMode]);
 
-  // Handle ESC key press
+  // ESC key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
+      if (e.key === 'Escape' && isOpen) onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -62,139 +72,172 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Password Strength Calculation (0-4 score)
-  const calculatePasswordStrength = (pass: string) => {
-    let score = 0;
-    if (pass.length >= 8) score++;
-    if (/[A-Z]/.test(pass)) score++;
-    if (/[0-9]/.test(pass)) score++;
-    if (/[^A-Za-z0-9]/.test(pass)) score++;
-    return score;
+  // Password Strength (0-4)
+  const calcStrength = (pass: string) => {
+    let s = 0;
+    if (pass.length >= 8) s++;
+    if (/[A-Z]/.test(pass)) s++;
+    if (/[0-9]/.test(pass)) s++;
+    if (/[^A-Za-z0-9]/.test(pass)) s++;
+    return s;
   };
-
-  const passStrength = calculatePasswordStrength(password);
+  const strength = calcStrength(password);
   const strengthLabels = ['Weak', 'Fair', 'Good', 'Strong'];
   const strengthColors = ['bg-rose-500', 'bg-amber-500', 'bg-blue-500', 'bg-emerald-500'];
 
-  const triggerShake = (field: string) => {
+  const shake = (field: string) => {
     setShakingField(field);
     setTimeout(() => setShakingField(null), 500);
   };
 
-  // Validate Form
-  const validateForm = () => {
-    const errs: Record<string, string> = {};
-
-    if (mode === 'signup' && !fullName.trim()) {
-      errs.fullName = 'Full Name is required';
-      triggerShake('fullName');
-    }
-
-    if (!email.trim()) {
-      errs.email = 'Email address is required';
-      triggerShake('email');
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      errs.email = 'Please enter a valid email address';
-      triggerShake('email');
-    }
-
-    if (!password) {
-      errs.password = 'Password is required';
-      triggerShake('password');
-    } else if (password.length < 6) {
-      errs.password = 'Password must be at least 6 characters';
-      triggerShake('password');
-    }
-
-    if (mode === 'signup') {
-      if (confirmPassword !== password) {
-        errs.confirmPassword = 'Passwords do not match';
-        triggerShake('confirmPassword');
-      }
-    }
-
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
+  const setFieldError = (field: string, msg: string) => {
+    setErrors({ [field]: msg });
+    shake(field);
   };
 
-  // Real Backend API Submit Handler
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
+  // ── HANDLERS ────────────────────────────────────────────────
+
+  const handleSignup = async () => {
+    if (!fullName.trim()) return setFieldError('fullName', 'Full name is required');
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) return setFieldError('email', 'Valid email address is required');
+    if (!password) return setFieldError('password', 'Password is required');
+    if (password.length < 6) return setFieldError('password', 'Password must be at least 6 characters');
+    if (password !== confirmPassword) return setFieldError('confirmPassword', 'Passwords do not match');
 
     setIsLoading(true);
-    setSuccessMsg(null);
     setErrors({});
-
     try {
-      if (mode === 'signup') {
-        const res = await fetch('http://127.0.0.1:8000/api/v1/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fullName, email, password })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          setErrors({ email: data.detail || 'Registration failed' });
-          triggerShake('email');
-          setIsLoading(false);
-          return;
-        }
+      const res = await fetch(`${API}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName: fullName.trim(), email: email.toLowerCase().trim(), password })
+      });
+      const data = await res.json();
+      if (!res.ok) return setFieldError('email', data.detail || 'Registration failed');
 
-        if (data.access_token) {
-          localStorage.setItem('nova_auth_token', data.access_token);
-        }
-        setSuccessMsg('Account created successfully! Please sign in with your credentials.');
-        setMode('login');
-        setPassword('');
-        setConfirmPassword('');
-      } else if (mode === 'login') {
-        const res = await fetch('http://127.0.0.1:8000/api/v1/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          setErrors({ email: data.detail || 'Invalid email or password' });
-          triggerShake('email');
-          setIsLoading(false);
-          return;
-        }
+      // Save tokens from registration response
+      if (data.access_token) localStorage.setItem('nova_auth_token', data.access_token);
+      if (data.refresh_token) localStorage.setItem('nova_refresh_token', data.refresh_token);
 
-        if (data.access_token) {
-          localStorage.setItem('nova_auth_token', data.access_token);
-        }
-        if (data.refresh_token) {
-          localStorage.setItem('nova_refresh_token', data.refresh_token);
-        }
-        onLoginSuccess(data.user);
-        onClose();
-      } else if (mode === 'forgot') {
-        setSuccessMsg('Password reset link sent to your email!');
-        setMode('login');
-      }
-    } catch (err) {
-      console.error(err);
-      setErrors({ email: 'Server connection error. Please try again.' });
+      // Immediately log user in after registration
+      onLoginSuccess(data.user);
+      onClose();
+    } catch {
+      setFieldError('email', 'Cannot connect to server. Is the backend running?');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Google OAuth Simulation
-  const handleGoogleLogin = () => {
+  const handleLogin = async () => {
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) return setFieldError('email', 'Valid email address is required');
+    if (!password) return setFieldError('password', 'Password is required');
+
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      const googleUser: UserProfile = {
-        name: 'Ved Dhobi',
-        email: 'veddhobi252@gmail.com',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
-      };
-      onLoginSuccess(googleUser);
+    setErrors({});
+    try {
+      const res = await fetch(`${API}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.toLowerCase().trim(), password })
+      });
+      const data = await res.json();
+      if (!res.ok) return setFieldError('email', data.detail || 'Invalid email or password');
+
+      if (data.access_token) localStorage.setItem('nova_auth_token', data.access_token);
+      if (data.refresh_token) localStorage.setItem('nova_refresh_token', data.refresh_token);
+
+      onLoginSuccess(data.user);
       onClose();
-    }, 700);
+    } catch {
+      setFieldError('email', 'Cannot connect to server. Is the backend running?');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) return setFieldError('email', 'Please enter your registered email address');
+
+    setIsLoading(true);
+    setErrors({});
+    try {
+      const res = await fetch(`${API}/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.toLowerCase().trim() })
+      });
+      const data = await res.json();
+
+      if (data.reset_token) {
+        // Dev mode: token returned in response — pre-fill the reset form
+        setResetToken(data.reset_token);
+        setSuccessMsg('Reset token generated. Enter it below along with your new password (dev mode — in production this would be emailed).');
+        setMode('reset');
+      } else {
+        setSuccessMsg(data.message || 'If an account exists with that email, a reset link has been sent.');
+      }
+    } catch {
+      setFieldError('email', 'Cannot connect to server. Is the backend running?');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetToken.trim()) return setFieldError('resetToken', 'Reset token is required');
+    if (!newPassword || newPassword.length < 6) return setFieldError('newPassword', 'New password must be at least 6 characters');
+    if (newPassword !== confirmNewPassword) return setFieldError('confirmNewPassword', 'Passwords do not match');
+
+    setIsLoading(true);
+    setErrors({});
+    try {
+      const res = await fetch(`${API}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: resetToken.trim(), new_password: newPassword })
+      });
+      const data = await res.json();
+      if (!res.ok) return setFieldError('resetToken', data.detail || 'Invalid or expired token');
+
+      setSuccessMsg('Password reset successfully! Please sign in with your new password.');
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setResetToken('');
+      setTimeout(() => setMode('login'), 2000);
+    } catch {
+      setFieldError('resetToken', 'Cannot connect to server. Is the backend running?');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mode === 'signup') handleSignup();
+    else if (mode === 'login') handleLogin();
+    else if (mode === 'forgot') handleForgotPassword();
+    else if (mode === 'reset') handleResetPassword();
+  };
+
+  // ── FORM HEADER LABELS ────────────────────────────────────
+  const titles = {
+    login: 'Welcome Back to NovaResume',
+    signup: 'Create Your Free Account',
+    forgot: 'Reset Your Password',
+    reset: 'Set New Password'
+  };
+  const subtitles = {
+    login: 'Sign in to access your resumes, portfolios & AI mentor',
+    signup: 'Build ATS-proof resumes with AI — free forever',
+    forgot: "Enter your email and we'll send you a reset link",
+    reset: 'Enter the reset token and your new password'
+  };
+  const btnLabels = {
+    login: 'Sign In to Account',
+    signup: 'Create Account',
+    forgot: 'Send Reset Link',
+    reset: 'Save New Password'
   };
 
   return (
@@ -202,12 +245,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fadeIn"
       onClick={onClose}
     >
-      {/* Glassmorphism Floating Card */}
       <div
-        className="bg-white border border-slate-200/90 rounded-[24px] w-full max-w-md shadow-2xl p-6 sm:p-8 relative flex flex-col transform transition-all duration-300 scale-100 animate-scaleUp"
+        className="bg-white border border-slate-200/90 rounded-[24px] w-full max-w-md shadow-2xl p-6 sm:p-8 relative flex flex-col transform transition-all duration-300 animate-scaleUp max-h-[95vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close Button */}
+        {/* Close */}
         <button
           onClick={onClose}
           className="absolute right-5 top-5 p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-700 transition-colors z-10"
@@ -215,20 +257,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Modal Header */}
+        {/* Header */}
         <div className="text-center space-y-1 mb-6">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-green-700 mx-auto flex items-center justify-center text-white font-black text-2xl shadow-lg mb-3">
             N
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            {mode === 'login' ? 'Welcome Back to NovaResume' : mode === 'signup' ? 'Create Your Free Account' : 'Reset Your Password'}
-          </h2>
-          <p className="text-xs font-semibold text-slate-500">
-            {mode === 'login' ? 'Sign in to access your resumes, portfolios, and AI mentor' : mode === 'signup' ? 'Join 50,000+ engineers building ATS-proof resumes' : 'Enter your email address to receive a recovery link'}
-          </p>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{titles[mode]}</h2>
+          <p className="text-xs font-semibold text-slate-500">{subtitles[mode]}</p>
         </div>
 
-        {/* Success Alert Banner */}
+        {/* Success Banner */}
         {successMsg && (
           <div className="p-3 mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold flex items-center gap-2 animate-fadeIn">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
@@ -236,34 +274,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         )}
 
-        {/* Google Social Login */}
-        {mode !== 'forgot' && (
-          <div className="space-y-3 mb-4">
-            <button
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-              className="w-full py-2.5 px-4 bg-slate-50 hover:bg-slate-100 text-slate-800 font-extrabold text-xs rounded-xl border border-slate-200 flex items-center justify-center gap-2 shadow-xs transition-transform active:scale-95 disabled:opacity-50"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-              </svg>
-              <span>Continue with Google</span>
-            </button>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-3" noValidate>
 
-            <div className="relative flex items-center justify-center my-3">
-              <div className="border-t border-slate-200 w-full" />
-              <span className="bg-white px-3 text-[10px] font-bold uppercase text-slate-400 absolute">Or with email</span>
-            </div>
-          </div>
-        )}
-
-        {/* Dynamic Animated Form Container */}
-        <form onSubmit={handleSubmit} className="space-y-3">
-          
-          {/* Full Name Field (Sign Up Only) */}
+          {/* Full Name — signup only */}
           {mode === 'signup' && (
             <div className={`space-y-1 ${shakingField === 'fullName' ? 'animate-shake' : ''}`}>
               <label className="text-[11px] font-extrabold text-slate-700 block">Full Name</label>
@@ -273,7 +287,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Ved Dhobi"
+                  placeholder="Your full name"
                   className={`w-full pl-9 pr-3 py-2.5 bg-slate-50 border rounded-xl text-xs font-semibold focus:outline-none transition-all ${
                     errors.fullName ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
                   }`}
@@ -283,33 +297,55 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           )}
 
-          {/* Email Field */}
-          <div className={`space-y-1 ${shakingField === 'email' ? 'animate-shake' : ''}`}>
-            <label className="text-[11px] font-extrabold text-slate-700 block">Email Address</label>
-            <div className="relative">
-              <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="veddhobi252@gmail.com"
-                className={`w-full pl-9 pr-3 py-2.5 bg-slate-50 border rounded-xl text-xs font-semibold focus:outline-none transition-all ${
-                  errors.email ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
-                }`}
-              />
+          {/* Email — login, signup, forgot */}
+          {mode !== 'reset' && (
+            <div className={`space-y-1 ${shakingField === 'email' ? 'animate-shake' : ''}`}>
+              <label className="text-[11px] font-extrabold text-slate-700 block">Email Address</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className={`w-full pl-9 pr-3 py-2.5 bg-slate-50 border rounded-xl text-xs font-semibold focus:outline-none transition-all ${
+                    errors.email ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
+                  }`}
+                />
+              </div>
+              {errors.email && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.email}</span>}
             </div>
-            {errors.email && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.email}</span>}
-          </div>
+          )}
 
-          {/* Password Field */}
-          {mode !== 'forgot' && (
+          {/* Reset Token — reset mode */}
+          {mode === 'reset' && (
+            <div className={`space-y-1 ${shakingField === 'resetToken' ? 'animate-shake' : ''}`}>
+              <label className="text-[11px] font-extrabold text-slate-700 block">Reset Token</label>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <input
+                  type="text"
+                  value={resetToken}
+                  onChange={(e) => setResetToken(e.target.value)}
+                  placeholder="Paste the reset token from your email"
+                  className={`w-full pl-9 pr-3 py-2.5 bg-slate-50 border rounded-xl text-xs font-mono focus:outline-none transition-all ${
+                    errors.resetToken ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
+                  }`}
+                />
+              </div>
+              {errors.resetToken && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.resetToken}</span>}
+            </div>
+          )}
+
+          {/* Password — login, signup */}
+          {(mode === 'login' || mode === 'signup') && (
             <div className={`space-y-1 ${shakingField === 'password' ? 'animate-shake' : ''}`}>
               <div className="flex justify-between items-center">
                 <label className="text-[11px] font-extrabold text-slate-700">Password</label>
                 {mode === 'login' && (
                   <button
                     type="button"
-                    onClick={() => setMode('forgot')}
+                    onClick={() => { setMode('forgot'); setErrors({}); setSuccessMsg(null); }}
                     className="text-[10px] font-extrabold text-emerald-700 hover:underline"
                   >
                     Forgot Password?
@@ -327,30 +363,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     errors.password ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
                   }`}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
-                >
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-slate-400 hover:text-slate-600">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
               {errors.password && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.password}</span>}
 
-              {/* Password Strength Indicator for Sign Up */}
+              {/* Password Strength Bar */}
               {mode === 'signup' && password.length > 0 && (
                 <div className="pt-1 space-y-1">
                   <div className="flex justify-between items-center text-[10px] font-bold">
                     <span className="text-slate-500">Strength</span>
-                    <span className="text-slate-700">{strengthLabels[Math.min(3, passStrength)]}</span>
+                    <span className="text-slate-700">{strengthLabels[Math.min(3, strength)]}</span>
                   </div>
                   <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden flex gap-1">
                     {[0, 1, 2, 3].map((step) => (
                       <div
                         key={step}
-                        className={`h-full flex-1 rounded-full transition-all duration-300 ${
-                          step <= passStrength ? strengthColors[passStrength] : 'bg-slate-200'
-                        }`}
+                        className={`h-full flex-1 rounded-full transition-all duration-300 ${step <= strength ? strengthColors[Math.min(3, strength)] : 'bg-slate-200'}`}
                       />
                     ))}
                   </div>
@@ -359,7 +389,52 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           )}
 
-          {/* Confirm Password Field (Sign Up Only) */}
+          {/* New Password — reset mode */}
+          {mode === 'reset' && (
+            <>
+              <div className={`space-y-1 ${shakingField === 'newPassword' ? 'animate-shake' : ''}`}>
+                <label className="text-[11px] font-extrabold text-slate-700 block">New Password</label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Minimum 6 characters"
+                    className={`w-full pl-9 pr-9 py-2.5 bg-slate-50 border rounded-xl text-xs font-semibold focus:outline-none transition-all ${
+                      errors.newPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
+                    }`}
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-slate-400">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.newPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.newPassword}</span>}
+              </div>
+
+              <div className={`space-y-1 ${shakingField === 'confirmNewPassword' ? 'animate-shake' : ''}`}>
+                <label className="text-[11px] font-extrabold text-slate-700 block">Confirm New Password</label>
+                <div className="relative">
+                  <KeyRound className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={`w-full pl-9 pr-9 py-2.5 bg-slate-50 border rounded-xl text-xs font-semibold focus:outline-none transition-all ${
+                      errors.confirmNewPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
+                    }`}
+                  />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3 text-slate-400">
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.confirmNewPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.confirmNewPassword}</span>}
+              </div>
+            </>
+          )}
+
+          {/* Confirm Password — signup */}
           {mode === 'signup' && (
             <div className={`space-y-1 ${shakingField === 'confirmPassword' ? 'animate-shake' : ''}`}>
               <label className="text-[11px] font-extrabold text-slate-700 block">Confirm Password</label>
@@ -374,11 +449,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     errors.confirmPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
                   }`}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
-                >
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3 text-slate-400">
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
@@ -386,22 +457,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           )}
 
-          {/* Remember Me Checkbox (Login Only) */}
-          {mode === 'login' && (
-            <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                />
-                <span>Remember me on this device</span>
-              </label>
-            </div>
-          )}
-
-          {/* Submit CTA Button */}
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
@@ -411,20 +467,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
-                <span>{mode === 'login' ? 'Sign In to Account' : mode === 'signup' ? 'Create Account' : 'Send Recovery Link'}</span>
+                <span>{btnLabels[mode]}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
           </button>
         </form>
 
-        {/* Toggle Mode Footer */}
+        {/* Footer / Back links */}
         <div className="pt-4 mt-4 border-t border-slate-100 text-center text-xs font-semibold text-slate-600">
-          {mode === 'login' ? (
+          {(mode === 'forgot' || mode === 'reset') ? (
+            <button
+              onClick={() => { setMode('login'); setErrors({}); setSuccessMsg(null); }}
+              className="flex items-center justify-center gap-1.5 mx-auto font-extrabold text-emerald-700 hover:underline"
+            >
+              <ArrowLeft className="w-3 h-3" />
+              Back to Sign In
+            </button>
+          ) : mode === 'login' ? (
             <p>
               Don't have an account?{' '}
               <button
-                onClick={() => { setMode('signup'); setErrors({}); }}
+                onClick={() => { setMode('signup'); setErrors({}); setSuccessMsg(null); }}
                 className="font-extrabold text-emerald-700 hover:underline"
               >
                 Sign Up Free
@@ -434,7 +498,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <p>
               Already have an account?{' '}
               <button
-                onClick={() => { setMode('login'); setErrors({}); }}
+                onClick={() => { setMode('login'); setErrors({}); setSuccessMsg(null); }}
                 className="font-extrabold text-emerald-700 hover:underline"
               >
                 Sign In

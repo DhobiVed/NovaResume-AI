@@ -257,7 +257,7 @@ export const AppContent: React.FC = () => {
           {/* User Auth Profile Badge / Login Buttons */}
           {user ? (
             <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-              <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full border border-emerald-300 shadow-xs object-cover" />
+              <img src={user.avatarUrl ?? undefined} alt={user.name} className="w-8 h-8 rounded-full border border-emerald-300 shadow-xs object-cover" />
               <div className="hidden lg:block text-left">
                 <span className="font-extrabold text-xs text-slate-900 block leading-tight">{user.name}</span>
                 <span className="text-[10px] text-slate-500 font-mono block leading-tight">{user.email}</span>
@@ -306,7 +306,7 @@ export const AppContent: React.FC = () => {
             {user ? (
               <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl mb-2">
                 <div className="flex items-center gap-2.5">
-                  <img src={user.avatarUrl} alt={user.name} className="w-9 h-9 rounded-full border border-emerald-400 object-cover" />
+                  <img src={user.avatarUrl ?? undefined} alt={user.name} className="w-9 h-9 rounded-full border border-emerald-400 object-cover" />
                   <div>
                     <span className="font-extrabold text-xs text-slate-900 block">{user.name}</span>
                     <span className="text-[10px] text-slate-500 font-mono block">{user.email}</span>
