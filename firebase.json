@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "novaresumeai",
     "public": "frontend/dist",
     "ignore": [
       "firebase.json",
