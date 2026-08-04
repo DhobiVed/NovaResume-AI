@@ -83,9 +83,18 @@ export const firebaseAuthService = {
   },
 
   /**
-   * Login/Signup with Google OAuth via Popup (falls back to Redirect for mobile/popup-blocked browsers).
+   * Login/Signup with Google OAuth.
+   * Auto-detects mobile devices and uses signInWithRedirect for 100% mobile compatibility.
    */
   async loginWithGoogle(): Promise<UserProfile | null> {
+    const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      console.log('Mobile device detected: launching Google Redirect Auth...');
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    }
+
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
@@ -97,7 +106,6 @@ export const firebaseAuthService = {
         avatarUrl: user.photoURL || null
       };
 
-      // Safely write to Firestore in background if active
       if (db) {
         try {
           const userRef = doc(db, 'users', user.uid);
@@ -113,15 +121,10 @@ export const firebaseAuthService = {
 
       return userProfile;
     } catch (err: any) {
-      console.warn('Google Popup login notice:', err);
-
-      // If popup was blocked or failed on mobile browser, fallback to Redirect mode
-      if (
-        err.code === 'auth/popup-blocked' ||
-        err.code === 'auth/popup-closed-by-user' ||
-        err.code === 'auth/cancelled-popup-request'
-      ) {
-        console.log('Switching to Google Redirect mode for mobile browser compatibility...');
+      console.warn('Google Popup login error, retrying with Redirect mode:', err);
+      
+      // Fallback to Redirect mode for any popup blocker or iframe restrictions
+      if (err.code !== 'auth/popup-closed-by-user') {
         await signInWithRedirect(auth, googleProvider);
         return null;
       }
