@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   X, Globe, Download, Copy, Check, Eye, Edit3, Camera, Plus, Trash2,
-  Award, Briefcase, Monitor, Smartphone, Palette, Share2, Layers, CheckCircle2
+  Award, Briefcase, Monitor, Smartphone, Palette, Share2, Layers, CheckCircle2, FileText, Upload
 } from 'lucide-react';
 
 interface PortfolioModalProps {
@@ -145,6 +145,17 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
       const reader = new FileReader();
       reader.onloadend = () => {
         setPortfolio(prev => ({ ...prev, photoUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPortfolio(prev => ({ ...prev, resumeUrl: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
@@ -369,7 +380,9 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
 
         <div class="hero-actions">
           <a href="#contact" class="btn btn-primary">Get In Touch ➔</a>
-          ${portfolio.resumeUrl ? `<a href="${portfolio.resumeUrl}" class="btn btn-secondary" target="_blank">📄 Download Resume</a>` : ''}
+          ${portfolio.resumeUrl && portfolio.resumeUrl !== '#' 
+            ? `<a href="${portfolio.resumeUrl}" class="btn btn-secondary" target="_blank" download="${portfolio.fullName.toLowerCase().replace(/ /g, '_')}_resume">📄 Download Resume</a>` 
+            : `<a href="#contact" class="btn btn-secondary">📄 Request Resume</a>`}
         </div>
       </div>
 
@@ -750,6 +763,55 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
                   rows={4}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl leading-relaxed text-slate-900"
                 />
+              </div>
+
+              {/* Resume Upload / Document Link Section */}
+              <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-emerald-600 text-white shadow-xs">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <label className="font-extrabold text-slate-900 text-xs block">Download Resume Link / File</label>
+                      <p className="text-[11px] text-slate-600">Upload a PDF/Word resume file or paste a Google Drive / cloud URL for your portfolio download button.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {/* Option 1: Paste Resume URL */}
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Paste Resume Link (Google Drive / Cloud PDF)</label>
+                    <input
+                      type="text"
+                      value={portfolio.resumeUrl.startsWith('data:') ? '[Uploaded Resume File Embedded]' : portfolio.resumeUrl}
+                      onChange={(e) => setPortfolio({ ...portfolio, resumeUrl: e.target.value })}
+                      placeholder="https://drive.google.com/file/d/..."
+                      className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-mono text-[11px]"
+                    />
+                  </div>
+
+                  {/* Option 2: Upload Resume File (.pdf, .doc, .docx) */}
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Upload Resume Document (.pdf, .doc)</label>
+                    <div className="flex items-center gap-2">
+                      <label className="flex-1 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs cursor-pointer flex items-center justify-center gap-1.5 shadow-xs transition-transform active:scale-95">
+                        <Upload className="w-4 h-4" />
+                        <span>{portfolio.resumeUrl.startsWith('data:') ? 'Change Resume File' : 'Upload PDF File'}</span>
+                        <input type="file" accept=".pdf,.doc,.docx" onChange={handleResumeUpload} className="hidden" />
+                      </label>
+                      {portfolio.resumeUrl && portfolio.resumeUrl !== '#' && (
+                        <button
+                          onClick={() => setPortfolio(prev => ({ ...prev, resumeUrl: '#' }))}
+                          className="px-3 py-2 bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-700 rounded-xl font-bold text-xs border border-slate-200 transition-colors"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Contact Information */}
