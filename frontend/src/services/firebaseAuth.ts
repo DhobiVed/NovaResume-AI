@@ -23,7 +23,7 @@ let isRegistering = false;
 export const firebaseAuthService = {
   /**
    * Register new user in Firebase Auth.
-   * Immediately signs out and blocks onAuthStateChanged auto-login.
+   * Instant response. Signs out immediately so user is NOT auto-logged in.
    */
   async register(fullName: string, email: string, pass: string): Promise<UserProfile> {
     isRegistering = true;
@@ -34,14 +34,18 @@ export const firebaseAuthService = {
       // Non-blocking update profile
       updateProfile(user, { displayName: fullName }).catch(() => {});
 
-      // Non-blocking Firestore save (runs safely in background)
-      const userRef = doc(db, 'users', user.uid);
-      setDoc(userRef, {
-        uid: user.uid,
-        name: fullName,
-        email: user.email,
-        createdAt: new Date().toISOString()
-      }, { merge: true }).catch(() => {});
+      // Safely store user profile in Firestore if db is active
+      if (db) {
+        try {
+          const userRef = doc(db, 'users', user.uid);
+          setDoc(userRef, {
+            uid: user.uid,
+            name: fullName,
+            email: user.email,
+            createdAt: new Date().toISOString()
+          }, { merge: true }).catch(() => {});
+        } catch {}
+      }
 
       const createdProfile: UserProfile = {
         id: user.uid,
@@ -55,7 +59,6 @@ export const firebaseAuthService = {
 
       return createdProfile;
     } finally {
-      // Delay resetting flag slightly to ensure onAuthStateChanged events have settled
       setTimeout(() => {
         isRegistering = false;
       }, 500);
@@ -63,11 +66,12 @@ export const firebaseAuthService = {
   },
 
   /**
-   * Login user with Email & Password
+   * Login user with Email & Password.
    */
   async login(email: string, pass: string): Promise<UserProfile> {
     const userCredential = await signInWithEmailAndPassword(auth, email, pass);
     const user = userCredential.user;
+
     const name = user.displayName || user.email?.split('@')[0] || 'User';
 
     return {
@@ -93,19 +97,23 @@ export const firebaseAuthService = {
         avatarUrl: user.photoURL || null
       };
 
-      // Non-blocking Firestore save
-      const userRef = doc(db, 'users', user.uid);
-      setDoc(userRef, {
-        uid: user.uid,
-        name: userProfile.name,
-        email: userProfile.email,
-        avatarUrl: userProfile.avatarUrl,
-        updatedAt: new Date().toISOString()
-      }, { merge: true }).catch(() => {});
+      // Safely write to Firestore in background if active
+      if (db) {
+        try {
+          const userRef = doc(db, 'users', user.uid);
+          setDoc(userRef, {
+            uid: user.uid,
+            name: userProfile.name,
+            email: userProfile.email,
+            avatarUrl: userProfile.avatarUrl,
+            updatedAt: new Date().toISOString()
+          }, { merge: true }).catch(() => {});
+        } catch {}
+      }
 
       return userProfile;
     } catch (err: any) {
-      console.warn('Google Popup login notice/fallback:', err);
+      console.warn('Google Popup login notice:', err);
 
       // If popup was blocked or failed on mobile browser, fallback to Redirect mode
       if (
@@ -113,9 +121,9 @@ export const firebaseAuthService = {
         err.code === 'auth/popup-closed-by-user' ||
         err.code === 'auth/cancelled-popup-request'
       ) {
-        console.log('Switching to Google Redirect mode for mobile/browser compatibility...');
+        console.log('Switching to Google Redirect mode for mobile browser compatibility...');
         await signInWithRedirect(auth, googleProvider);
-        return null; // Page will redirect to Google OAuth
+        return null;
       }
 
       throw err;
@@ -137,14 +145,18 @@ export const firebaseAuthService = {
           avatarUrl: user.photoURL || null
         };
 
-        const userRef = doc(db, 'users', user.uid);
-        setDoc(userRef, {
-          uid: user.uid,
-          name: userProfile.name,
-          email: userProfile.email,
-          avatarUrl: userProfile.avatarUrl,
-          updatedAt: new Date().toISOString()
-        }, { merge: true }).catch(() => {});
+        if (db) {
+          try {
+            const userRef = doc(db, 'users', user.uid);
+            setDoc(userRef, {
+              uid: user.uid,
+              name: userProfile.name,
+              email: userProfile.email,
+              avatarUrl: userProfile.avatarUrl,
+              updatedAt: new Date().toISOString()
+            }, { merge: true }).catch(() => {});
+          } catch {}
+        }
 
         return userProfile;
       }
@@ -169,7 +181,7 @@ export const firebaseAuthService = {
   },
 
   /**
-   * Subscribe to Firebase Auth state changes
+   * Subscribe to Firebase Auth state changes.
    */
   onAuthState(callback: (user: UserProfile | null) => void) {
     return onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {

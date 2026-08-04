@@ -118,14 +118,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setMode('login');
     } catch (err: any) {
       let msg = 'Registration failed. Please try again.';
-      if (err.code === 'auth/email-already-in-use') {
-        msg = 'An account with this email already exists. Please sign in.';
-      } else if (err.code === 'auth/invalid-email') {
+      if (err?.code === 'auth/email-already-in-use') {
+        msg = 'An account with this email address already exists. Please sign in.';
+      } else if (err?.code === 'auth/invalid-email') {
         msg = 'Invalid email address format.';
-      } else if (err.code === 'auth/weak-password') {
-        msg = 'Password should be at least 6 characters.';
-      } else if (err.message) {
-        msg = err.message;
+      } else if (err?.code === 'auth/weak-password') {
+        msg = 'Password must be at least 6 characters.';
       }
       setFieldError('email', msg);
     } finally {
@@ -145,12 +143,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       onClose();
     } catch (err: any) {
       let msg = 'Invalid email address or password.';
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+      if (err?.code === 'auth/user-not-found' || err?.code === 'auth/wrong-password' || err?.code === 'auth/invalid-credential') {
         msg = 'Invalid email or password. Please check your credentials.';
-      } else if (err.code === 'auth/too-many-requests') {
+      } else if (err?.code === 'auth/too-many-requests') {
         msg = 'Too many failed login attempts. Please try again later or reset password.';
-      } else if (err.message) {
-        msg = err.message;
       }
       setFieldError('email', msg);
     } finally {
@@ -168,10 +164,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setSuccessMsg(`✅ Password reset email sent to ${email.toLowerCase().trim()}! Check your inbox.`);
     } catch (err: any) {
       let msg = 'Failed to send password reset email.';
-      if (err.code === 'auth/user-not-found') {
+      if (err?.code === 'auth/user-not-found') {
         msg = 'No account found with this email address.';
-      } else if (err.message) {
-        msg = err.message;
       }
       setFieldError('email', msg);
     } finally {
@@ -223,10 +217,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       }
     } catch (err: any) {
       let msg = 'Google Sign-In failed.';
-      if (err.code === 'auth/popup-closed-by-user') {
+      if (err?.code === 'auth/popup-closed-by-user') {
         msg = 'Sign-in popup was closed before completing.';
-      } else if (err.message) {
-        msg = err.message;
+      } else if (err?.code === 'auth/popup-blocked') {
+        msg = 'Popup was blocked by your browser. Retrying in redirect mode...';
       }
       setFieldError('email', msg);
     } finally {

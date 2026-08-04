@@ -26,12 +26,20 @@ const firebaseConfig = {
   measurementId: "G-N74F5W138G"
 };
 
-// Initialize Firebase App
+// Initialize Firebase App & Auth
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
+// Safely initialize Firestore (optional - fallback if not enabled in console)
+let db: any = null;
+try {
+  db = getFirestore(app);
+} catch (err) {
+  console.warn('Firestore database notice:', err);
+}
+
+export { db };
 export type { FirebaseUser };
 export {
   createUserWithEmailAndPassword,
