@@ -26,17 +26,16 @@ export const firebaseAuthService = {
     const user = userCredential.user;
 
     // Set display name in Firebase Auth
-    await updateProfile(user, { displayName: fullName });
+    await updateProfile(user, { displayName: fullName }).catch(() => {});
 
-    // Store User document in Firestore users collection
+    // Non-blocking Firestore save (never hangs UI)
     const userRef = doc(db, 'users', user.uid);
-    const profileData = {
+    setDoc(userRef, {
       uid: user.uid,
       name: fullName,
       email: user.email,
       createdAt: new Date().toISOString()
-    };
-    await setDoc(userRef, profileData, { merge: true });
+    }, { merge: true }).catch(() => {});
 
     const createdProfile: UserProfile = {
       id: user.uid,
@@ -45,7 +44,7 @@ export const firebaseAuthService = {
       avatarUrl: user.photoURL || null
     };
 
-    // Immediatley sign out so registration does NOT auto-login
+    // Immediately sign out so registration does NOT auto-login
     await firebaseSignOut(auth);
 
     return createdProfile;
@@ -58,13 +57,16 @@ export const firebaseAuthService = {
     const userCredential = await signInWithEmailAndPassword(auth, email, pass);
     const user = userCredential.user;
 
-    // Fetch user document from Firestore if name isn't set in auth
     let name = user.displayName;
     if (!name) {
-      const userRef = doc(db, 'users', user.uid);
-      const userDoc = await getDoc(userRef);
-      if (userDoc.exists()) {
-        name = userDoc.data().name;
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          name = userDoc.data().name;
+        }
+      } catch {
+        name = user.email?.split('@')[0] || 'User';
       }
     }
 
@@ -77,29 +79,33 @@ export const firebaseAuthService = {
   },
 
   /**
-   * Login/Signup with Google OAuth via Firebase Popup
+   * Login/Signup with Google OAuth via Firebase Popup.
+   * Instant UI response (never hangs on Firestore network latency).
    */
   async loginWithGoogle(): Promise<UserProfile> {
     const result = await signInWithPopup(auth, googleProvider);
     const user = result.user;
 
-    // Store/Update User document in Firestore
-    const userRef = doc(db, 'users', user.uid);
-    const profileData = {
-      uid: user.uid,
-      name: user.displayName || user.email?.split('@')[0] || 'Google User',
-      email: user.email,
-      avatarUrl: user.photoURL,
-      updatedAt: new Date().toISOString()
-    };
-    await setDoc(userRef, profileData, { merge: true });
-
-    return {
+    const userProfile: UserProfile = {
       id: user.uid,
       name: user.displayName || user.email?.split('@')[0] || 'Google User',
       email: user.email || '',
       avatarUrl: user.photoURL || null
     };
+
+    // Non-blocking Firestore save (runs safely in background without blocking login completion)
+    const userRef = doc(db, 'users', user.uid);
+    setDoc(userRef, {
+      uid: user.uid,
+      name: userProfile.name,
+      email: userProfile.email,
+      avatarUrl: userProfile.avatarUrl,
+      updatedAt: new Date().toISOString()
+    }, { merge: true }).catch((err) => {
+      console.warn('Firestore user profile sync warning:', err);
+    });
+
+    return userProfile;
   },
 
   /**
