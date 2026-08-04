@@ -6,9 +6,12 @@ import { AtsAnalyzerModal } from './components/ats/AtsAnalyzerModal';
 import { CoverLetterModal } from './components/coverletter/CoverLetterModal';
 import { PortfolioModal } from './components/portfolio/PortfolioModal';
 import { ResumeImportModal } from './components/import/ResumeImportModal';
+import { ResumeMentorModal } from './components/mentor/ResumeMentorModal';
+import { VersionHistoryModal } from './components/history/VersionHistoryModal';
+import { JobTrackerModal } from './components/tracker/JobTrackerModal';
 import type { TemplateDefinition } from './lib/resumeTypes';
 import { ALL_TEMPLATES } from './lib/templateData';
-import { Plus, ShieldCheck, Briefcase, Globe, Menu, X } from 'lucide-react';
+import { Plus, ShieldCheck, Briefcase, Globe, Menu, X, Sparkles, History, Upload } from 'lucide-react';
 
 export const AppContent: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateDefinition | null>(null);
@@ -49,6 +52,9 @@ export const AppContent: React.FC = () => {
   const [isCoverLetterOpen, setIsCoverLetterOpen] = useState(false);
   const [isPortfolioOpen, setIsPortfolioOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isMentorOpen, setIsMentorOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isJobTrackerOpen, setIsJobTrackerOpen] = useState(false);
 
   const activeResumeData = {
     fullName: 'Alex Vance',
@@ -106,34 +112,50 @@ export const AppContent: React.FC = () => {
         <div className="hidden md:flex items-center gap-2">
           <button
             onClick={() => setSelectedTemplate(ALL_TEMPLATES[0])}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow hover:bg-emerald-700 transition-transform active:scale-95 min-h-[44px]"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow hover:bg-emerald-700 transition-transform active:scale-95 min-h-[40px]"
           >
             <Plus className="w-4 h-4" />
             <span>Create Resume</span>
           </button>
 
           <button
-            onClick={() => setIsAtsOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors min-h-[44px]"
+            onClick={() => setIsMentorOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-tr from-emerald-50 to-teal-50 border border-emerald-200 text-xs font-extrabold text-emerald-800 hover:bg-emerald-100 transition-colors min-h-[40px]"
           >
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>ATS & JD Matcher</span>
+            <Sparkles className="w-4 h-4 text-emerald-600" />
+            <span>AI Resume Mentor</span>
           </button>
 
           <button
-            onClick={() => setIsCoverLetterOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors min-h-[44px]"
+            onClick={() => setIsJobTrackerOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors min-h-[40px]"
           >
             <Briefcase className="w-4 h-4 text-teal-600" />
-            <span>AI Cover Letter</span>
+            <span>Job Tracker</span>
+          </button>
+
+          <button
+            onClick={() => setIsHistoryOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors min-h-[40px]"
+          >
+            <History className="w-4 h-4 text-slate-600" />
+            <span>Version History</span>
+          </button>
+
+          <button
+            onClick={() => setIsImportOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors min-h-[40px]"
+          >
+            <Upload className="w-4 h-4 text-emerald-600" />
+            <span>Import Resume</span>
           </button>
 
           <button
             onClick={() => setIsPortfolioOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors min-h-[44px]"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors min-h-[40px]"
           >
             <Globe className="w-4 h-4 text-emerald-600" />
-            <span>Web Portfolio Generator</span>
+            <span>Web Portfolio</span>
           </button>
         </div>
 
@@ -150,7 +172,7 @@ export const AppContent: React.FC = () => {
       {/* Mobile Drawer Menu Overlay */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 top-16 bg-slate-950/70 backdrop-blur-sm z-50 md:hidden flex flex-col justify-between p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl p-4 shadow-xl border border-slate-200 space-y-3">
+          <div className="bg-white rounded-2xl p-4 shadow-xl border border-slate-200 space-y-2.5 max-h-[85vh] overflow-y-auto">
             <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider mb-2">Navigation Menu</h3>
             
             <button
@@ -162,19 +184,43 @@ export const AppContent: React.FC = () => {
             </button>
 
             <button
+              onClick={() => { setIsMentorOpen(true); setIsMobileMenuOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 text-emerald-800 font-extrabold text-sm min-h-[44px]"
+            >
+              <Sparkles className="w-5 h-5 text-emerald-600" />
+              <span>AI Resume Mentor</span>
+            </button>
+
+            <button
+              onClick={() => { setIsJobTrackerOpen(true); setIsMobileMenuOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 text-slate-800 font-bold text-sm min-h-[44px]"
+            >
+              <Briefcase className="w-5 h-5 text-teal-600" />
+              <span>Job Application Tracker</span>
+            </button>
+
+            <button
+              onClick={() => { setIsHistoryOpen(true); setIsMobileMenuOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 text-slate-800 font-bold text-sm min-h-[44px]"
+            >
+              <History className="w-5 h-5 text-slate-600" />
+              <span>Version History</span>
+            </button>
+
+            <button
+              onClick={() => { setIsImportOpen(true); setIsMobileMenuOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 text-slate-800 font-bold text-sm min-h-[44px]"
+            >
+              <Upload className="w-5 h-5 text-emerald-600" />
+              <span>Import Resume (PDF/DOCX)</span>
+            </button>
+
+            <button
               onClick={() => { setIsAtsOpen(true); setIsMobileMenuOpen(false); }}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 text-slate-800 font-bold text-sm min-h-[44px]"
             >
               <ShieldCheck className="w-5 h-5 text-emerald-600" />
               <span>ATS & JD Matcher</span>
-            </button>
-
-            <button
-              onClick={() => { setIsCoverLetterOpen(true); setIsMobileMenuOpen(false); }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 text-slate-800 font-bold text-sm min-h-[44px]"
-            >
-              <Briefcase className="w-5 h-5 text-teal-600" />
-              <span>AI Cover Letter Generator</span>
             </button>
 
             <button
@@ -185,33 +231,29 @@ export const AppContent: React.FC = () => {
               <span>Web Portfolio Generator</span>
             </button>
           </div>
-
-          <div className="bg-slate-900 text-white rounded-2xl p-4 border border-slate-800 text-center space-y-1">
-            <div className="text-xs font-bold text-emerald-400">Developed by Ved Dhobi</div>
-            <div className="text-[11px] text-slate-400 font-mono">veddhobi252@gmail.com</div>
-          </div>
         </div>
       )}
 
-      {/* View Switcher: Gallery Page vs Full Editor */}
-      <div className="flex-1 overflow-hidden relative">
+      {/* Main Workspace Area */}
+      <main className="flex-1 overflow-hidden relative">
         {selectedTemplate ? (
           <ResumeEditor
             template={selectedTemplate}
             onBackToGallery={() => setSelectedTemplate(null)}
           />
         ) : (
-          <div className="h-full overflow-y-auto">
-            <TemplateGalleryPage onSelectTemplate={handleSelectTemplate} />
-          </div>
+          <TemplateGalleryPage onSelectTemplate={handleSelectTemplate} />
         )}
-      </div>
+      </main>
 
       {/* Modals Suite */}
       <AtsAnalyzerModal isOpen={isAtsOpen} onClose={() => setIsAtsOpen(false)} resumeData={activeResumeData} />
       <CoverLetterModal isOpen={isCoverLetterOpen} onClose={() => setIsCoverLetterOpen(false)} resumeData={activeResumeData} />
       <PortfolioModal isOpen={isPortfolioOpen} onClose={() => setIsPortfolioOpen(false)} resumeData={activeResumeData} />
       <ResumeImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} onImportComplete={handleImportComplete} />
+      <ResumeMentorModal isOpen={isMentorOpen} onClose={() => setIsMentorOpen(false)} resumeData={activeResumeData} />
+      <VersionHistoryModal isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} currentResumeData={activeResumeData} onRestoreVersion={handleImportComplete} />
+      <JobTrackerModal isOpen={isJobTrackerOpen} onClose={() => setIsJobTrackerOpen(false)} />
 
       {/* ── INTRO VIDEO SPLASH OVERLAY WITH TOP WATERMARK CROP & SKIP OPTION ── */}
       {showIntroVideo && (

@@ -150,9 +150,10 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
   const [visibleCount, setVisibleCount] = useState(16);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const toggleFavorite = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const toggleFavorite = (id: string, e?: React.SyntheticEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
     setFavorites(prev => {
       const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
       try {
@@ -524,13 +525,15 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                           <span>{t.atsScore}% ATS</span>
                         </span>
 
-                        {/* Favorite Button */}
+                        {/* Favorite Button (High Z-Index & 40px Touch Target) */}
                         <button
                           onClick={(e) => toggleFavorite(t.id, e)}
-                          className="pointer-events-auto w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow-md border border-slate-200/80 flex items-center justify-center transition-transform active:scale-90"
+                          onTouchEnd={(e) => toggleFavorite(t.id, e)}
+                          className="z-30 relative pointer-events-auto p-2 min-w-[40px] min-h-[40px] rounded-full bg-white/95 hover:bg-white text-slate-700 shadow-md border border-slate-200/90 flex items-center justify-center transition-transform active:scale-90 touch-manipulation cursor-pointer"
                           title={isFav ? 'Remove from favorites' : 'Save to favorites'}
+                          aria-label="Toggle Favorite"
                         >
-                          <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
+                          <Heart className={`w-4 h-4 sm:w-4.5 sm:h-4.5 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
                         </button>
                       </div>
 
@@ -576,11 +579,21 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                             <h3 className="font-black text-xs sm:text-sm text-slate-900 group-hover:text-emerald-600 truncate transition-colors">
                               {t.name}
                             </h3>
-                            <div
-                              className="w-3.5 h-3.5 rounded-full border border-slate-300 shadow-xs flex-shrink-0"
-                              style={{ backgroundColor: palette.primary }}
-                              title={`Color theme: ${palette.name}`}
-                            />
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              <button
+                                onClick={(e) => toggleFavorite(t.id, e)}
+                                onTouchEnd={(e) => toggleFavorite(t.id, e)}
+                                className="p-1 text-slate-400 hover:text-rose-500 transition-colors z-20 min-w-[32px] min-h-[32px] flex items-center justify-center cursor-pointer touch-manipulation"
+                                title={isFav ? 'Remove from favorites' : 'Save to favorites'}
+                              >
+                                <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
+                              </button>
+                              <div
+                                className="w-3.5 h-3.5 rounded-full border border-slate-300 shadow-xs flex-shrink-0"
+                                style={{ backgroundColor: palette.primary }}
+                                title={`Color theme: ${palette.name}`}
+                              />
+                            </div>
                           </div>
                           <p className="text-[10px] sm:text-xs text-slate-500 line-clamp-1 font-medium">{t.description}</p>
                         </div>
