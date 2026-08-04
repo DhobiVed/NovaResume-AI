@@ -6,7 +6,9 @@ import {
   signOut,
   sendPasswordResetEmail,
   updateProfile,
-  onAuthStateChanged
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
@@ -26,6 +28,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const googleProvider = new GoogleAuthProvider();
 
 export type { FirebaseUser };
 export {
@@ -35,6 +38,7 @@ export {
   sendPasswordResetEmail,
   updateProfile,
   onAuthStateChanged,
+  signInWithPopup,
   doc,
   setDoc,
   getDoc,

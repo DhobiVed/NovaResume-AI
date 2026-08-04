@@ -1,8 +1,10 @@
 import {
   auth,
   db,
+  googleProvider,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut as firebaseSignOut,
   sendPasswordResetEmail,
   updateProfile,
@@ -16,7 +18,8 @@ import type { UserProfile } from '../components/auth/AuthModal';
 
 export const firebaseAuthService = {
   /**
-   * Register new user in Firebase Auth & create user document in Firestore
+   * Register new user in Firebase Auth & create user document in Firestore.
+   * Immediately signs out so user is NOT auto-logged in upon registration.
    */
   async register(fullName: string, email: string, pass: string): Promise<UserProfile> {
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
@@ -35,12 +38,17 @@ export const firebaseAuthService = {
     };
     await setDoc(userRef, profileData, { merge: true });
 
-    return {
+    const createdProfile: UserProfile = {
       id: user.uid,
       name: fullName,
       email: user.email || email,
       avatarUrl: user.photoURL || null
     };
+
+    // Immediatley sign out so registration does NOT auto-login
+    await firebaseSignOut(auth);
+
+    return createdProfile;
   },
 
   /**
@@ -64,6 +72,32 @@ export const firebaseAuthService = {
       id: user.uid,
       name: name || user.email?.split('@')[0] || 'User',
       email: user.email || email,
+      avatarUrl: user.photoURL || null
+    };
+  },
+
+  /**
+   * Login/Signup with Google OAuth via Firebase Popup
+   */
+  async loginWithGoogle(): Promise<UserProfile> {
+    const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
+
+    // Store/Update User document in Firestore
+    const userRef = doc(db, 'users', user.uid);
+    const profileData = {
+      uid: user.uid,
+      name: user.displayName || user.email?.split('@')[0] || 'Google User',
+      email: user.email,
+      avatarUrl: user.photoURL,
+      updatedAt: new Date().toISOString()
+    };
+    await setDoc(userRef, profileData, { merge: true });
+
+    return {
+      id: user.uid,
+      name: user.displayName || user.email?.split('@')[0] || 'Google User',
+      email: user.email || '',
       avatarUrl: user.photoURL || null
     };
   },
