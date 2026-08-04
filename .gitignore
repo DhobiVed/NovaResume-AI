@@ -21,3 +21,6 @@ backend/*.db
 *.log
 .vscode/
 .idea/
+
+# Local Netlify folder
+.netlify
