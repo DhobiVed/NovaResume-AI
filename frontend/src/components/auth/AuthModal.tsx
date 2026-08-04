@@ -117,37 +117,66 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     return Object.keys(errs).length === 0;
   };
 
-  // Submit Handler
-  const handleSubmit = (e: React.FormEvent) => {
+  // Real Backend API Submit Handler
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsLoading(true);
     setSuccessMsg(null);
+    setErrors({});
 
-    setTimeout(() => {
-      setIsLoading(false);
-
+    try {
       if (mode === 'signup') {
-        // Sign Up Success Flow -> Switch to Login with Prefilled Email & Toast
+        const res = await fetch('http://127.0.0.1:8000/api/v1/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fullName, email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setErrors({ email: data.detail || 'Registration failed' });
+          triggerShake('email');
+          setIsLoading(false);
+          return;
+        }
+
+        if (data.access_token) {
+          localStorage.setItem('nova_auth_token', data.access_token);
+        }
         setSuccessMsg('Account created successfully! Please sign in with your credentials.');
         setMode('login');
         setPassword('');
         setConfirmPassword('');
       } else if (mode === 'login') {
-        // Login Success Flow -> Close modal & notify parent user state
-        const loggedInUser: UserProfile = {
-          name: fullName || email.split('@')[0] || 'Ved Dhobi',
-          email: email,
-          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
-        };
-        onLoginSuccess(loggedInUser);
+        const res = await fetch('http://127.0.0.1:8000/api/v1/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setErrors({ email: data.detail || 'Invalid email or password' });
+          triggerShake('email');
+          setIsLoading(false);
+          return;
+        }
+
+        if (data.access_token) {
+          localStorage.setItem('nova_auth_token', data.access_token);
+        }
+        onLoginSuccess(data.user);
         onClose();
       } else if (mode === 'forgot') {
         setSuccessMsg('Password reset link sent to your email!');
         setMode('login');
       }
-    }, 900);
+    } catch (err) {
+      console.error(err);
+      setErrors({ email: 'Server connection error. Please try again.' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Google OAuth Simulation

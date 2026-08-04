@@ -17,7 +17,8 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.database.session import engine, Base
-from app.api.v1.endpoints import docgen, resumes, models
+from app.models.user import User
+from app.api.v1.endpoints import docgen, resumes, models, auth
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -39,6 +40,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Authentication"])
 app.include_router(resumes.router, prefix=f"{settings.API_V1_STR}/resumes", tags=["Resumes"])
 app.include_router(docgen.router, prefix=f"{settings.API_V1_STR}/docgen", tags=["Document Generation"])
 app.include_router(models.router, prefix=f"{settings.API_V1_STR}/models", tags=["Models"])

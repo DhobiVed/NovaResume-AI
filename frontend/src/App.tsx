@@ -60,30 +60,41 @@ export const AppContent: React.FC = () => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    try {
-      const saved = localStorage.getItem('nova_user_session');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return {
-      name: 'Ved Dhobi',
-      email: 'veddhobi252@gmail.com',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
-    };
-  });
+  const [user, setUser] = useState<UserProfile | null>(null);
+
+  // Validate Persistent JWT Token Session on Load
+  useEffect(() => {
+    const token = localStorage.getItem('nova_auth_token');
+    if (!token) {
+      setUser(null);
+      return;
+    }
+
+    fetch('http://127.0.0.1:8000/api/v1/auth/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => {
+        if (res.ok) return res.json();
+        throw new Error('Token expired or invalid');
+      })
+      .then(userData => {
+        setUser(userData);
+      })
+      .catch(() => {
+        localStorage.removeItem('nova_auth_token');
+        setUser(null);
+      });
+  }, []);
 
   const handleLoginSuccess = (loggedInUser: UserProfile) => {
     setUser(loggedInUser);
-    try {
-      localStorage.setItem('nova_user_session', JSON.stringify(loggedInUser));
-    } catch {}
   };
 
   const handleLogout = () => {
     setUser(null);
-    try {
-      localStorage.removeItem('nova_user_session');
-    } catch {}
+    localStorage.removeItem('nova_auth_token');
+    setSelectedTemplate(null);
+    fetch('http://127.0.0.1:8000/api/v1/auth/logout', { method: 'POST' }).catch(() => {});
   };
 
   const activeResumeData = {
@@ -109,8 +120,17 @@ export const AppContent: React.FC = () => {
     ]
   };
 
+  const requireAuth = (action: () => void) => {
+    if (!user) {
+      setAuthMode('login');
+      setIsAuthOpen(true);
+    } else {
+      action();
+    }
+  };
+
   const handleSelectTemplate = (template: TemplateDefinition) => {
-    setSelectedTemplate(template);
+    requireAuth(() => setSelectedTemplate(template));
   };
 
   const handleImportComplete = (_parsedData: any) => {
@@ -141,7 +161,7 @@ export const AppContent: React.FC = () => {
         {/* Desktop Global Action Shortcuts */}
         <div className="hidden md:flex items-center gap-2">
           <button
-            onClick={() => setSelectedTemplate(ALL_TEMPLATES[0])}
+            onClick={() => requireAuth(() => setSelectedTemplate(ALL_TEMPLATES[0]))}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow hover:bg-emerald-700 transition-transform active:scale-95 min-h-[40px]"
           >
             <Plus className="w-4 h-4" />
@@ -149,7 +169,7 @@ export const AppContent: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setIsMentorOpen(true)}
+            onClick={() => requireAuth(() => setIsMentorOpen(true))}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-tr from-emerald-50 to-teal-50 border border-emerald-200 text-xs font-extrabold text-emerald-800 hover:bg-emerald-100 transition-colors min-h-[40px]"
           >
             <Sparkles className="w-4 h-4 text-emerald-600" />
@@ -157,7 +177,7 @@ export const AppContent: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setIsJobTrackerOpen(true)}
+            onClick={() => requireAuth(() => setIsJobTrackerOpen(true))}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors min-h-[40px]"
           >
             <Briefcase className="w-4 h-4 text-teal-600" />
@@ -165,7 +185,7 @@ export const AppContent: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setIsHistoryOpen(true)}
+            onClick={() => requireAuth(() => setIsHistoryOpen(true))}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors min-h-[40px]"
           >
             <History className="w-4 h-4 text-slate-600" />
@@ -173,7 +193,7 @@ export const AppContent: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setIsImportOpen(true)}
+            onClick={() => requireAuth(() => setIsImportOpen(true))}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors min-h-[40px]"
           >
             <Upload className="w-4 h-4 text-emerald-600" />
@@ -181,7 +201,7 @@ export const AppContent: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setIsPortfolioOpen(true)}
+            onClick={() => requireAuth(() => setIsPortfolioOpen(true))}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors min-h-[40px]"
           >
             <Globe className="w-4 h-4 text-emerald-600" />
@@ -270,7 +290,7 @@ export const AppContent: React.FC = () => {
             <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider mb-2">Navigation Menu</h3>
             
             <button
-              onClick={() => { setSelectedTemplate(ALL_TEMPLATES[0]); setIsMobileMenuOpen(false); }}
+              onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setSelectedTemplate(ALL_TEMPLATES[0])); }}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm min-h-[44px]"
             >
               <Plus className="w-5 h-5" />
@@ -278,7 +298,7 @@ export const AppContent: React.FC = () => {
             </button>
 
             <button
-              onClick={() => { setIsMentorOpen(true); setIsMobileMenuOpen(false); }}
+              onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setIsMentorOpen(true)); }}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 text-emerald-800 font-extrabold text-sm min-h-[44px]"
             >
               <Sparkles className="w-5 h-5 text-emerald-600" />
@@ -286,7 +306,7 @@ export const AppContent: React.FC = () => {
             </button>
 
             <button
-              onClick={() => { setIsJobTrackerOpen(true); setIsMobileMenuOpen(false); }}
+              onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setIsJobTrackerOpen(true)); }}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 text-slate-800 font-bold text-sm min-h-[44px]"
             >
               <Briefcase className="w-5 h-5 text-teal-600" />
@@ -294,7 +314,7 @@ export const AppContent: React.FC = () => {
             </button>
 
             <button
-              onClick={() => { setIsHistoryOpen(true); setIsMobileMenuOpen(false); }}
+              onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setIsHistoryOpen(true)); }}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 text-slate-800 font-bold text-sm min-h-[44px]"
             >
               <History className="w-5 h-5 text-slate-600" />
@@ -302,7 +322,7 @@ export const AppContent: React.FC = () => {
             </button>
 
             <button
-              onClick={() => { setIsImportOpen(true); setIsMobileMenuOpen(false); }}
+              onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setIsImportOpen(true)); }}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 text-slate-800 font-bold text-sm min-h-[44px]"
             >
               <Upload className="w-5 h-5 text-emerald-600" />
@@ -310,7 +330,7 @@ export const AppContent: React.FC = () => {
             </button>
 
             <button
-              onClick={() => { setIsAtsOpen(true); setIsMobileMenuOpen(false); }}
+              onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setIsAtsOpen(true)); }}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 text-slate-800 font-bold text-sm min-h-[44px]"
             >
               <ShieldCheck className="w-5 h-5 text-emerald-600" />
@@ -318,7 +338,7 @@ export const AppContent: React.FC = () => {
             </button>
 
             <button
-              onClick={() => { setIsPortfolioOpen(true); setIsMobileMenuOpen(false); }}
+              onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setIsPortfolioOpen(true)); }}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 text-slate-800 font-bold text-sm min-h-[44px]"
             >
               <Globe className="w-5 h-5 text-emerald-600" />
