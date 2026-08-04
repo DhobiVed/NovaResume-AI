@@ -115,13 +115,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const data = await res.json();
       if (!res.ok) return setFieldError('email', data.detail || 'Registration failed');
 
-      // Save tokens from registration response
-      if (data.access_token) localStorage.setItem('nova_auth_token', data.access_token);
-      if (data.refresh_token) localStorage.setItem('nova_refresh_token', data.refresh_token);
-
-      // Immediately log user in after registration
-      onLoginSuccess(data.user);
-      onClose();
+      // DO NOT auto-login — user must sign in manually
+      // Clear passwords and switch to login form
+      const registeredEmail = email.toLowerCase().trim();
+      setPassword('');
+      setConfirmPassword('');
+      setFullName('');
+      setSuccessMsg(`✅ Account created! Sign in with ${registeredEmail} to continue.`);
+      setEmail(registeredEmail); // Pre-fill email in login form
+      setMode('login');
     } catch {
       setFieldError('email', 'Cannot connect to server. Is the backend running?');
     } finally {
