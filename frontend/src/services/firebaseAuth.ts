@@ -17,13 +17,13 @@ import {
 import type { FirebaseUser } from '../lib/firebase';
 import type { UserProfile } from '../components/auth/AuthModal';
 
-// Flag to prevent onAuthStateChanged from auto-logging in user during registration
+// Guard flag to prevent onAuthStateChanged from logging in user during registration
 let isRegistering = false;
 
 export const firebaseAuthService = {
   /**
    * Register new user in Firebase Auth.
-   * Instant response. Signs out immediately so user is NOT auto-logged in.
+   * Explicitly signs out and blocks onAuthStateChanged auto-login.
    */
   async register(fullName: string, email: string, pass: string): Promise<UserProfile> {
     isRegistering = true;
@@ -31,10 +31,10 @@ export const firebaseAuthService = {
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
       const user = userCredential.user;
 
-      // Non-blocking update profile
-      updateProfile(user, { displayName: fullName }).catch(() => {});
+      // Update display name in Firebase Auth
+      await updateProfile(user, { displayName: fullName }).catch(() => {});
 
-      // Safely store user profile in Firestore if db is active
+      // Safely store user document in Firestore if active
       if (db) {
         try {
           const userRef = doc(db, 'users', user.uid);
@@ -54,14 +54,15 @@ export const firebaseAuthService = {
         avatarUrl: user.photoURL || null
       };
 
-      // Immediately sign out so registration NEVER auto-logins
-      await firebaseSignOut(auth).catch(() => {});
+      // Explicitly sign out so user MUST log in manually
+      await firebaseSignOut(auth);
 
       return createdProfile;
     } finally {
+      // Suppress auth listener for 1s to ensure registration NEVER triggers auto-login
       setTimeout(() => {
         isRegistering = false;
-      }, 500);
+      }, 1000);
     }
   },
 
@@ -71,7 +72,6 @@ export const firebaseAuthService = {
   async login(email: string, pass: string): Promise<UserProfile> {
     const userCredential = await signInWithEmailAndPassword(auth, email, pass);
     const user = userCredential.user;
-
     const name = user.displayName || user.email?.split('@')[0] || 'User';
 
     return {
