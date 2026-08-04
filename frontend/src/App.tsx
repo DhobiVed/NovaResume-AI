@@ -62,28 +62,67 @@ export const AppContent: React.FC = () => {
 
   const [user, setUser] = useState<UserProfile | null>(null);
 
-  // Validate Persistent JWT Token Session on Load
+  // Validate Persistent JWT Access & Refresh Tokens on Load
   useEffect(() => {
     const token = localStorage.getItem('nova_auth_token');
-    if (!token) {
+    const refreshToken = localStorage.getItem('nova_refresh_token');
+    
+    if (!token && !refreshToken) {
       setUser(null);
       return;
     }
 
-    fetch('http://127.0.0.1:8000/api/v1/auth/me', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => {
-        if (res.ok) return res.json();
-        throw new Error('Token expired or invalid');
-      })
-      .then(userData => {
-        setUser(userData);
-      })
-      .catch(() => {
+    const verifyOrRefresh = async () => {
+      try {
+        if (token) {
+          const res = await fetch('http://127.0.0.1:8000/api/v1/auth/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const userData = await res.json();
+            setUser(userData);
+            return;
+          }
+        }
+
+        // Attempt Refresh Token Swap if access token is expired
+        if (refreshToken) {
+          const refRes = await fetch('http://127.0.0.1:8000/api/v1/auth/refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: refreshToken })
+          });
+
+          if (refRes.ok) {
+            const refData = await refRes.json();
+            localStorage.setItem('nova_auth_token', refData.access_token);
+            localStorage.setItem('nova_refresh_token', refData.refresh_token);
+
+            // Re-fetch user profile
+            const meRes = await fetch('http://127.0.0.1:8000/api/v1/auth/me', {
+              headers: { Authorization: `Bearer ${refData.access_token}` }
+            });
+            if (meRes.ok) {
+              const meData = await meRes.json();
+              setUser(meData);
+              return;
+            }
+          }
+        }
+
+        // Expired or invalid -> purge session
         localStorage.removeItem('nova_auth_token');
+        localStorage.removeItem('nova_refresh_token');
         setUser(null);
-      });
+      } catch (err) {
+        console.warn('Auth verification offline:', err);
+        localStorage.removeItem('nova_auth_token');
+        localStorage.removeItem('nova_refresh_token');
+        setUser(null);
+      }
+    };
+
+    verifyOrRefresh();
   }, []);
 
   const handleLoginSuccess = (loggedInUser: UserProfile) => {
@@ -91,10 +130,17 @@ export const AppContent: React.FC = () => {
   };
 
   const handleLogout = () => {
+    const token = localStorage.getItem('nova_auth_token');
     setUser(null);
     localStorage.removeItem('nova_auth_token');
+    localStorage.removeItem('nova_refresh_token');
     setSelectedTemplate(null);
-    fetch('http://127.0.0.1:8000/api/v1/auth/logout', { method: 'POST' }).catch(() => {});
+    if (token) {
+      fetch('http://127.0.0.1:8000/api/v1/auth/logout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      }).catch(() => {});
+    }
   };
 
   const activeResumeData = {

@@ -165,6 +165,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         if (data.access_token) {
           localStorage.setItem('nova_auth_token', data.access_token);
         }
+        if (data.refresh_token) {
+          localStorage.setItem('nova_refresh_token', data.refresh_token);
+        }
         onLoginSuccess(data.user);
         onClose();
       } else if (mode === 'forgot') {

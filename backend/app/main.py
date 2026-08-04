@@ -17,7 +17,7 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.database.session import engine, Base
-from app.models.user import User
+import app.models.schema  # Register all relational database models
 from app.api.v1.endpoints import docgen, resumes, models, auth
 
 @asynccontextmanager
