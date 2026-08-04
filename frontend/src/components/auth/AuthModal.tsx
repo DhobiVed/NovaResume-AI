@@ -254,6 +254,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <p className="text-xs font-semibold text-slate-500">{subtitles[mode]}</p>
         </div>
 
+        {/* In-App Browser Warning (WhatsApp / Instagram / Telegram) */}
+        {typeof navigator !== 'undefined' && /FBAN|FBAV|Instagram|WhatsApp|Telegram|Messenger/i.test(navigator.userAgent) && (
+          <div className="p-3 mb-4 bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl text-[11px] font-bold leading-relaxed flex items-start gap-2">
+            <span className="text-base leading-none">⚠️</span>
+            <div>
+              <strong>WhatsApp / Instagram Browser Detected:</strong> Google blocks sign-in inside chat apps. Please tap top 3 dots <strong>(⋮)</strong> &amp; select <strong>"Open in Chrome / Safari"</strong> to log in with Google!
+            </div>
+          </div>
+        )}
+
         {/* Success Banner */}
         {successMsg && (
           <div className="p-3 mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold flex items-center gap-2 animate-fadeIn">
