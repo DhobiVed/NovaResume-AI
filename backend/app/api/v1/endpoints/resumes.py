@@ -189,12 +189,19 @@ async def parse_resume_file(file: UploadFile = File(...)):
     elif filename.endswith(".docx") or filename.endswith(".doc"):
         try:
             import io
-            import docx
-            doc = docx.Document(io.BytesIO(content))
-            extracted_text = "\n".join([p.text for p in doc.paragraphs])
+            import zipfile
+            import xml.etree.ElementTree as ET
+            with zipfile.ZipFile(io.BytesIO(content)) as z:
+                xml_content = z.read('word/document.xml')
+                tree = ET.fromstring(xml_content)
+                extracted_text = " ".join([node.text for node in tree.iter() if node.text])
         except Exception:
-            extracted_text = content.decode("latin-1", errors="ignore")
+            text_raw = content.decode("utf-8", errors="ignore")
+            cleaned = re.sub(r'PK[\s\S]*?\[Content_Types\]\.xml', '', text_raw)
+            cleaned = re.sub(r'<[^>]*>', ' ', cleaned)
+            extracted_text = re.sub(r'[^\x20-\x7E\n\r\t]', ' ', cleaned)
     else:
-        extracted_text = content.decode("utf-8", errors="ignore")
+        text_raw = content.decode("utf-8", errors="ignore")
+        extracted_text = re.sub(r'[^\x20-\x7E\n\r\t]', ' ', text_raw)
 
     return parse_resume_import(ImportParseRequest(raw_text=extracted_text))
