@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   X, Eye, EyeOff, CheckCircle2,
-  AlertCircle, ArrowLeft, Sparkles, ShieldCheck, Briefcase, Globe, Calendar, Zap
+  AlertCircle, ArrowLeft, Sparkles, ShieldCheck, Briefcase, Globe, FileText, Zap
 } from 'lucide-react';
 import { firebaseAuthService } from '../../services/firebaseAuth';
 
@@ -60,7 +60,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return () => clearTimeout(timer);
     } else {
       setIsVisible(false);
-      const timer = setTimeout(() => setIsRendered(false), 350);
+      const timer = setTimeout(() => setIsRendered(false), 300);
       return () => clearTimeout(timer);
     }
   }, [isOpen, initialMode]);
@@ -70,7 +70,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setIsVisible(false);
     setTimeout(() => {
       onClose();
-    }, 320);
+    }, 280);
   };
 
   // ESC key listener
@@ -90,7 +90,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setTimeout(() => {
       setMode(newMode);
       setIsSwitchingMode(false);
-    }, 200);
+    }, 180);
   };
 
   if (!isRendered) return null;
@@ -214,48 +214,44 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] overflow-y-auto flex items-center justify-center p-3 sm:p-6 transform-gpu">
+    <div className="fixed inset-0 z-[99999] overflow-y-auto flex items-center justify-center p-3 sm:p-5 transform-gpu">
       
-      {/* 1. Full-Screen Translucent Glassmorphic Overlay */}
+      {/* 1. Crisp Semi-Transparent Full-Screen Backdrop (No Blur Artifacts) */}
       <div
-        className={`fixed inset-0 bg-slate-950/75 backdrop-blur-2xl backdrop-saturate-150 transition-opacity duration-400 ease-out ${
+        className={`fixed inset-0 bg-slate-950/70 transition-opacity duration-300 ease-out ${
           isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={handleClose}
       />
 
-      {/* 2. Split-Screen Floating Auth Modal Card (Matching demoo.mp4) */}
+      {/* 2. Crisp Split-Screen Floating Auth Modal Card (NovaResume AI Custom Tailored) */}
       <div
-        className={`bg-white rounded-[32px] border border-slate-200/90 shadow-[0_25px_80px_-15px_rgba(0,0,0,0.4),0_0_50px_rgba(9,95,108,0.2)] w-full max-w-5xl relative flex flex-col md:flex-row overflow-hidden transform-gpu transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-10 max-h-[95vh] ${
-          isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8 pointer-events-none'
+        className={`bg-white rounded-[28px] border border-slate-200/90 shadow-2xl w-full max-w-4xl relative flex flex-col md:flex-row overflow-hidden transform-gpu transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] z-10 max-h-[92vh] ${
+          isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-6 pointer-events-none'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
           onClick={handleClose}
-          className="absolute right-5 top-5 p-2 bg-slate-100/90 hover:bg-slate-200 rounded-full text-slate-500 hover:text-slate-900 transition-all duration-200 active:scale-90 z-30 shadow-xs"
+          className="absolute right-4 top-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 hover:text-slate-900 transition-all duration-200 active:scale-90 z-30 shadow-xs"
           aria-label="Close modal"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* ── LEFT PANEL: RICH TEAL SHOWCASE WITH ANIMATED FLOATING BADGES ── */}
-        <div className="hidden md:flex w-1/2 bg-[#095f6c] bg-gradient-to-br from-[#085460] via-[#0b6c7a] to-[#063e47] p-8 lg:p-10 flex-col justify-between text-white relative overflow-hidden select-none flex-shrink-0">
+        <div className="hidden md:flex w-1/2 bg-[#085a67] bg-gradient-to-br from-[#074c57] via-[#0a6675] to-[#053740] p-7 lg:p-9 flex-col justify-between text-white relative overflow-hidden select-none flex-shrink-0">
           
-          {/* Subtle Background Glow Circles */}
-          <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-teal-400/10 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
-
           {/* Morphing Left Panel Header Text */}
           <div className={`transition-all duration-300 transform-gpu z-10 ${isSwitchingMode ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
-            <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center mb-4 border border-white/20 shadow-md">
+            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-4 border border-white/20 shadow-md">
               <Sparkles className="w-5 h-5 text-teal-200" />
             </div>
             
             {mode === 'signup' ? (
               <>
-                <h2 className="text-2xl lg:text-3xl font-black text-white leading-snug tracking-tight mb-3">
+                <h2 className="text-2xl lg:text-3xl font-black text-white leading-snug tracking-tight mb-2">
                   Unlock The Full Power<br />of NovaResume AI
                 </h2>
                 <p className="text-xs lg:text-sm text-teal-100/80 leading-relaxed max-w-sm">
@@ -264,7 +260,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </>
             ) : (
               <>
-                <h2 className="text-2xl lg:text-3xl font-black text-white leading-snug tracking-tight mb-3">
+                <h2 className="text-2xl lg:text-3xl font-black text-white leading-snug tracking-tight mb-2">
                   Start Creating Impact<br />Right Away
                 </h2>
                 <p className="text-xs lg:text-sm text-teal-100/80 leading-relaxed max-w-sm">
@@ -274,17 +270,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             )}
           </div>
 
-          {/* Center Showcase Card with Animated Floating Integration Badges */}
-          <div className="relative my-8 py-6 flex items-center justify-center z-10">
+          {/* Center Showcase Card with Animated Floating NovaResume AI Badges */}
+          <div className="relative my-6 py-4 flex items-center justify-center z-10">
             
             {/* Main Central Metrics Preview Card */}
-            <div className="w-full max-w-xs bg-white/95 backdrop-blur-2xl rounded-2xl p-4 shadow-2xl border border-white/60 text-slate-900 transform transition-all duration-300 hover:scale-[1.02]">
+            <div className="w-full max-w-xs bg-white rounded-2xl p-4 shadow-xl border border-slate-100 text-slate-900 transform transition-all duration-300 hover:scale-[1.02]">
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-lg bg-teal-600 flex items-center justify-center text-white text-[10px] font-black">
                     N
                   </div>
-                  <span className="text-xs font-black text-slate-900">Campaign Performance</span>
+                  <span className="text-xs font-black text-slate-900">NovaResume AI Engine</span>
                 </div>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[9px]">
                   ATS 98%
@@ -294,12 +290,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-2 mb-3">
                 <div className="p-2 bg-slate-50 rounded-xl border border-slate-100">
-                  <span className="text-[9px] text-slate-400 font-bold block">Open Rate</span>
-                  <span className="text-sm font-black text-slate-900">89%</span>
+                  <span className="text-[9px] text-slate-400 font-bold block">ATS Score</span>
+                  <span className="text-sm font-black text-slate-900">98%</span>
                 </div>
                 <div className="p-2 bg-slate-50 rounded-xl border border-slate-100">
-                  <span className="text-[9px] text-slate-400 font-bold block">Click Through</span>
-                  <span className="text-sm font-black text-emerald-600">68%</span>
+                  <span className="text-[9px] text-slate-400 font-bold block">JD Match Rate</span>
+                  <span className="text-sm font-black text-emerald-600">92%</span>
                 </div>
               </div>
 
@@ -315,46 +311,46 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
             </div>
 
-            {/* Floating Pill Badges around Central Card */}
+            {/* Floating NovaResume Feature Badges */}
             <div className="absolute -top-1 -left-2 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-1.5 animate-float-badge-1">
-              <Calendar className="w-3.5 h-3.5 text-rose-500" />
-              <span>Calendar</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>AI Mentor</span>
             </div>
 
             <div className="absolute -top-3 -right-2 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-1.5 animate-float-badge-2">
-              <Zap className="w-3.5 h-3.5 text-amber-500" />
-              <span>Slack</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>ATS 100%</span>
             </div>
 
             <div className="absolute top-1/2 -left-4 -translate-y-1/2 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-1.5 animate-float-badge-2">
-              <Briefcase className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Shopify</span>
+              <FileText className="w-3.5 h-3.5 text-teal-600" />
+              <span>PDF Export</span>
             </div>
 
             <div className="absolute top-1/2 -right-4 -translate-y-1/2 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-1.5 animate-float-badge-1">
-              <Globe className="w-3.5 h-3.5 text-blue-500" />
-              <span>Google Ads</span>
+              <Briefcase className="w-3.5 h-3.5 text-blue-500" />
+              <span>Job Tracker</span>
             </div>
 
             <div className="absolute -bottom-2 -left-2 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-1.5 animate-float-badge-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
-              <span>Zendesk</span>
+              <Globe className="w-3.5 h-3.5 text-purple-500" />
+              <span>Portfolios</span>
             </div>
 
             <div className="absolute -bottom-2 -right-2 bg-teal-500 text-white text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 animate-float-badge-2">
-              <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-              <span>Retain Feed</span>
+              <Zap className="w-3.5 h-3.5 text-yellow-300" />
+              <span>Multi-Template</span>
             </div>
           </div>
 
           {/* Left Panel Footer Copyright */}
           <div className="text-[10px] text-teal-200/60 font-semibold tracking-wider uppercase z-10">
-            © Vertex / NovaResume 2026. All Rights Reserved
+            © NovaResume AI 2026. All Rights Reserved
           </div>
         </div>
 
-        {/* ── RIGHT PANEL: CLEAN GLASSMORPHIC AUTH FORM ── */}
-        <div className="w-full md:w-1/2 p-6 sm:p-10 flex flex-col justify-between bg-white bg-dot-pattern relative overflow-y-auto">
+        {/* ── RIGHT PANEL: CLEAN AUTH FORM ── */}
+        <div className="w-full md:w-1/2 p-6 sm:p-9 flex flex-col justify-between bg-white bg-dot-pattern relative overflow-y-auto">
           
           {/* Morphing Form Container */}
           <div className={`transition-all duration-300 transform-gpu ${isSwitchingMode ? 'opacity-0 scale-98' : 'opacity-100 scale-100'}`}>
@@ -365,11 +361,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                {mode === 'signup' ? 'Create Vertex Account' : mode === 'login' ? 'Welcome Back' : 'Reset Password'}
+                {mode === 'signup' ? 'Create NovaResume Account' : mode === 'login' ? 'Welcome Back' : 'Reset Password'}
               </h2>
               <p className="text-xs font-semibold text-slate-500 max-w-xs mx-auto">
                 {mode === 'signup'
-                  ? 'Drive growth with intelligent automation and effortless teamwork'
+                  ? 'Build ATS-proof resumes with AI — free forever'
                   : mode === 'login'
                   ? 'Sign in to access your resumes, portfolios & AI mentor'
                   : 'Enter your registered email address to receive reset link'}
@@ -554,7 +550,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </>
               )}
 
-              {/* Submit Button (Matching demoo.mp4 dark button style) */}
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isLoading}
@@ -568,8 +564,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </button>
             </form>
 
-            {/* Footer Mode Morph Switch (Matching demoo.mp4) */}
-            <div className="pt-6 mt-6 border-t border-slate-100 text-center text-xs font-semibold text-slate-500">
+            {/* Footer Mode Morph Switch */}
+            <div className="pt-5 mt-5 border-t border-slate-100 text-center text-xs font-semibold text-slate-500">
               {(mode === 'forgot' || mode === 'reset') ? (
                 <button
                   onClick={() => handleSwitchMode('login')}
