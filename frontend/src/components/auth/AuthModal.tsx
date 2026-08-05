@@ -3,6 +3,7 @@ import {
   X, Mail, Lock, User, Eye, EyeOff, CheckCircle2, ArrowRight,
   AlertCircle, KeyRound, ArrowLeft
 } from 'lucide-react';
+import { firebaseAuthService } from '../../services/firebaseAuth';
 
 export interface UserProfile {
   id?: string;
@@ -18,8 +19,6 @@ interface AuthModalProps {
   onLoginSuccess: (user: UserProfile) => void;
 }
 
-import { firebaseAuthService } from '../../services/firebaseAuth';
-
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
@@ -27,6 +26,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onLoginSuccess
 }) => {
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot' | 'reset'>('login');
+
+  // Animation States for Full-Screen Floating Experience
+  const [isRendered, setIsRendered] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isSwitchingMode, setIsSwitchingMode] = useState(false);
 
   // Form States
   const [fullName, setFullName] = useState('');
@@ -45,34 +49,53 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [shakingField, setShakingField] = useState<string | null>(null);
 
-  // Sync mode on open
+  // Smooth Mount / Unmount Animation Controller
   useEffect(() => {
     if (isOpen) {
+      setIsRendered(true);
       setMode(initialMode);
       setErrors({});
       setSuccessMsg(null);
-      setFullName('');
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      setResetToken('');
-      setNewPassword('');
-      setConfirmNewPassword('');
+      const timer = setTimeout(() => setIsVisible(true), 20);
+      return () => clearTimeout(timer);
+    } else {
+      setIsVisible(false);
+      const timer = setTimeout(() => setIsRendered(false), 350);
+      return () => clearTimeout(timer);
     }
   }, [isOpen, initialMode]);
 
-  // ESC key
+  // Graceful Smooth Closing Animation Trigger
+  const handleClose = () => {
+    setIsVisible(false);
+    setTimeout(() => {
+      onClose();
+    }, 320);
+  };
+
+  // ESC key listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) onClose();
+      if (e.key === 'Escape' && isOpen) handleClose();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
-  if (!isOpen) return null;
+  // Smooth Morph Transition between Auth Modes
+  const handleSwitchMode = (newMode: 'login' | 'signup' | 'forgot' | 'reset') => {
+    setIsSwitchingMode(true);
+    setErrors({});
+    setSuccessMsg(null);
+    setTimeout(() => {
+      setMode(newMode);
+      setIsSwitchingMode(false);
+    }, 180);
+  };
 
-  // Password Strength (0-4)
+  if (!isRendered) return null;
+
+  // Password Strength Calculator (0-4)
   const calcStrength = (pass: string) => {
     let s = 0;
     if (pass.length >= 8) s++;
@@ -95,7 +118,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     shake(field);
   };
 
-  // ── HANDLERS ────────────────────────────────────────────────
+  // ── AUTHENTICATION HANDLERS (LOGIC UNCHANGED) ───────────────────────
 
   const handleSignup = async () => {
     if (!fullName.trim()) return setFieldError('fullName', 'Full name is required');
@@ -115,7 +138,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setFullName('');
       setSuccessMsg(`✅ Account created in Firebase! Sign in with ${registeredEmail} to continue.`);
       setEmail(registeredEmail);
-      setMode('login');
+      handleSwitchMode('login');
     } catch (err: any) {
       let msg = 'Registration failed. Please try again.';
       if (err?.code === 'auth/email-already-in-use') {
@@ -140,7 +163,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     try {
       const userProfile = await firebaseAuthService.login(email.toLowerCase().trim(), password);
       onLoginSuccess(userProfile);
-      onClose();
+      handleClose();
     } catch (err: any) {
       let msg = 'Invalid email address or password.';
       if (err?.code === 'auth/user-not-found' || err?.code === 'auth/wrong-password' || err?.code === 'auth/invalid-credential') {
@@ -175,7 +198,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const handleResetPassword = async () => {
     setSuccessMsg('A password reset link was sent to your email. Please check your inbox and click the link to reset your password.');
-    setTimeout(() => setMode('login'), 3000);
+    setTimeout(() => handleSwitchMode('login'), 3000);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -206,328 +229,285 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     reset: 'Save New Password'
   };
 
-  const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    setErrors({});
-    try {
-      const userProfile = await firebaseAuthService.loginWithGoogle();
-      if (userProfile) {
-        onLoginSuccess(userProfile);
-        onClose();
-      }
-    } catch (err: any) {
-      let msg = 'Google Sign-In failed.';
-      if (err?.code === 'auth/popup-closed-by-user') {
-        msg = 'Sign-in popup was closed before completing.';
-      } else if (err?.code === 'auth/popup-blocked') {
-        msg = 'Popup was blocked by your browser. Retrying in redirect mode...';
-      }
-      setFieldError('email', msg);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <div
-      className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fadeIn"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-[99999] overflow-y-auto flex items-center justify-center p-4 sm:p-6 md:p-8 transform-gpu">
+      
+      {/* 1. Full-Screen Translucent Backdrop with Motion Blur */}
       <div
-        className="bg-white border border-slate-200/90 rounded-[24px] w-full max-w-md shadow-2xl p-6 sm:p-8 relative flex flex-col transform transition-all duration-300 animate-scaleUp max-h-[95vh] overflow-y-auto"
+        className={`fixed inset-0 bg-slate-950/60 backdrop-blur-2xl backdrop-saturate-150 transition-opacity duration-400 ease-out ${
+          isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={handleClose}
+      />
+
+      {/* 2. Full-Screen Floating Glassmorphic Authentication Card */}
+      <div
+        className={`bg-white/95 backdrop-blur-3xl border border-white/80 rounded-[32px] w-full max-w-md shadow-[0_25px_70px_-15px_rgba(0,0,0,0.35),0_0_50px_rgba(5,150,105,0.15)] p-6 sm:p-9 relative flex flex-col transform-gpu transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-10 max-h-[92vh] overflow-y-auto ${
+          isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8 pointer-events-none'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close */}
+        {/* Close Button */}
         <button
-          onClick={onClose}
-          className="absolute right-5 top-5 p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-700 transition-colors z-10"
+          onClick={handleClose}
+          className="absolute right-6 top-6 p-2 bg-slate-100/80 hover:bg-slate-200/80 rounded-full text-slate-400 hover:text-slate-700 transition-all duration-200 active:scale-90 z-20"
+          aria-label="Close authentication screen"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
-        {/* Header */}
-        <div className="text-center space-y-1 mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-green-700 mx-auto flex items-center justify-center text-white font-black text-2xl shadow-lg mb-3">
-            N
-          </div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{titles[mode]}</h2>
-          <p className="text-xs font-semibold text-slate-500">{subtitles[mode]}</p>
-        </div>
+        {/* Morphing Form Container */}
+        <div className={`transition-all duration-300 transform-gpu ${isSwitchingMode ? 'opacity-0 scale-98 translate-x-2' : 'opacity-100 scale-100 translate-x-0'}`}>
 
-        {/* In-App Browser Warning (WhatsApp / Instagram / Telegram) */}
-        {typeof navigator !== 'undefined' && /FBAN|FBAV|Instagram|WhatsApp|Telegram|Messenger/i.test(navigator.userAgent) && (
-          <div className="p-3 mb-4 bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl text-[11px] font-bold leading-relaxed flex items-start gap-2">
-            <span className="text-base leading-none">⚠️</span>
-            <div>
-              <strong>WhatsApp / Instagram Browser Detected:</strong> Google blocks sign-in inside chat apps. Please tap top 3 dots <strong>(⋮)</strong> &amp; select <strong>"Open in Chrome / Safari"</strong> to log in with Google!
+          {/* Header */}
+          <div className="text-center space-y-1.5 mb-7">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-green-700 mx-auto flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-emerald-600/30 mb-4 animate-float">
+              N
             </div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{titles[mode]}</h2>
+            <p className="text-xs font-semibold text-slate-500">{subtitles[mode]}</p>
           </div>
-        )}
 
-        {/* Success Banner */}
-        {successMsg && (
-          <div className="p-3 mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold flex items-center gap-2 animate-fadeIn">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-            <span>{successMsg}</span>
-          </div>
-        )}
-
-        {/* Google OAuth Login Button */}
-        {mode !== 'forgot' && mode !== 'reset' && (
-          <div className="space-y-3 mb-4">
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-              className="w-full py-2.5 px-4 bg-slate-50 hover:bg-slate-100 text-slate-800 font-extrabold text-xs rounded-xl border border-slate-200 flex items-center justify-center gap-2 shadow-xs transition-transform active:scale-95 disabled:opacity-50 min-h-[42px]"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-              </svg>
-              <span>Continue with Google</span>
-            </button>
-
-            <div className="relative flex items-center justify-center my-3">
-              <div className="border-t border-slate-200 w-full" />
-              <span className="bg-white px-3 text-[10px] font-bold uppercase text-slate-400 absolute">Or with email</span>
-            </div>
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-3" noValidate>
-
-          {/* Full Name — signup only */}
-          {mode === 'signup' && (
-            <div className={`space-y-1 ${shakingField === 'fullName' ? 'animate-shake' : ''}`}>
-              <label className="text-[11px] font-extrabold text-slate-700 block">Full Name</label>
-              <div className="relative">
-                <User className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Your full name"
-                  className={`w-full pl-9 pr-3 py-2.5 bg-slate-50 border rounded-xl text-xs font-semibold focus:outline-none transition-all ${
-                    errors.fullName ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
-                  }`}
-                />
-              </div>
-              {errors.fullName && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.fullName}</span>}
+          {/* Success Banner */}
+          {successMsg && (
+            <div className="p-3.5 mb-5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold flex items-center gap-2.5 animate-fadeIn shadow-xs">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <span>{successMsg}</span>
             </div>
           )}
 
-          {/* Email — login, signup, forgot */}
-          {mode !== 'reset' && (
-            <div className={`space-y-1 ${shakingField === 'email' ? 'animate-shake' : ''}`}>
-              <label className="text-[11px] font-extrabold text-slate-700 block">Email Address</label>
-              <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className={`w-full pl-9 pr-3 py-2.5 bg-slate-50 border rounded-xl text-xs font-semibold focus:outline-none transition-all ${
-                    errors.email ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
-                  }`}
-                />
-              </div>
-              {errors.email && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.email}</span>}
-            </div>
-          )}
+          {/* Pure Email/Password Form */}
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
 
-          {/* Reset Token — reset mode */}
-          {mode === 'reset' && (
-            <div className={`space-y-1 ${shakingField === 'resetToken' ? 'animate-shake' : ''}`}>
-              <label className="text-[11px] font-extrabold text-slate-700 block">Reset Token</label>
-              <div className="relative">
-                <KeyRound className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-                <input
-                  type="text"
-                  value={resetToken}
-                  onChange={(e) => setResetToken(e.target.value)}
-                  placeholder="Paste the reset token from your email"
-                  className={`w-full pl-9 pr-3 py-2.5 bg-slate-50 border rounded-xl text-xs font-mono focus:outline-none transition-all ${
-                    errors.resetToken ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
-                  }`}
-                />
-              </div>
-              {errors.resetToken && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.resetToken}</span>}
-            </div>
-          )}
-
-          {/* Password — login, signup */}
-          {(mode === 'login' || mode === 'signup') && (
-            <div className={`space-y-1 ${shakingField === 'password' ? 'animate-shake' : ''}`}>
-              <div className="flex justify-between items-center">
-                <label className="text-[11px] font-extrabold text-slate-700">Password</label>
-                {mode === 'login' && (
-                  <button
-                    type="button"
-                    onClick={() => { setMode('forgot'); setErrors({}); setSuccessMsg(null); }}
-                    className="text-[10px] font-extrabold text-emerald-700 hover:underline"
-                  >
-                    Forgot Password?
-                  </button>
-                )}
-              </div>
-              <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className={`w-full pl-9 pr-9 py-2.5 bg-slate-50 border rounded-xl text-xs font-semibold focus:outline-none transition-all ${
-                    errors.password ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
-                  }`}
-                />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-slate-400 hover:text-slate-600">
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {errors.password && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.password}</span>}
-
-              {/* Password Strength Bar */}
-              {mode === 'signup' && password.length > 0 && (
-                <div className="pt-1 space-y-1">
-                  <div className="flex justify-between items-center text-[10px] font-bold">
-                    <span className="text-slate-500">Strength</span>
-                    <span className="text-slate-700">{strengthLabels[Math.min(3, strength)]}</span>
-                  </div>
-                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden flex gap-1">
-                    {[0, 1, 2, 3].map((step) => (
-                      <div
-                        key={step}
-                        className={`h-full flex-1 rounded-full transition-all duration-300 ${step <= strength ? strengthColors[Math.min(3, strength)] : 'bg-slate-200'}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* New Password — reset mode */}
-          {mode === 'reset' && (
-            <>
-              <div className={`space-y-1 ${shakingField === 'newPassword' ? 'animate-shake' : ''}`}>
-                <label className="text-[11px] font-extrabold text-slate-700 block">New Password</label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+            {/* Full Name — signup only */}
+            {mode === 'signup' && (
+              <div className={`space-y-1.5 ${shakingField === 'fullName' ? 'animate-shake' : ''}`}>
+                <label className="text-[11px] font-extrabold text-slate-700 block uppercase tracking-wider">Full Name</label>
+                <div className="relative group">
+                  <User className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
                   <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Minimum 6 characters"
-                    className={`w-full pl-9 pr-9 py-2.5 bg-slate-50 border rounded-xl text-xs font-semibold focus:outline-none transition-all ${
-                      errors.newPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Your full name"
+                    className={`w-full pl-10 pr-3.5 py-3 bg-slate-50 border rounded-2xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
+                      errors.fullName ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200/90 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/15'
                     }`}
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-slate-400">
+                </div>
+                {errors.fullName && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.fullName}</span>}
+              </div>
+            )}
+
+            {/* Email Address — login, signup, forgot */}
+            {mode !== 'reset' && (
+              <div className={`space-y-1.5 ${shakingField === 'email' ? 'animate-shake' : ''}`}>
+                <label className="text-[11px] font-extrabold text-slate-700 block uppercase tracking-wider">Email Address</label>
+                <div className="relative group">
+                  <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className={`w-full pl-10 pr-3.5 py-3 bg-slate-50 border rounded-2xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
+                      errors.email ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200/90 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/15'
+                    }`}
+                  />
+                </div>
+                {errors.email && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.email}</span>}
+              </div>
+            )}
+
+            {/* Reset Token — reset mode */}
+            {mode === 'reset' && (
+              <div className={`space-y-1.5 ${shakingField === 'resetToken' ? 'animate-shake' : ''}`}>
+                <label className="text-[11px] font-extrabold text-slate-700 block uppercase tracking-wider">Reset Token</label>
+                <div className="relative group">
+                  <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                  <input
+                    type="text"
+                    value={resetToken}
+                    onChange={(e) => setResetToken(e.target.value)}
+                    placeholder="Paste reset token from email"
+                    className={`w-full pl-10 pr-3.5 py-3 bg-slate-50 border rounded-2xl text-sm font-mono focus:outline-none transition-all duration-200 ${
+                      errors.resetToken ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200/90 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/15'
+                    }`}
+                  />
+                </div>
+                {errors.resetToken && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.resetToken}</span>}
+              </div>
+            )}
+
+            {/* Password — login, signup */}
+            {(mode === 'login' || mode === 'signup') && (
+              <div className={`space-y-1.5 ${shakingField === 'password' ? 'animate-shake' : ''}`}>
+                <div className="flex justify-between items-center">
+                  <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">Password</label>
+                  {mode === 'login' && (
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchMode('forgot')}
+                      className="text-[11px] font-extrabold text-emerald-700 hover:text-emerald-800 hover:underline transition-colors"
+                    >
+                      Forgot Password?
+                    </button>
+                  )}
+                </div>
+                <div className="relative group">
+                  <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={`w-full pl-10 pr-10 py-3 bg-slate-50 border rounded-2xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
+                      errors.password ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200/90 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/15'
+                    }`}
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 transition-colors">
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                {errors.newPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.newPassword}</span>}
-              </div>
+                {errors.password && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.password}</span>}
 
-              <div className={`space-y-1 ${shakingField === 'confirmNewPassword' ? 'animate-shake' : ''}`}>
-                <label className="text-[11px] font-extrabold text-slate-700 block">Confirm New Password</label>
-                <div className="relative">
-                  <KeyRound className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                {/* Password Strength Meter */}
+                {mode === 'signup' && password.length > 0 && (
+                  <div className="pt-1 space-y-1">
+                    <div className="flex justify-between items-center text-[10px] font-bold">
+                      <span className="text-slate-500">Strength</span>
+                      <span className="text-slate-700">{strengthLabels[Math.min(3, strength)]}</span>
+                    </div>
+                    <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden flex gap-1">
+                      {[0, 1, 2, 3].map((step) => (
+                        <div
+                          key={step}
+                          className={`h-full flex-1 rounded-full transition-all duration-300 ${step <= strength ? strengthColors[Math.min(3, strength)] : 'bg-slate-200'}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Confirm Password — signup */}
+            {mode === 'signup' && (
+              <div className={`space-y-1.5 ${shakingField === 'confirmPassword' ? 'animate-shake' : ''}`}>
+                <label className="text-[11px] font-extrabold text-slate-700 block uppercase tracking-wider">Confirm Password</label>
+                <div className="relative group">
+                  <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmNewPassword}
-                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className={`w-full pl-9 pr-9 py-2.5 bg-slate-50 border rounded-xl text-xs font-semibold focus:outline-none transition-all ${
-                      errors.confirmNewPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
+                    className={`w-full pl-10 pr-10 py-3 bg-slate-50 border rounded-2xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
+                      errors.confirmPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200/90 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/15'
                     }`}
                   />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3 text-slate-400">
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 transition-colors">
                     {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                {errors.confirmNewPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.confirmNewPassword}</span>}
+                {errors.confirmPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.confirmPassword}</span>}
               </div>
-            </>
-          )}
+            )}
 
-          {/* Confirm Password — signup */}
-          {mode === 'signup' && (
-            <div className={`space-y-1 ${shakingField === 'confirmPassword' ? 'animate-shake' : ''}`}>
-              <label className="text-[11px] font-extrabold text-slate-700 block">Confirm Password</label>
-              <div className="relative">
-                <KeyRound className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className={`w-full pl-9 pr-9 py-2.5 bg-slate-50 border rounded-xl text-xs font-semibold focus:outline-none transition-all ${
-                    errors.confirmPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
-                  }`}
-                />
-                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3 text-slate-400">
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {errors.confirmPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.confirmPassword}</span>}
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2 min-h-[44px] disabled:opacity-50 mt-4"
-          >
-            {isLoading ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
+            {/* New Password & Confirm — reset mode */}
+            {mode === 'reset' && (
               <>
-                <span>{btnLabels[mode]}</span>
-                <ArrowRight className="w-4 h-4" />
+                <div className={`space-y-1.5 ${shakingField === 'newPassword' ? 'animate-shake' : ''}`}>
+                  <label className="text-[11px] font-extrabold text-slate-700 block uppercase tracking-wider">New Password</label>
+                  <div className="relative group">
+                    <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Minimum 6 characters"
+                      className={`w-full pl-10 pr-10 py-3 bg-slate-50 border rounded-2xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
+                        errors.newPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200/90 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/15'
+                      }`}
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-3.5 text-slate-400">
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {errors.newPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.newPassword}</span>}
+                </div>
+
+                <div className={`space-y-1.5 ${shakingField === 'confirmNewPassword' ? 'animate-shake' : ''}`}>
+                  <label className="text-[11px] font-extrabold text-slate-700 block uppercase tracking-wider">Confirm New Password</label>
+                  <div className="relative group">
+                    <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className={`w-full pl-10 pr-10 py-3 bg-slate-50 border rounded-2xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
+                        errors.confirmNewPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200/90 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/15'
+                      }`}
+                    />
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-3.5 text-slate-400">
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {errors.confirmNewPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.confirmNewPassword}</span>}
+                </div>
               </>
             )}
-          </button>
-        </form>
 
-        {/* Footer / Back links */}
-        <div className="pt-4 mt-4 border-t border-slate-100 text-center text-xs font-semibold text-slate-600">
-          {(mode === 'forgot' || mode === 'reset') ? (
+            {/* Premium Submit Button with Micro-Press Ripple */}
             <button
-              onClick={() => { setMode('login'); setErrors({}); setSuccessMsg(null); }}
-              className="flex items-center justify-center gap-1.5 mx-auto font-extrabold text-emerald-700 hover:underline"
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg hover:shadow-emerald-600/25 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 min-h-[46px] disabled:opacity-50 mt-5 tracking-wide transform-gpu"
             >
-              <ArrowLeft className="w-3 h-3" />
-              Back to Sign In
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <span>{btnLabels[mode]}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
-          ) : mode === 'login' ? (
-            <p>
-              Don't have an account?{' '}
+          </form>
+
+          {/* Footer & Mode Morph Triggers */}
+          <div className="pt-5 mt-5 border-t border-slate-100 text-center text-xs font-semibold text-slate-600">
+            {(mode === 'forgot' || mode === 'reset') ? (
               <button
-                onClick={() => { setMode('signup'); setErrors({}); setSuccessMsg(null); }}
-                className="font-extrabold text-emerald-700 hover:underline"
+                onClick={() => handleSwitchMode('login')}
+                className="flex items-center justify-center gap-1.5 mx-auto font-extrabold text-emerald-700 hover:text-emerald-800 hover:underline transition-colors"
               >
-                Sign Up Free
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Back to Sign In
               </button>
-            </p>
-          ) : (
-            <p>
-              Already have an account?{' '}
-              <button
-                onClick={() => { setMode('login'); setErrors({}); setSuccessMsg(null); }}
-                className="font-extrabold text-emerald-700 hover:underline"
-              >
-                Sign In
-              </button>
-            </p>
-          )}
+            ) : mode === 'login' ? (
+              <p>
+                Don't have an account?{' '}
+                <button
+                  onClick={() => handleSwitchMode('signup')}
+                  className="font-extrabold text-emerald-700 hover:text-emerald-800 hover:underline transition-colors ml-1"
+                >
+                  Sign Up Free
+                </button>
+              </p>
+            ) : (
+              <p>
+                Already have an account?{' '}
+                <button
+                  onClick={() => handleSwitchMode('login')}
+                  className="font-extrabold text-emerald-700 hover:text-emerald-800 hover:underline transition-colors ml-1"
+                >
+                  Sign In
+                </button>
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

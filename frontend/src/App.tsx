@@ -164,7 +164,7 @@ export const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-50 text-slate-900 font-sans">
+    <div className={`flex flex-col h-screen w-screen overflow-hidden bg-slate-50 text-slate-900 font-sans transition-all duration-500 transform-gpu ease-out ${isAuthOpen ? 'scale-[0.985] blur-[2.5px] filter brightness-[0.93] pointer-events-none select-none' : 'scale-100 blur-0 brightness-100'}`}>
       {/* Platform Header */}
       <header className="h-16 px-4 md:px-6 bg-white border-b border-slate-200 flex items-center justify-between z-20 flex-shrink-0">
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setSelectedTemplate(null)}>
