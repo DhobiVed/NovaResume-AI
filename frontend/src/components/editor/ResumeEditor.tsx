@@ -20,9 +20,10 @@ import {
 interface Props {
   template: TemplateDefinition;
   onBackToGallery: () => void;
+  initialData?: any;
 }
 
-export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery }) => {
+export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery, initialData }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(0.85);
@@ -66,18 +67,18 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery }) => 
     layout: template.layout
   });
 
-  // Resume Content State
-  const [data, setData] = useState<ResumeData>({
-    fullName: 'Alex Vance',
-    title: 'Senior AI & Systems Engineer',
-    email: 'alex.vance@example.com',
-    phone: '+1 (555) 019-2834',
-    location: 'San Francisco, CA',
-    linkedin: 'linkedin.com/in/alexvance',
-    github: 'github.com/alexvance',
-    summary: 'Senior AI Engineer with 6+ years of experience designing scalable LLM pipelines, RAG vector architectures, and high-performance FastAPI backends.',
-    objective: 'To lead innovative AI engineering teams in developing high-throughput LLM architectures and production RAG retrieval platforms.',
-    experience: [
+  // Resume Content State (Populates imported data if present)
+  const [data, setData] = useState<ResumeData>(() => ({
+    fullName: initialData?.fullName || 'Alex Vance',
+    title: initialData?.title || 'Senior AI & Systems Engineer',
+    email: initialData?.email || 'alex.vance@example.com',
+    phone: initialData?.phone || '+1 (555) 019-2834',
+    location: initialData?.location || 'San Francisco, CA',
+    linkedin: initialData?.linkedin || 'linkedin.com/in/alexvance',
+    github: initialData?.github || 'github.com/alexvance',
+    summary: initialData?.summary || 'Senior AI Engineer with 6+ years of experience designing scalable LLM pipelines, RAG vector architectures, and high-performance FastAPI backends.',
+    objective: initialData?.objective || 'To lead innovative AI engineering teams in developing high-throughput LLM architectures and production RAG retrieval platforms.',
+    experience: initialData?.experience && initialData.experience.length > 0 ? initialData.experience : [
       {
         company: 'NeuralTech AI',
         role: 'Lead AI Engineer',
@@ -93,23 +94,48 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery }) => 
         bullets: 'Developed React & TypeScript dashboards for real-time model monitoring.\nOptimized SQL queries reducing analytics latency by 45%.'
       }
     ],
-    education: [
+    education: initialData?.education && initialData.education.length > 0 ? initialData.education : [
       { degree: 'B.S. in Computer Science', school: 'University of California, Berkeley', year: '2019', gpa: '3.85' }
     ],
-    projects: [
+    projects: initialData?.projects && initialData.projects.length > 0 ? initialData.projects : [
       { name: 'NovaResume AI Platform', description: 'Enterprise AI Resume Builder with Canva-style graphic editor and single-page ATS vector PDF generator.', tech: 'React, TypeScript, FastAPI' }
     ],
-    skills: 'Python, FastAPI, Groq API, LangChain, PyTorch, React, TypeScript, PostgreSQL, Docker, Git, REST APIs',
-    certifications: 'AWS Certified Machine Learning Specialist, TensorFlow Developer Certificate',
-    languages: 'English (Native), Spanish (Professional)',
-    achievements: 'Winner of Global AI Innovation Hackathon (1st place out of 400 teams)\nPublished research paper on Context Window Compression in LLMs',
+    skills: initialData?.skills || 'Python, FastAPI, Groq API, LangChain, PyTorch, React, TypeScript, PostgreSQL, Docker, Git, REST APIs',
+    certifications: initialData?.certifications || 'AWS Certified Machine Learning Specialist, TensorFlow Developer Certificate',
+    languages: initialData?.languages || 'English (Native), Spanish (Professional)',
+    achievements: initialData?.achievements || 'Winner of Global AI Innovation Hackathon (1st place out of 400 teams)\nPublished research paper on Context Window Compression in LLMs',
     showPhoto: true,
     photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     photoShape: 'round',
-    customSections: [
+    customSections: initialData?.customSections || [
       { title: 'Research & Publications', content: 'Co-authored paper: "Optimizing Context Retrieval Overhead in High-Concurrency Agentic Workflows" (2025)' }
     ]
-  });
+  }));
+
+  // Sync state if initialData changes dynamically
+  useEffect(() => {
+    if (initialData) {
+      setData((prev) => ({
+        ...prev,
+        fullName: initialData.fullName || prev.fullName,
+        title: initialData.title || prev.title,
+        email: initialData.email || prev.email,
+        phone: initialData.phone || prev.phone,
+        location: initialData.location || prev.location,
+        linkedin: initialData.linkedin || prev.linkedin,
+        github: initialData.github || prev.github,
+        summary: initialData.summary || prev.summary,
+        objective: initialData.objective || prev.objective,
+        skills: initialData.skills || prev.skills,
+        experience: initialData.experience && initialData.experience.length > 0 ? initialData.experience : prev.experience,
+        education: initialData.education && initialData.education.length > 0 ? initialData.education : prev.education,
+        projects: initialData.projects && initialData.projects.length > 0 ? initialData.projects : prev.projects,
+        certifications: initialData.certifications || prev.certifications,
+        languages: initialData.languages || prev.languages,
+        achievements: initialData.achievements || prev.achievements
+      }));
+    }
+  }, [initialData]);
 
   // Export handlers
   const handleDownloadPdf = async (singlePage: boolean = true) => {

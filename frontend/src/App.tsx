@@ -123,7 +123,9 @@ export const AppContent: React.FC = () => {
     await firebaseAuthService.logout();
   };
 
-  const activeResumeData = {
+  const [importedResumeData, setImportedResumeData] = useState<any>(null);
+
+  const activeResumeData = importedResumeData || {
     fullName: 'Alex Vance',
     title: 'Senior AI Systems Engineer',
     email: 'alex.vance@example.com',
@@ -159,8 +161,29 @@ export const AppContent: React.FC = () => {
     requireAuth(() => setSelectedTemplate(template));
   };
 
-  const handleImportComplete = (_parsedData: any) => {
-    setSelectedTemplate(ALL_TEMPLATES[0]);
+  const handleImportComplete = (parsedData: any) => {
+    if (parsedData) {
+      const formattedData = {
+        fullName: parsedData.fullName || 'Imported Candidate',
+        title: parsedData.title || 'Professional',
+        email: parsedData.email || '',
+        phone: parsedData.phone || '',
+        location: parsedData.location || '',
+        linkedin: parsedData.linkedin || '',
+        github: parsedData.github || '',
+        summary: parsedData.summary || '',
+        objective: parsedData.objective || '',
+        skills: parsedData.skills || '',
+        experience: Array.isArray(parsedData.experience) && parsedData.experience.length > 0 ? parsedData.experience : [],
+        education: Array.isArray(parsedData.education) && parsedData.education.length > 0 ? parsedData.education : [],
+        projects: Array.isArray(parsedData.projects) && parsedData.projects.length > 0 ? parsedData.projects : [],
+        certifications: parsedData.certifications || '',
+        languages: parsedData.languages || '',
+        achievements: parsedData.achievements || '',
+      };
+      setImportedResumeData(formattedData);
+      setSelectedTemplate(ALL_TEMPLATES[0]);
+    }
   };
 
   return (
@@ -392,6 +415,7 @@ export const AppContent: React.FC = () => {
         {selectedTemplate ? (
           <ResumeEditor
             template={selectedTemplate}
+            initialData={importedResumeData}
             onBackToGallery={() => setSelectedTemplate(null)}
           />
         ) : (
