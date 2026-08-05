@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  X, Mail, Lock, User, Eye, EyeOff, CheckCircle2, ArrowRight,
-  AlertCircle, KeyRound, ArrowLeft
+  X, Eye, EyeOff, CheckCircle2,
+  AlertCircle, ArrowLeft, Sparkles, ShieldCheck, Briefcase, Globe, Calendar, Zap
 } from 'lucide-react';
 import { firebaseAuthService } from '../../services/firebaseAuth';
 
@@ -90,7 +90,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setTimeout(() => {
       setMode(newMode);
       setIsSwitchingMode(false);
-    }, 180);
+    }, 200);
   };
 
   if (!isRendered) return null;
@@ -118,7 +118,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     shake(field);
   };
 
-  // ── AUTHENTICATION HANDLERS (LOGIC UNCHANGED) ───────────────────────
+  // ── AUTHENTICATION HANDLERS ─────────────────────────────────────────
 
   const handleSignup = async () => {
     if (!fullName.trim()) return setFieldError('fullName', 'Full name is required');
@@ -197,6 +197,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   const handleResetPassword = async () => {
+    if (!resetToken.trim()) return setFieldError('resetToken', 'Reset token is required');
+    if (!newPassword || newPassword.length < 6) return setFieldError('newPassword', 'Minimum 6 characters required');
+    if (newPassword !== confirmNewPassword) return setFieldError('confirmNewPassword', 'Passwords do not match');
+
     setSuccessMsg('A password reset link was sent to your email. Please check your inbox and click the link to reset your password.');
     setTimeout(() => handleSwitchMode('login'), 3000);
   };
@@ -209,40 +213,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     else if (mode === 'reset') handleResetPassword();
   };
 
-  // ── FORM HEADER LABELS ────────────────────────────────────
-  const titles = {
-    login: 'Welcome Back to NovaResume',
-    signup: 'Create Your Free Account',
-    forgot: 'Reset Your Password',
-    reset: 'Set New Password'
-  };
-  const subtitles = {
-    login: 'Sign in to access your resumes, portfolios & AI mentor',
-    signup: 'Build ATS-proof resumes with AI — free forever',
-    forgot: "Enter your email and we'll send you a reset link",
-    reset: 'Enter the reset token and your new password'
-  };
-  const btnLabels = {
-    login: 'Sign In to Account',
-    signup: 'Create Account',
-    forgot: 'Send Reset Link',
-    reset: 'Save New Password'
-  };
-
   return (
-    <div className="fixed inset-0 z-[99999] overflow-y-auto flex items-center justify-center p-4 sm:p-6 md:p-8 transform-gpu">
+    <div className="fixed inset-0 z-[99999] overflow-y-auto flex items-center justify-center p-3 sm:p-6 transform-gpu">
       
-      {/* 1. Full-Screen Translucent Backdrop with Motion Blur */}
+      {/* 1. Full-Screen Translucent Glassmorphic Overlay */}
       <div
-        className={`fixed inset-0 bg-slate-950/60 backdrop-blur-2xl backdrop-saturate-150 transition-opacity duration-400 ease-out ${
+        className={`fixed inset-0 bg-slate-950/75 backdrop-blur-2xl backdrop-saturate-150 transition-opacity duration-400 ease-out ${
           isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={handleClose}
       />
 
-      {/* 2. Full-Screen Floating Glassmorphic Authentication Card */}
+      {/* 2. Split-Screen Floating Auth Modal Card (Matching demoo.mp4) */}
       <div
-        className={`bg-white/95 backdrop-blur-3xl border border-white/80 rounded-[32px] w-full max-w-md shadow-[0_25px_70px_-15px_rgba(0,0,0,0.35),0_0_50px_rgba(5,150,105,0.15)] p-6 sm:p-9 relative flex flex-col transform-gpu transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-10 max-h-[92vh] overflow-y-auto ${
+        className={`bg-white rounded-[32px] border border-slate-200/90 shadow-[0_25px_80px_-15px_rgba(0,0,0,0.4),0_0_50px_rgba(9,95,108,0.2)] w-full max-w-5xl relative flex flex-col md:flex-row overflow-hidden transform-gpu transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-10 max-h-[95vh] ${
           isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8 pointer-events-none'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -250,263 +234,372 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {/* Close Button */}
         <button
           onClick={handleClose}
-          className="absolute right-6 top-6 p-2 bg-slate-100/80 hover:bg-slate-200/80 rounded-full text-slate-400 hover:text-slate-700 transition-all duration-200 active:scale-90 z-20"
-          aria-label="Close authentication screen"
+          className="absolute right-5 top-5 p-2 bg-slate-100/90 hover:bg-slate-200 rounded-full text-slate-500 hover:text-slate-900 transition-all duration-200 active:scale-90 z-30 shadow-xs"
+          aria-label="Close modal"
         >
           <X className="w-4 h-4" />
         </button>
 
-        {/* Morphing Form Container */}
-        <div className={`transition-all duration-300 transform-gpu ${isSwitchingMode ? 'opacity-0 scale-98 translate-x-2' : 'opacity-100 scale-100 translate-x-0'}`}>
+        {/* ── LEFT PANEL: RICH TEAL SHOWCASE WITH ANIMATED FLOATING BADGES ── */}
+        <div className="hidden md:flex w-1/2 bg-[#095f6c] bg-gradient-to-br from-[#085460] via-[#0b6c7a] to-[#063e47] p-8 lg:p-10 flex-col justify-between text-white relative overflow-hidden select-none flex-shrink-0">
+          
+          {/* Subtle Background Glow Circles */}
+          <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-teal-400/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
 
-          {/* Header */}
-          <div className="text-center space-y-1.5 mb-7">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-green-700 mx-auto flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-emerald-600/30 mb-4 animate-float">
-              N
+          {/* Morphing Left Panel Header Text */}
+          <div className={`transition-all duration-300 transform-gpu z-10 ${isSwitchingMode ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
+            <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center mb-4 border border-white/20 shadow-md">
+              <Sparkles className="w-5 h-5 text-teal-200" />
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{titles[mode]}</h2>
-            <p className="text-xs font-semibold text-slate-500">{subtitles[mode]}</p>
+            
+            {mode === 'signup' ? (
+              <>
+                <h2 className="text-2xl lg:text-3xl font-black text-white leading-snug tracking-tight mb-3">
+                  Unlock The Full Power<br />of NovaResume AI
+                </h2>
+                <p className="text-xs lg:text-sm text-teal-100/80 leading-relaxed max-w-sm">
+                  Just a few simple steps and you'll be ready to automate, optimize, and craft ATS-proof resumes like never before.
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl lg:text-3xl font-black text-white leading-snug tracking-tight mb-3">
+                  Start Creating Impact<br />Right Away
+                </h2>
+                <p className="text-xs lg:text-sm text-teal-100/80 leading-relaxed max-w-sm">
+                  From AI resume tailoring to job application tracking, let's turn your career goals into measurable results.
+                </p>
+              </>
+            )}
           </div>
 
-          {/* Success Banner */}
-          {successMsg && (
-            <div className="p-3.5 mb-5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold flex items-center gap-2.5 animate-fadeIn shadow-xs">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-              <span>{successMsg}</span>
+          {/* Center Showcase Card with Animated Floating Integration Badges */}
+          <div className="relative my-8 py-6 flex items-center justify-center z-10">
+            
+            {/* Main Central Metrics Preview Card */}
+            <div className="w-full max-w-xs bg-white/95 backdrop-blur-2xl rounded-2xl p-4 shadow-2xl border border-white/60 text-slate-900 transform transition-all duration-300 hover:scale-[1.02]">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-teal-600 flex items-center justify-center text-white text-[10px] font-black">
+                    N
+                  </div>
+                  <span className="text-xs font-black text-slate-900">Campaign Performance</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[9px]">
+                  ATS 98%
+                </span>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="p-2 bg-slate-50 rounded-xl border border-slate-100">
+                  <span className="text-[9px] text-slate-400 font-bold block">Open Rate</span>
+                  <span className="text-sm font-black text-slate-900">89%</span>
+                </div>
+                <div className="p-2 bg-slate-50 rounded-xl border border-slate-100">
+                  <span className="text-[9px] text-slate-400 font-bold block">Click Through</span>
+                  <span className="text-sm font-black text-emerald-600">68%</span>
+                </div>
+              </div>
+
+              {/* Progress Bars */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex justify-between text-[9px] font-bold text-slate-500">
+                  <span>Resume Score</span>
+                  <span className="text-teal-600">98 / 100</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div className="bg-gradient-to-r from-teal-600 to-emerald-500 h-full w-[98%] rounded-full" />
+                </div>
+              </div>
             </div>
-          )}
 
-          {/* Pure Email/Password Form */}
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            {/* Floating Pill Badges around Central Card */}
+            <div className="absolute -top-1 -left-2 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-1.5 animate-float-badge-1">
+              <Calendar className="w-3.5 h-3.5 text-rose-500" />
+              <span>Calendar</span>
+            </div>
 
-            {/* Full Name — signup only */}
-            {mode === 'signup' && (
-              <div className={`space-y-1.5 ${shakingField === 'fullName' ? 'animate-shake' : ''}`}>
-                <label className="text-[11px] font-extrabold text-slate-700 block uppercase tracking-wider">Full Name</label>
-                <div className="relative group">
-                  <User className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+            <div className="absolute -top-3 -right-2 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-1.5 animate-float-badge-2">
+              <Zap className="w-3.5 h-3.5 text-amber-500" />
+              <span>Slack</span>
+            </div>
+
+            <div className="absolute top-1/2 -left-4 -translate-y-1/2 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-1.5 animate-float-badge-2">
+              <Briefcase className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Shopify</span>
+            </div>
+
+            <div className="absolute top-1/2 -right-4 -translate-y-1/2 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-1.5 animate-float-badge-1">
+              <Globe className="w-3.5 h-3.5 text-blue-500" />
+              <span>Google Ads</span>
+            </div>
+
+            <div className="absolute -bottom-2 -left-2 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-1.5 animate-float-badge-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
+              <span>Zendesk</span>
+            </div>
+
+            <div className="absolute -bottom-2 -right-2 bg-teal-500 text-white text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 animate-float-badge-2">
+              <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+              <span>Retain Feed</span>
+            </div>
+          </div>
+
+          {/* Left Panel Footer Copyright */}
+          <div className="text-[10px] text-teal-200/60 font-semibold tracking-wider uppercase z-10">
+            © Vertex / NovaResume 2026. All Rights Reserved
+          </div>
+        </div>
+
+        {/* ── RIGHT PANEL: CLEAN GLASSMORPHIC AUTH FORM ── */}
+        <div className="w-full md:w-1/2 p-6 sm:p-10 flex flex-col justify-between bg-white bg-dot-pattern relative overflow-y-auto">
+          
+          {/* Morphing Form Container */}
+          <div className={`transition-all duration-300 transform-gpu ${isSwitchingMode ? 'opacity-0 scale-98' : 'opacity-100 scale-100'}`}>
+            
+            {/* Header Icon & Title */}
+            <div className="text-center space-y-1 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-teal-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-teal-600/30 mx-auto mb-3">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                {mode === 'signup' ? 'Create Vertex Account' : mode === 'login' ? 'Welcome Back' : 'Reset Password'}
+              </h2>
+              <p className="text-xs font-semibold text-slate-500 max-w-xs mx-auto">
+                {mode === 'signup'
+                  ? 'Drive growth with intelligent automation and effortless teamwork'
+                  : mode === 'login'
+                  ? 'Sign in to access your resumes, portfolios & AI mentor'
+                  : 'Enter your registered email address to receive reset link'}
+              </p>
+            </div>
+
+            {/* Success Banner */}
+            {successMsg && (
+              <div className="p-3.5 mb-5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold flex items-center gap-2.5 animate-fadeIn shadow-xs">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span>{successMsg}</span>
+              </div>
+            )}
+
+            {/* Pure Clean Form */}
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+
+              {/* Full Name — Signup Only */}
+              {mode === 'signup' && (
+                <div className={`space-y-1 ${shakingField === 'fullName' ? 'animate-shake' : ''}`}>
+                  <label className="text-xs font-bold text-slate-700 block">Full name</label>
                   <input
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Your full name"
-                    className={`w-full pl-10 pr-3.5 py-3 bg-slate-50 border rounded-2xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
-                      errors.fullName ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200/90 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/15'
+                    placeholder="Enter your full name"
+                    className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
+                      errors.fullName ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
                     }`}
                   />
+                  {errors.fullName && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.fullName}</span>}
                 </div>
-                {errors.fullName && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.fullName}</span>}
-              </div>
-            )}
+              )}
 
-            {/* Email Address — login, signup, forgot */}
-            {mode !== 'reset' && (
-              <div className={`space-y-1.5 ${shakingField === 'email' ? 'animate-shake' : ''}`}>
-                <label className="text-[11px] font-extrabold text-slate-700 block uppercase tracking-wider">Email Address</label>
-                <div className="relative group">
-                  <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+              {/* Email Address — Login, Signup, Forgot */}
+              {mode !== 'reset' && (
+                <div className={`space-y-1 ${shakingField === 'email' ? 'animate-shake' : ''}`}>
+                  <label className="text-xs font-bold text-slate-700 block">Email</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className={`w-full pl-10 pr-3.5 py-3 bg-slate-50 border rounded-2xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
-                      errors.email ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200/90 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/15'
+                    placeholder="Enter your email"
+                    className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
+                      errors.email ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
                     }`}
                   />
+                  {errors.email && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.email}</span>}
                 </div>
-                {errors.email && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.email}</span>}
-              </div>
-            )}
+              )}
 
-            {/* Reset Token — reset mode */}
-            {mode === 'reset' && (
-              <div className={`space-y-1.5 ${shakingField === 'resetToken' ? 'animate-shake' : ''}`}>
-                <label className="text-[11px] font-extrabold text-slate-700 block uppercase tracking-wider">Reset Token</label>
-                <div className="relative group">
-                  <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+              {/* Reset Token — Reset Mode */}
+              {mode === 'reset' && (
+                <div className={`space-y-1 ${shakingField === 'resetToken' ? 'animate-shake' : ''}`}>
+                  <label className="text-xs font-bold text-slate-700 block">Reset Token</label>
                   <input
                     type="text"
                     value={resetToken}
                     onChange={(e) => setResetToken(e.target.value)}
                     placeholder="Paste reset token from email"
-                    className={`w-full pl-10 pr-3.5 py-3 bg-slate-50 border rounded-2xl text-sm font-mono focus:outline-none transition-all duration-200 ${
-                      errors.resetToken ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200/90 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/15'
+                    className={`w-full px-4 py-3 bg-white border rounded-xl text-sm font-mono focus:outline-none transition-all duration-200 ${
+                      errors.resetToken ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
                     }`}
                   />
+                  {errors.resetToken && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.resetToken}</span>}
                 </div>
-                {errors.resetToken && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.resetToken}</span>}
-              </div>
-            )}
+              )}
 
-            {/* Password — login, signup */}
-            {(mode === 'login' || mode === 'signup') && (
-              <div className={`space-y-1.5 ${shakingField === 'password' ? 'animate-shake' : ''}`}>
-                <div className="flex justify-between items-center">
-                  <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">Password</label>
-                  {mode === 'login' && (
-                    <button
-                      type="button"
-                      onClick={() => handleSwitchMode('forgot')}
-                      className="text-[11px] font-extrabold text-emerald-700 hover:text-emerald-800 hover:underline transition-colors"
-                    >
-                      Forgot Password?
-                    </button>
-                  )}
-                </div>
-                <div className="relative group">
-                  <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className={`w-full pl-10 pr-10 py-3 bg-slate-50 border rounded-2xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
-                      errors.password ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200/90 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/15'
-                    }`}
-                  />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 transition-colors">
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {errors.password && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.password}</span>}
-
-                {/* Password Strength Meter */}
-                {mode === 'signup' && password.length > 0 && (
-                  <div className="pt-1 space-y-1">
-                    <div className="flex justify-between items-center text-[10px] font-bold">
-                      <span className="text-slate-500">Strength</span>
-                      <span className="text-slate-700">{strengthLabels[Math.min(3, strength)]}</span>
-                    </div>
-                    <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden flex gap-1">
-                      {[0, 1, 2, 3].map((step) => (
-                        <div
-                          key={step}
-                          className={`h-full flex-1 rounded-full transition-all duration-300 ${step <= strength ? strengthColors[Math.min(3, strength)] : 'bg-slate-200'}`}
-                        />
-                      ))}
-                    </div>
+              {/* Password — Login, Signup */}
+              {(mode === 'login' || mode === 'signup') && (
+                <div className={`space-y-1 ${shakingField === 'password' ? 'animate-shake' : ''}`}>
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold text-slate-700">Password</label>
+                    {mode === 'login' && (
+                      <button
+                        type="button"
+                        onClick={() => handleSwitchMode('forgot')}
+                        className="text-xs font-semibold text-slate-500 hover:text-slate-900 hover:underline transition-colors"
+                      >
+                        Forgot Password?
+                      </button>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
-
-            {/* Confirm Password — signup */}
-            {mode === 'signup' && (
-              <div className={`space-y-1.5 ${shakingField === 'confirmPassword' ? 'animate-shake' : ''}`}>
-                <label className="text-[11px] font-extrabold text-slate-700 block uppercase tracking-wider">Confirm Password</label>
-                <div className="relative group">
-                  <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className={`w-full pl-10 pr-10 py-3 bg-slate-50 border rounded-2xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
-                      errors.confirmPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200/90 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/15'
-                    }`}
-                  />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 transition-colors">
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {errors.confirmPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.confirmPassword}</span>}
-              </div>
-            )}
-
-            {/* New Password & Confirm — reset mode */}
-            {mode === 'reset' && (
-              <>
-                <div className={`space-y-1.5 ${shakingField === 'newPassword' ? 'animate-shake' : ''}`}>
-                  <label className="text-[11px] font-extrabold text-slate-700 block uppercase tracking-wider">New Password</label>
-                  <div className="relative group">
-                    <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                  <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Minimum 6 characters"
-                      className={`w-full pl-10 pr-10 py-3 bg-slate-50 border rounded-2xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
-                        errors.newPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200/90 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/15'
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Create your password"
+                      className={`w-full pl-4 pr-10 py-3 bg-white border rounded-xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
+                        errors.password ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
                       }`}
                     />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-3.5 text-slate-400">
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 transition-colors">
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  {errors.newPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.newPassword}</span>}
-                </div>
+                  {errors.password && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.password}</span>}
 
-                <div className={`space-y-1.5 ${shakingField === 'confirmNewPassword' ? 'animate-shake' : ''}`}>
-                  <label className="text-[11px] font-extrabold text-slate-700 block uppercase tracking-wider">Confirm New Password</label>
-                  <div className="relative group">
-                    <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                  {/* Password Strength Meter */}
+                  {mode === 'signup' && password.length > 0 && (
+                    <div className="pt-1 space-y-1">
+                      <div className="flex justify-between items-center text-[10px] font-bold">
+                        <span className="text-slate-500">Strength</span>
+                        <span className="text-slate-700">{strengthLabels[Math.min(3, strength)]}</span>
+                      </div>
+                      <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden flex gap-1">
+                        {[0, 1, 2, 3].map((step) => (
+                          <div
+                            key={step}
+                            className={`h-full flex-1 rounded-full transition-all duration-300 ${step <= strength ? strengthColors[Math.min(3, strength)] : 'bg-slate-200'}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Confirm Password — Signup */}
+              {mode === 'signup' && (
+                <div className={`space-y-1 ${shakingField === 'confirmPassword' ? 'animate-shake' : ''}`}>
+                  <label className="text-xs font-bold text-slate-700 block">Confirm Password</label>
+                  <div className="relative">
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
-                      value={confirmNewPassword}
-                      onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className={`w-full pl-10 pr-10 py-3 bg-slate-50 border rounded-2xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
-                        errors.confirmNewPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200/90 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/15'
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm your password"
+                      className={`w-full pl-4 pr-10 py-3 bg-white border rounded-xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
+                        errors.confirmPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
                       }`}
                     />
-                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-3.5 text-slate-400">
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 transition-colors">
                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  {errors.confirmNewPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.confirmNewPassword}</span>}
+                  {errors.confirmPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.confirmPassword}</span>}
                 </div>
-              </>
-            )}
+              )}
 
-            {/* Premium Submit Button with Micro-Press Ripple */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg hover:shadow-emerald-600/25 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 min-h-[46px] disabled:opacity-50 mt-5 tracking-wide transform-gpu"
-            >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
+              {/* New Password & Confirm — Reset Mode */}
+              {mode === 'reset' && (
                 <>
-                  <span>{btnLabels[mode]}</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <div className={`space-y-1 ${shakingField === 'newPassword' ? 'animate-shake' : ''}`}>
+                    <label className="text-xs font-bold text-slate-700 block">New Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Minimum 6 characters"
+                        className={`w-full pl-4 pr-10 py-3 bg-white border rounded-xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
+                          errors.newPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
+                        }`}
+                      />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 transition-colors">
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {errors.newPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.newPassword}</span>}
+                  </div>
+
+                  <div className={`space-y-1 ${shakingField === 'confirmNewPassword' ? 'animate-shake' : ''}`}>
+                    <label className="text-xs font-bold text-slate-700 block">Confirm New Password</label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className={`w-full pl-4 pr-10 py-3 bg-white border rounded-xl text-sm font-semibold focus:outline-none transition-all duration-200 ${
+                          errors.confirmNewPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
+                        }`}
+                      />
+                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 transition-colors">
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {errors.confirmNewPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.confirmNewPassword}</span>}
+                  </div>
                 </>
               )}
-            </button>
-          </form>
 
-          {/* Footer & Mode Morph Triggers */}
-          <div className="pt-5 mt-5 border-t border-slate-100 text-center text-xs font-semibold text-slate-600">
-            {(mode === 'forgot' || mode === 'reset') ? (
+              {/* Submit Button (Matching demoo.mp4 dark button style) */}
               <button
-                onClick={() => handleSwitchMode('login')}
-                className="flex items-center justify-center gap-1.5 mx-auto font-extrabold text-emerald-700 hover:text-emerald-800 hover:underline transition-colors"
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3.5 px-4 bg-[#182230] hover:bg-[#0f1728] active:bg-black text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-lg transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 min-h-[46px] disabled:opacity-50 mt-5 transform-gpu"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                Back to Sign In
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span>{mode === 'signup' ? 'Sign Up' : mode === 'login' ? 'Sign In' : 'Send Link'}</span>
+                )}
               </button>
-            ) : mode === 'login' ? (
-              <p>
-                Don't have an account?{' '}
-                <button
-                  onClick={() => handleSwitchMode('signup')}
-                  className="font-extrabold text-emerald-700 hover:text-emerald-800 hover:underline transition-colors ml-1"
-                >
-                  Sign Up Free
-                </button>
-              </p>
-            ) : (
-              <p>
-                Already have an account?{' '}
+            </form>
+
+            {/* Footer Mode Morph Switch (Matching demoo.mp4) */}
+            <div className="pt-6 mt-6 border-t border-slate-100 text-center text-xs font-semibold text-slate-500">
+              {(mode === 'forgot' || mode === 'reset') ? (
                 <button
                   onClick={() => handleSwitchMode('login')}
-                  className="font-extrabold text-emerald-700 hover:text-emerald-800 hover:underline transition-colors ml-1"
+                  className="flex items-center justify-center gap-1.5 mx-auto font-extrabold text-slate-900 hover:underline transition-colors"
                 >
-                  Sign In
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Back to Sign In
                 </button>
-              </p>
-            )}
+              ) : mode === 'login' ? (
+                <p>
+                  Don't have an account?{' '}
+                  <button
+                    onClick={() => handleSwitchMode('signup')}
+                    className="font-extrabold text-slate-900 hover:underline transition-colors ml-1"
+                  >
+                    Sign Up &gt;
+                  </button>
+                </p>
+              ) : (
+                <p>
+                  Already have an account?{' '}
+                  <button
+                    onClick={() => handleSwitchMode('login')}
+                    className="font-extrabold text-slate-900 hover:underline transition-colors ml-1"
+                  >
+                    Sign In &gt;
+                  </button>
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

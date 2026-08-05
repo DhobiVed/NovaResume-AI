@@ -146,3 +146,26 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.6);
 }
+
+@keyframes floatBadgeSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(1.5deg); }
+}
+
+@keyframes floatBadgeReverse {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(7px) rotate(-1.5deg); }
+}
+
+.animate-float-badge-1 {
+  animation: floatBadgeSlow 3.8s ease-in-out infinite;
+}
+
+.animate-float-badge-2 {
+  animation: floatBadgeReverse 4.2s ease-in-out infinite;
+}
+
+.bg-dot-pattern {
+  background-image: radial-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
