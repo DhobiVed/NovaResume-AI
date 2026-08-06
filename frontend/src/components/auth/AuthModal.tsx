@@ -213,6 +213,59 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [shakingField, setShakingField] = useState<string | null>(null);
 
+  // ── DESKTOP AUTH SLIDER STATE & AUTO-PLAY ─────────────────────────────────
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const SLIDES = [
+    {
+      title: 'Start Creating Impact Right Away',
+      subtitle: "From AI resume tailoring to job application tracking, let's turn your career goals into measurable results.",
+      badge: 'ATS 98%',
+      metric1Label: 'ATS Score',
+      metric1Val: '98%',
+      metric2Label: 'JD Match Rate',
+      metric2Val: '92%',
+      meterLabel: 'Optimization Meter',
+      meterVal: '98 / 100',
+      meterWidth: '98%',
+      cardIcon: '⚡'
+    },
+    {
+      title: '100% ATS-Safe & Recruiter Approved',
+      subtitle: 'Bypass applicant tracking filters with clean vector resumes engineered for Greenhouse, Lever & Workday.',
+      badge: 'Recruiter Passed',
+      metric1Label: 'Parse Accuracy',
+      metric1Val: '100%',
+      metric2Label: 'Keywords Found',
+      metric2Val: '24 / 24',
+      meterLabel: 'ATS Compatibility Score',
+      meterVal: '100 / 100',
+      meterWidth: '100%',
+      cardIcon: '🛡️'
+    },
+    {
+      title: 'Generate Web Portfolios in 1-Click',
+      subtitle: 'Transform your resume into a self-contained, high-performance HTML web portfolio website in seconds.',
+      badge: 'Web Portfolio Pro',
+      metric1Label: 'Portfolio Style',
+      metric1Val: 'Dev Pro',
+      metric2Label: 'Load Speed',
+      metric2Val: '< 100ms',
+      meterLabel: 'Mobile & Desktop Responsive',
+      meterVal: '100%',
+      meterWidth: '100%',
+      cardIcon: '🌐'
+    }
+  ];
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [isOpen]);
+
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
   // Smooth Mount / Unmount Controller
@@ -458,64 +511,80 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-teal-400/10 blur-3xl pointer-events-none" />
             <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
 
-            <div className="relative z-10">
-              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-5 border border-white/20 shadow-lg backdrop-blur-md">
-                <Sparkles className="w-6 h-6 text-teal-200" />
+            {/* Slide Header Text with Smooth Animation */}
+            <div className="relative z-10 min-h-[130px] flex flex-col justify-center">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-4 border border-white/20 shadow-lg backdrop-blur-md">
+                <Sparkles className="w-6 h-6 text-teal-200 animate-pulse" />
               </div>
-              {mode === 'signup' ? (
-                <div className="space-y-3">
-                  <h2 className="text-3xl lg:text-4xl font-black text-white leading-tight tracking-tight">
-                    Unlock The Full Power<br />of NovaResume AI
-                  </h2>
-                  <p className="text-sm text-teal-100/80 leading-relaxed max-w-md font-medium">
-                    Just a few simple steps and you'll be ready to automate, optimize, and craft ATS-proof resumes like never before.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <h2 className="text-3xl lg:text-4xl font-black text-white leading-tight tracking-tight">
-                    Start Creating Impact<br />Right Away
-                  </h2>
-                  <p className="text-sm text-teal-100/80 leading-relaxed max-w-md font-medium">
-                    From AI resume tailoring to job application tracking, let's turn your career goals into measurable results.
-                  </p>
-                </div>
-              )}
+              <div key={currentSlide} className="space-y-2 animate-fadeIn transition-all duration-500">
+                <h2 className="text-3xl lg:text-4xl font-black text-white leading-tight tracking-tight">
+                  {SLIDES[currentSlide].title}
+                </h2>
+                <p className="text-sm text-teal-100/90 leading-relaxed max-w-md font-medium">
+                  {SLIDES[currentSlide].subtitle}
+                </p>
+              </div>
             </div>
 
-            <div className="relative my-auto py-8 flex items-center justify-center z-10">
-              <div className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl border border-white/80 text-slate-900 hover:scale-[1.02] transition-transform duration-300">
+            {/* Slide Interactive Card with Animated Transitions */}
+            <div className="relative my-auto py-6 flex items-center justify-center z-10">
+              <div
+                key={currentSlide}
+                className="w-full max-w-sm bg-white/95 backdrop-blur-md rounded-3xl p-5 shadow-2xl border border-white/80 text-slate-900 transition-all duration-500 transform hover:scale-[1.03] animate-slideUp"
+              >
                 <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-slate-100">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-xl bg-teal-600 flex items-center justify-center text-white text-xs font-black shadow-md">N</div>
+                    <div className="w-8 h-8 rounded-xl bg-teal-600 flex items-center justify-center text-white text-sm font-black shadow-md">
+                      {SLIDES[currentSlide].cardIcon}
+                    </div>
                     <span className="text-sm font-black text-slate-900">NovaResume AI Engine</span>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px]">ATS 98%</span>
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px] uppercase shadow-xs">
+                    {SLIDES[currentSlide].badge}
+                  </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2.5 mb-4">
-                  <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="text-[10px] text-slate-400 font-bold block">ATS Score</span>
-                    <span className="text-base font-black text-slate-900">98%</span>
+                  <div className="p-3 bg-slate-50/90 rounded-2xl border border-slate-100">
+                    <span className="text-[10px] text-slate-400 font-bold block truncate">{SLIDES[currentSlide].metric1Label}</span>
+                    <span className="text-base font-black text-slate-900">{SLIDES[currentSlide].metric1Val}</span>
                   </div>
-                  <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="text-[10px] text-slate-400 font-bold block">JD Match Rate</span>
-                    <span className="text-base font-black text-emerald-600">92%</span>
+                  <div className="p-3 bg-slate-50/90 rounded-2xl border border-slate-100">
+                    <span className="text-[10px] text-slate-400 font-bold block truncate">{SLIDES[currentSlide].metric2Label}</span>
+                    <span className="text-base font-black text-emerald-600">{SLIDES[currentSlide].metric2Val}</span>
                   </div>
                 </div>
                 <div className="space-y-2 pt-1">
                   <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                    <span>Optimization Meter</span>
-                    <span className="text-teal-600">98 / 100</span>
+                    <span>{SLIDES[currentSlide].meterLabel}</span>
+                    <span className="text-teal-600">{SLIDES[currentSlide].meterVal}</span>
                   </div>
                   <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                    <div className="bg-gradient-to-r from-teal-600 to-emerald-500 h-full w-[98%] rounded-full" />
+                    <div
+                      className="bg-gradient-to-r from-teal-600 to-emerald-500 h-full rounded-full transition-all duration-700 ease-out"
+                      style={{ width: SLIDES[currentSlide].meterWidth }}
+                    />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="text-xs text-teal-200/60 font-bold tracking-wider uppercase z-10">
-              © NovaResume AI 2026. Enterprise SaaS Architecture
+            {/* Slide Pagination Bullets / Dots Indicator */}
+            <div className="flex items-center justify-between z-10 pt-2 border-t border-teal-500/30">
+              <div className="flex items-center gap-2">
+                {SLIDES.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
+                      currentSlide === idx ? 'w-8 bg-white shadow-md' : 'w-2.5 bg-white/30 hover:bg-white/60'
+                    }`}
+                    aria-label={`Go to slide ${idx + 1}`}
+                  />
+                ))}
+              </div>
+              <div className="text-[11px] text-teal-200/70 font-bold tracking-wider uppercase">
+                © NovaResume AI 2026
+              </div>
             </div>
           </div>
 
