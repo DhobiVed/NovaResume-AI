@@ -704,30 +704,30 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                     onTouchEnd={handleTouchEnd}
                     onMouseDown={handleTouchStart}
                     onMouseUp={handleTouchEnd}
-                    className="relative w-full flex-1 flex items-center justify-center perspective-1000 select-none py-2 overflow-hidden"
+                    className="relative w-full flex-1 flex items-center justify-center perspective-1000 select-none py-1 overflow-hidden"
                   >
                     {/* Floating Prev Button */}
                     <button
                       onClick={handlePrev}
                       disabled={activeIndex === 0}
-                      className="absolute left-2 sm:left-6 z-40 p-3 sm:p-4 rounded-full bg-slate-900/90 hover:bg-emerald-600 text-white border border-slate-700/80 shadow-2xl backdrop-blur-md transition-all duration-200 active:scale-90 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                      className="absolute left-1 sm:left-6 z-40 p-2.5 sm:p-4 rounded-full bg-slate-900/90 hover:bg-emerald-600 text-white border border-slate-700/80 shadow-2xl backdrop-blur-md transition-all duration-200 active:scale-90 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
                       aria-label="Previous Template"
                     >
-                      <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                      <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
                     </button>
 
                     {/* Floating Next Button */}
                     <button
                       onClick={handleNext}
                       disabled={activeIndex === filteredTemplates.length - 1}
-                      className="absolute right-2 sm:right-6 z-40 p-3 sm:p-4 rounded-full bg-slate-900/90 hover:bg-emerald-600 text-white border border-slate-700/80 shadow-2xl backdrop-blur-md transition-all duration-200 active:scale-90 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                      className="absolute right-1 sm:right-6 z-40 p-2.5 sm:p-4 rounded-full bg-slate-900/90 hover:bg-emerald-600 text-white border border-slate-700/80 shadow-2xl backdrop-blur-md transition-all duration-200 active:scale-90 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
                       aria-label="Next Template"
                     >
-                      <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                      <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
                     </button>
 
                     {/* CAROUSEL CARDS STACK */}
-                    <div className="relative w-full max-w-4xl h-[280px] sm:h-[380px] flex items-center justify-center preserve-3d">
+                    <div className="relative w-full max-w-4xl h-[230px] sm:h-[380px] flex items-center justify-center preserve-3d">
                       {filteredTemplates.map((t, idx) => {
                         const offset = idx - activeIndex;
                         if (Math.abs(offset) > 3) return null; // Performance optimization
@@ -736,7 +736,7 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                         const palette = PALETTES.find(p => p.id === t.defaultPaletteId) || PALETTES[0];
                         const isFav = favorites.includes(t.id);
 
-                        // Calculate 3D transformation values based on offset distance
+                        // Calculate 3D transformation values based on offset distance & screen width
                         let translateX = '0px';
                         let scale = 1;
                         let rotateY = '0deg';
@@ -750,28 +750,28 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                           opacity = 1;
                           zIndex = 30;
                         } else if (offset === -1) {
-                          translateX = window.innerWidth <= 640 ? '-130px' : '-280px';
-                          scale = 0.82;
-                          rotateY = '20deg';
-                          opacity = 0.6;
+                          translateX = window.innerWidth <= 640 ? '-75px' : '-280px';
+                          scale = window.innerWidth <= 640 ? 0.72 : 0.82;
+                          rotateY = '22deg';
+                          opacity = window.innerWidth <= 640 ? 0.5 : 0.65;
                           zIndex = 20;
                         } else if (offset === 1) {
-                          translateX = window.innerWidth <= 640 ? '130px' : '280px';
-                          scale = 0.82;
-                          rotateY = '-20deg';
-                          opacity = 0.6;
+                          translateX = window.innerWidth <= 640 ? '75px' : '280px';
+                          scale = window.innerWidth <= 640 ? 0.72 : 0.82;
+                          rotateY = '-22deg';
+                          opacity = window.innerWidth <= 640 ? 0.5 : 0.65;
                           zIndex = 20;
                         } else if (offset === -2) {
-                          translateX = window.innerWidth <= 640 ? '-220px' : '-480px';
-                          scale = 0.66;
+                          translateX = window.innerWidth <= 640 ? '-140px' : '-480px';
+                          scale = 0.6;
                           rotateY = '35deg';
-                          opacity = 0.3;
+                          opacity = window.innerWidth <= 640 ? 0 : 0.3;
                           zIndex = 10;
                         } else if (offset === 2) {
-                          translateX = window.innerWidth <= 640 ? '220px' : '480px';
-                          scale = 0.66;
+                          translateX = window.innerWidth <= 640 ? '140px' : '480px';
+                          scale = 0.6;
                           rotateY = '-35deg';
-                          opacity = 0.3;
+                          opacity = window.innerWidth <= 640 ? 0 : 0.3;
                           zIndex = 10;
                         }
 
@@ -779,7 +779,7 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                           <div
                             key={t.id}
                             onClick={() => setActiveIndex(idx)}
-                            className={`absolute w-[200px] sm:w-[270px] h-[270px] sm:h-[370px] rounded-2xl bg-white text-slate-900 border border-slate-200 overflow-hidden flex flex-col shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] cursor-pointer group gpu-accelerated ${
+                            className={`absolute w-[160px] sm:w-[270px] h-[220px] sm:h-[370px] rounded-2xl bg-white text-slate-900 border border-slate-200 overflow-hidden flex flex-col shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] cursor-pointer group gpu-accelerated ${
                               isCentered ? 'ring-4 ring-emerald-500/60 animate-active-card' : 'hover:opacity-90'
                             }`}
                             style={{
@@ -790,8 +790,8 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                           >
                             {/* Top Badges */}
                             <div className="absolute top-2 left-2 right-2 z-40 flex justify-between items-center pointer-events-none">
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-900/90 text-emerald-400 shadow-md border border-slate-700 flex items-center gap-1">
-                                <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                              <span className="px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold bg-slate-900/90 text-emerald-400 shadow-md border border-slate-700 flex items-center gap-1">
+                                <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-400" />
                                 <span>{t.atsScore}% ATS</span>
                               </span>
 
@@ -799,10 +799,10 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                                 <button
                                   type="button"
                                   onClick={(e) => toggleFavorite(t.id, e)}
-                                  className="pointer-events-auto p-1.5 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow-lg flex items-center justify-center transition-transform active:scale-90 cursor-pointer"
+                                  className="pointer-events-auto p-1.5 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow-lg flex items-center justify-center transition-transform active:scale-90 cursor-pointer min-w-[28px] min-h-[28px]"
                                   title={isFav ? 'Remove from favorites' : 'Save to favorites'}
                                 >
-                                  <Heart className={`w-4 h-4 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
+                                  <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
                                 </button>
                               )}
                             </div>
@@ -823,12 +823,12 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                             </div>
 
                             {/* Minimal Header on Card */}
-                            <div className="p-3 bg-white border-t border-slate-100 flex items-center justify-between">
-                              <div className="truncate pr-2">
-                                <h4 className="font-black text-xs text-slate-900 truncate">{t.name}</h4>
-                                <p className="text-[10px] text-slate-500 font-bold truncate">{t.category}</p>
+                            <div className="p-2 sm:p-3 bg-white border-t border-slate-100 flex items-center justify-between">
+                              <div className="truncate pr-1">
+                                <h4 className="font-black text-[11px] sm:text-xs text-slate-900 truncate">{t.name}</h4>
+                                <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold truncate">{t.category}</p>
                               </div>
-                              <div className="w-3.5 h-3.5 rounded-full border border-slate-300 flex-shrink-0" style={{ backgroundColor: palette.primary }} />
+                              <div className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border border-slate-300 flex-shrink-0" style={{ backgroundColor: palette.primary }} />
                             </div>
                           </div>
                         );
@@ -838,59 +838,59 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
 
                   {/* ── ACTIVE TEMPLATE INFORMATION & ACTION PANEL (BOTTOM) ── */}
                   {activeTemplate && (
-                    <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-5 backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4 z-20 transition-all duration-300">
+                    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl sm:rounded-3xl p-3 sm:p-5 backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4 z-20 transition-all duration-300">
                       
                       {/* Template Meta Details */}
-                      <div className="space-y-2 text-center md:text-left flex-1">
+                      <div className="space-y-1.5 text-center md:text-left flex-1 w-full">
                         
                         {/* Name & Rating */}
-                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
-                          <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
+                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                          <h3 className="text-sm sm:text-xl font-black text-white tracking-tight">
                             {activeTemplate.name}
                           </h3>
-                          <div className="flex items-center gap-1 text-amber-400">
+                          <div className="flex items-center gap-0.5 text-amber-400">
                             {[...Array(5)].map((_, i) => (
-                              <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
+                              <Star key={i} className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-amber-400" />
                             ))}
-                            <span className="text-xs font-bold text-slate-300 ml-1">5.0</span>
+                            <span className="text-[10px] sm:text-xs font-bold text-slate-300 ml-1">5.0</span>
                           </div>
                         </div>
 
                         {/* Smart Badges */}
-                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5">
                           {getSmartBadges(activeTemplate).map((b, i) => (
-                            <span key={i} className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${b.bg} ${b.text} ${b.border}`}>
+                            <span key={i} className={`px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold border ${b.bg} ${b.text} ${b.border}`}>
                               {b.label}
                             </span>
                           ))}
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                            🛡️ ATS Score: {activeTemplate.atsScore}%
+                          <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                            🛡️ ATS: {activeTemplate.atsScore}%
                           </span>
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
                             📥 {getDownloadsCount(activeTemplate.id)}
                           </span>
                         </div>
 
                         {/* Suitable For Description */}
-                        <p className="text-xs text-slate-400 font-medium line-clamp-1">
+                        <p className="text-[11px] sm:text-xs text-slate-400 font-medium line-clamp-1">
                           🎯 {getSuitableFor(activeTemplate)} — {activeTemplate.description}
                         </p>
                       </div>
 
                       {/* Action Buttons Bar */}
-                      <div className="flex items-center gap-2.5 w-full md:w-auto flex-shrink-0">
+                      <div className="flex items-center gap-2 w-full md:w-auto flex-shrink-0">
                         
                         {/* Favorite Button */}
                         <button
                           onClick={() => toggleFavorite(activeTemplate.id)}
-                          className={`p-3 rounded-2xl border transition-all active:scale-95 cursor-pointer min-h-[46px] min-w-[46px] flex items-center justify-center ${
+                          className={`p-2.5 rounded-xl sm:rounded-2xl border transition-all active:scale-95 cursor-pointer min-h-[40px] sm:min-h-[46px] min-w-[40px] sm:min-w-[46px] flex items-center justify-center ${
                             favorites.includes(activeTemplate.id)
                               ? 'bg-rose-500/20 border-rose-500/40 text-rose-400'
                               : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
                           }`}
                           title="Save to Favorites"
                         >
-                          <Heart className={`w-5 h-5 ${favorites.includes(activeTemplate.id) ? 'fill-rose-500 text-rose-500' : ''}`} />
+                          <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${favorites.includes(activeTemplate.id) ? 'fill-rose-500 text-rose-500' : ''}`} />
                         </button>
 
                         {/* Fullscreen Preview Button */}
@@ -899,19 +899,19 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                             setPreviewModalTemplate(activeTemplate);
                             setModalZoom(0.70);
                           }}
-                          className="flex-1 md:flex-initial px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs border border-slate-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
+                          className="flex-1 md:flex-initial px-3.5 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs border border-slate-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[40px] sm:min-h-[46px]"
                         >
-                          <Eye className="w-4 h-4 text-emerald-400" />
-                          <span>Quick Preview</span>
+                          <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
+                          <span>Preview</span>
                         </button>
 
                         {/* Use Template CTA Button */}
                         <button
                           onClick={() => onSelectTemplate(activeTemplate)}
-                          className="flex-1 md:flex-initial px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-950 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
+                          className="flex-1 md:flex-initial px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-950 transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[40px] sm:min-h-[46px]"
                         >
-                          <span>Use This Template</span>
-                          <ArrowRight className="w-4 h-4" />
+                          <span>Use Template</span>
+                          <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </button>
                       </div>
                     </div>
