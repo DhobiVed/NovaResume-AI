@@ -108,12 +108,25 @@ export const NovaDashboard: React.FC<NovaDashboardProps> = ({
   return (
     <div className="flex-1 overflow-y-auto scroll-smooth p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
       
-      {/* Hero Header with Emerald, Deep Teal, Royal Indigo & Forest Green Palette */}
-      <div className="relative rounded-3xl p-6 md:p-10 bg-gradient-to-r from-emerald-950 via-teal-950 via-indigo-950 to-green-950 text-white shadow-2xl overflow-hidden border border-teal-500/30">
+      {/* Hero Header with Video Background */}
+      <div className="relative rounded-3xl overflow-hidden text-white shadow-2xl border border-teal-500/30" style={{ minHeight: '160px' }}>
+        {/* Background Video */}
+        <video
+          src="/promo.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover opacity-40"
+        />
+        {/* Dark Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/95 via-teal-950/85 to-green-950/80 pointer-events-none" />
+        {/* Decorative Blobs */}
         <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-10 -top-10 w-70 h-70 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
         
-        <div className="relative z-10 max-w-3xl space-y-3">
+        {/* Content */}
+        <div className="relative z-10 p-6 md:p-10 max-w-3xl space-y-3">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30 backdrop-blur-md">
             <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" />
             <span>NovaResume AI 2.0 Enterprise</span>

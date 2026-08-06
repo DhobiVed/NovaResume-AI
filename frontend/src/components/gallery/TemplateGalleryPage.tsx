@@ -579,91 +579,80 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
         <main className="flex-1 flex flex-col h-full overflow-hidden bg-slate-950 relative">
 
           {/* TOP FIXED MARKETPLACE BAR WITH VIEW MODE SWITCHER */}
-          <div className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 p-3 sm:p-4 flex flex-col gap-3 flex-shrink-0 z-20 shadow-lg">
+          <div className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-3 pt-2.5 pb-2 sm:p-4 flex flex-col gap-2 flex-shrink-0 z-20 shadow-lg">
             
-            {/* Upper Bar: Category Chips & View Switcher */}
-            <div className="flex items-center justify-between gap-2">
-              
-              {/* Quick Category Chips Carousel */}
-              <div className="flex-1 overflow-x-auto scrollbar-none flex items-center gap-2 py-0.5">
-                {QUICK_CATEGORY_CHIPS.map(chip => (
-                  <button
-                    key={chip.id}
-                    onClick={() => {
-                      setSelectedCategory(chip.id);
-                      if (chip.id === 'Favorites') setShowFavoritesOnly(true);
-                      else setShowFavoritesOnly(false);
-                    }}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 cursor-pointer ${
-                      selectedCategory === chip.id
-                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-950 ring-2 ring-emerald-400/40'
-                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700/60'
-                    }`}
-                  >
-                    {chip.label}
-                  </button>
-                ))}
-              </div>
+            {/* Row 1 on mobile: Category Chips (full width, scrollable) */}
+            <div className="flex-1 overflow-x-auto scrollbar-none flex items-center gap-1.5 sm:gap-2 py-0.5">
+              {QUICK_CATEGORY_CHIPS.map(chip => (
+                <button
+                  key={chip.id}
+                  onClick={() => {
+                    setSelectedCategory(chip.id);
+                    if (chip.id === 'Favorites') setShowFavoritesOnly(true);
+                    else setShowFavoritesOnly(false);
+                  }}
+                  className={`px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 cursor-pointer ${
+                    selectedCategory === chip.id
+                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-950 ring-2 ring-emerald-400/40'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700/60'
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
 
-              {/* View Mode Toggle Switcher Buttons (Cover Flow vs Normal Grid View) */}
-              <div className="flex items-center bg-slate-950 p-1 rounded-2xl border border-slate-800 flex-shrink-0">
+            {/* Row 2: View Switcher (left) + Filter Button (right) */}
+            <div className="flex items-center justify-between gap-2">
+
+              {/* View Mode Toggle Switcher */}
+              <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => setViewMode('coverflow')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-extrabold flex items-center gap-1 sm:gap-1.5 transition-all cursor-pointer ${
                     viewMode === 'coverflow'
                       ? 'bg-emerald-600 text-white shadow-md'
                       : 'text-slate-400 hover:text-white'
                   }`}
                   title="3D Cover Flow Carousel View"
                 >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">3D Cover Flow</span>
+                  <Layers className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <span>3D Flow</span>
                 </button>
                 
                 <button
                   type="button"
                   onClick={() => setViewMode('grid')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-extrabold flex items-center gap-1 sm:gap-1.5 transition-all cursor-pointer ${
                     viewMode === 'grid'
                       ? 'bg-emerald-600 text-white shadow-md'
                       : 'text-slate-400 hover:text-white'
                   }`}
                   title="Normal Scrollable Grid View"
                 >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                  <span>Normal View</span>
+                  <LayoutGrid className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <span>Grid View</span>
                 </button>
               </div>
+
+              {/* Results count */}
+              <span className="text-[11px] sm:text-xs font-bold text-slate-400 flex-1 text-center">
+                <strong className="text-emerald-400">{filteredTemplates.length}</strong> Templates
+                {showFavoritesOnly && <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[9px] border border-rose-500/30">Favs</span>}
+              </span>
 
               {/* Mobile Filter Sheet Trigger */}
               <button
                 onClick={() => setIsMobileFilterOpen(true)}
-                className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 flex-shrink-0 min-h-[40px] cursor-pointer"
+                className="lg:hidden flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-[11px] rounded-xl border border-slate-700 flex-shrink-0 min-h-[36px] cursor-pointer"
               >
-                <SlidersHorizontal className="w-4 h-4 text-emerald-400" />
-                <span>Filters</span>
+                <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Filter</span>
                 {(selectedCategory !== 'All' || searchQuery || selectedColor || showFavoritesOnly) && (
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 )}
               </button>
-            </div>
-
-            {/* Results Count & Shortcuts Info */}
-            <div className="flex items-center justify-between text-xs font-bold text-slate-400 px-1">
-              <div className="flex items-center gap-2">
-                <span>Showing <strong className="text-emerald-400">{filteredTemplates.length}</strong> Templates</span>
-                {showFavoritesOnly && <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[10px] border border-rose-500/30">Favorites Only</span>}
-                {selectedColor && <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] border border-emerald-500/30">Color Filtered</span>}
-              </div>
-
-              <div className="hidden sm:flex items-center gap-3 text-[11px]">
-                {viewMode === 'coverflow' ? (
-                  <span className="text-slate-500 font-mono">Use ← → keys, wheel or swipe to slide</span>
-                ) : (
-                  <span className="text-slate-500 font-mono">Normal Scroll Grid View</span>
-                )}
-              </div>
             </div>
           </div>
 
@@ -671,7 +660,7 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
           {viewMode === 'coverflow' ? (
             
             /* ── 3D COVER FLOW VIEW ── */
-            <div className="flex-1 flex flex-col justify-between overflow-hidden relative p-3 sm:p-6">
+            <div className="flex-1 flex flex-col justify-between overflow-hidden relative p-2 sm:p-6">
               
               {filteredTemplates.length === 0 ? (
                 <div className="bg-slate-900 rounded-3xl p-8 sm:p-12 border border-slate-800 text-center space-y-4 max-w-md mx-auto my-auto shadow-2xl">

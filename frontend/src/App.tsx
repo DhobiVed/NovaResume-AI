@@ -119,6 +119,9 @@ export const AppContent: React.FC = () => {
         setUser(redirectUser);
         setIsAuthOpen(false);
         setShowIntroVideo(false);
+        // Redirect to dashboard after mobile Google sign-in
+        setSelectedTemplate(null);
+        setCurrentRoute('dashboard');
       }
     });
 
@@ -145,6 +148,9 @@ export const AppContent: React.FC = () => {
     setUser(loggedInUser);
     setIsAuthOpen(false);
     setShowIntroVideo(false);
+    // ── Redirect to Dashboard on Login ──
+    setSelectedTemplate(null);
+    setCurrentRoute('dashboard');
 
     // Trigger 3D Intro Video ONE TIME ONLY after login on desktop/laptop (>=1024px)
     if (window.innerWidth >= 1024) {
