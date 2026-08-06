@@ -127,10 +127,10 @@ export const NovaDashboard: React.FC<NovaDashboardProps> = ({
             Create designed vector graphic resumes, analyze ATS compatibility, match job descriptions, and export matching Cover Letters & Web Portfolios.
           </p>
 
-          <div className="pt-2 flex flex-wrap gap-3">
+          <div className="pt-2 flex flex-col sm:flex-row flex-wrap gap-2.5">
             <button
               onClick={onCreateNew}
-              className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs md:text-sm font-extrabold shadow-lg shadow-emerald-900/40 transition-transform active:scale-95 cursor-pointer min-h-[44px]"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs md:text-sm font-extrabold shadow-lg shadow-emerald-900/40 transition-transform active:scale-95 cursor-pointer min-h-[44px]"
             >
               <Plus className="w-4 h-4" />
               <span>Create New Resume</span>
@@ -138,7 +138,7 @@ export const NovaDashboard: React.FC<NovaDashboardProps> = ({
 
             <button
               onClick={onOpenImport}
-              className="flex items-center gap-2 px-5 py-2.5 bg-teal-900/60 hover:bg-teal-800/80 text-teal-100 border border-teal-400/40 rounded-xl text-xs md:text-sm font-extrabold backdrop-blur-md transition-colors cursor-pointer min-h-[44px]"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-teal-900/60 hover:bg-teal-800/80 text-teal-100 border border-teal-400/40 rounded-xl text-xs md:text-sm font-extrabold backdrop-blur-md transition-colors cursor-pointer min-h-[44px]"
             >
               <Upload className="w-4 h-4 text-teal-300" />
               <span>Import Resume (PDF / DOCX)</span>
@@ -147,12 +147,12 @@ export const NovaDashboard: React.FC<NovaDashboardProps> = ({
         </div>
       </div>
 
-      {/* Feature Quick Tools Bar with Emerald, Deep Teal, Royal Indigo & Forest Green Icons */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      {/* Feature Quick Tools Bar */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-4">
         {[
-          { title: 'ATS Analyzer', desc: 'Score & Keyword Matcher', icon: ShieldCheck, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200', action: onOpenAtsAnalyzer },
-          { title: 'Cover Letter AI', desc: 'Tailored Job Applications', icon: Briefcase, color: 'text-teal-600 bg-teal-50 dark:bg-teal-950/60 border-teal-200', action: onOpenCoverLetter },
-          { title: 'Web Portfolio', desc: 'Personal Webpage Generator', icon: Zap, color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200', action: onOpenPortfolio },
+          { title: 'ATS Analyzer', desc: 'Score & JD Matcher', icon: ShieldCheck, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200', action: onOpenAtsAnalyzer },
+          { title: 'Cover Letter AI', desc: 'Tailored Applications', icon: Briefcase, color: 'text-teal-600 bg-teal-50 dark:bg-teal-950/60 border-teal-200', action: onOpenCoverLetter },
+          { title: 'Web Portfolio', desc: 'Personal Web Generator', icon: Zap, color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200', action: onOpenPortfolio },
           { title: '50+ Templates', desc: 'Canva & Graphic Styles', icon: Award, color: 'text-green-700 bg-green-50 dark:bg-green-950/60 border-green-200', action: onCreateNew },
         ].map((tool, idx) => {
           const Icon = tool.icon;
@@ -160,17 +160,17 @@ export const NovaDashboard: React.FC<NovaDashboardProps> = ({
             <div
               key={idx}
               onClick={tool.action}
-              className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+              className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
             >
               <div className="flex justify-between items-center mb-2">
-                <div className={`p-2.5 rounded-xl border ${tool.color}`}>
-                  <Icon className="w-5 h-5" />
+                <div className={`p-2 rounded-xl border ${tool.color}`}>
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
-                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-1 transition-transform" />
               </div>
               <div>
-                <h3 className="font-bold text-xs md:text-sm text-slate-900 dark:text-slate-100">{tool.title}</h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{tool.desc}</p>
+                <h3 className="font-bold text-xs md:text-sm text-slate-900 dark:text-slate-100 truncate">{tool.title}</h3>
+                <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{tool.desc}</p>
               </div>
             </div>
           );

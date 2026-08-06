@@ -24,14 +24,14 @@ export const DocGenModal: React.FC<DocGenModalProps> = ({ isOpen, onClose }) => 
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-xl shadow-2xl p-6 relative animate-in fade-in zoom-in duration-200">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+    <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-0 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 border-0 sm:border border-slate-200 dark:border-slate-800 rounded-none sm:rounded-3xl w-full max-w-xl shadow-2xl p-4 sm:p-6 relative flex flex-col h-full sm:h-auto overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Document Generator Engine</h2>
+            <FileText className="w-5 h-5 text-primary flex-shrink-0" />
+            <h2 className="text-sm sm:text-lg font-bold text-slate-800 dark:text-slate-100">Document Generator Engine</h2>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-500">
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl text-slate-500 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>

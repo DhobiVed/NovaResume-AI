@@ -57,20 +57,20 @@ export const AtsAnalyzerModal: React.FC<AtsAnalyzerModalProps> = ({ isOpen, onCl
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl w-full max-w-4xl shadow-2xl p-4 sm:p-6 relative flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-0 sm:p-4">
+      <div className="bg-white border-0 sm:border border-slate-200 rounded-none sm:rounded-3xl w-full max-w-4xl shadow-2xl p-3 sm:p-6 relative flex flex-col h-full sm:h-[92vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-emerald-100 text-emerald-700">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 sm:p-2.5 rounded-2xl bg-emerald-100 text-emerald-700 flex-shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-extrabold text-slate-900">ATS Score Analyzer & Job Description Matcher</h2>
-              <p className="text-xs text-slate-500">Comprehensive ATS compliance, formatting audit, and job description alignment</p>
+              <h2 className="text-sm sm:text-lg font-extrabold text-slate-900 leading-tight">ATS Score Analyzer & JD Matcher</h2>
+              <p className="text-[11px] sm:text-xs text-slate-500 line-clamp-1">ATS compliance, formatting audit, and job description alignment</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg text-slate-500">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -78,14 +78,14 @@ export const AtsAnalyzerModal: React.FC<AtsAnalyzerModalProps> = ({ isOpen, onCl
         {/* Tailor Notice */}
         {tailorNotice && (
           <div className="mt-3 p-2.5 bg-emerald-50 text-emerald-800 text-xs font-semibold rounded-xl border border-emerald-200 flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-600" />
+            <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
             <span>{tailorNotice}</span>
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto py-4 space-y-5 pr-1 text-xs">
+        <div className="flex-1 overflow-y-auto py-3 sm:py-4 space-y-4 pr-1 text-xs">
           {/* Target Job Description Input */}
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+          <div className="p-3 sm:p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
             <label className="font-bold text-slate-800 block">
               Paste Target Job Description (Job Description Matcher)
             </label>
@@ -96,18 +96,18 @@ export const AtsAnalyzerModal: React.FC<AtsAnalyzerModalProps> = ({ isOpen, onCl
               rows={2}
               className="w-full p-2.5 text-xs rounded-xl bg-white border border-slate-200 text-slate-900"
             />
-            <div className="flex gap-2 pt-1">
+            <div className="flex flex-col sm:flex-row gap-2 pt-1">
               <button
                 onClick={handleAnalyze}
                 disabled={isAnalyzing}
-                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-xs cursor-pointer min-h-[40px]"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
                 <span>Run Full ATS & JD Match Audit</span>
               </button>
               <button
                 onClick={handleAutoTailor}
-                className="flex items-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold text-xs shadow"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold text-xs shadow-xs cursor-pointer min-h-[40px]"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                 <span>1-Click AI Auto-Tailor Resume</span>

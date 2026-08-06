@@ -39,51 +39,51 @@ export const ResumeMentorModal: React.FC<ResumeMentorModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-5">
-      <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-5xl shadow-2xl p-4 sm:p-6 relative flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-0 sm:p-5">
+      <div className="bg-white border-0 sm:border border-slate-200 rounded-none sm:rounded-3xl w-full max-w-5xl shadow-2xl p-3 sm:p-6 relative flex flex-col h-full sm:h-[92vh] overflow-hidden">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 sm:p-2.5 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md flex-shrink-0">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
-                <span>AI Resume Mentor & Career Advisor</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase tracking-wider">
+              <h2 className="text-sm sm:text-lg font-black text-slate-900 flex items-center gap-1.5 flex-wrap">
+                <span>AI Resume Mentor</span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-extrabold uppercase tracking-wider">
                   Deep Review Engine
                 </span>
               </h2>
-              <p className="text-xs text-slate-500">Comprehensive AI analysis, recruiter readability scores, and 1-click improvements</p>
+              <p className="text-[11px] sm:text-xs text-slate-500 line-clamp-1">AI analysis, recruiter readability scores & 1-click fixes</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-500 transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl my-3 flex-shrink-0">
+        <div className="flex overflow-x-auto gap-1 bg-slate-100 p-1 rounded-xl my-2.5 flex-shrink-0 no-scrollbar scrollbar-none">
           {[
             { id: 'overview', label: 'Overall Audit & Scores', icon: TrendingUp },
             { id: 'suggestions', label: 'Improvement Suggestions', icon: Lightbulb },
             { id: 'action_verbs', label: 'Power Action Verbs', icon: Zap },
-            { id: 'roadmap', label: 'Career & Skills Roadmap', icon: Award }
+            { id: 'roadmap', label: 'Career Roadmap', icon: Award }
           ].map(tab => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                   activeTab === tab.id
                     ? 'bg-white text-emerald-700 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{tab.label}</span>
+                <span>{tab.label}</span>
               </button>
             );
           })}
