@@ -49,12 +49,13 @@ const PREVIEW_SAMPLE_DATA: ResumeData = {
 
 const QUICK_CATEGORY_CHIPS = [
   { id: 'All', label: 'All Templates' },
+  { id: 'Favorites', label: '❤️ Favorites' },
   { id: 'Modern', label: '✨ Modern' },
   { id: 'ATS Professional', label: '🛡️ ATS Safe' },
-  { id: 'Student', label: '🎓 Student' },
-  { id: 'Executive', label: '💼 Executive' },
   { id: 'Software Engineer', label: '💻 Software' },
   { id: 'AI Engineer', label: '🤖 AI & ML' },
+  { id: 'Student', label: '🎓 Student' },
+  { id: 'Executive', label: '💼 Executive' },
   { id: 'Corporate', label: '🏢 Corporate' },
   { id: 'Creative', label: '🎨 Creative' },
   { id: 'Minimal', label: '🌿 Minimal' },
@@ -206,7 +207,8 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
 
   // Filter Logic
   const filteredTemplates = ALL_TEMPLATES.filter(t => {
-    const matchesCategory = selectedCategory === 'All' || 
+    const matchesCategory = selectedCategory === 'All' ? true :
+                            selectedCategory === 'Favorites' ? favorites.includes(t.id) :
                             t.category.toLowerCase().includes(selectedCategory.toLowerCase()) ||
                             (selectedCategory === 'ATS Professional' && t.atsScore >= 98);
 
@@ -225,7 +227,7 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
 
     const matchesColor = !selectedColor || t.defaultPaletteId === selectedColor;
 
-    const matchesFav = !showFavoritesOnly || favorites.includes(t.id);
+    const matchesFav = (!showFavoritesOnly && selectedCategory !== 'Favorites') || favorites.includes(t.id);
 
     return matchesCategory && matchesSearch && matchesLayout && matchesAts && matchesColor && matchesFav;
   });
@@ -531,19 +533,25 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
             className="flex-1 overflow-y-auto p-3 sm:p-6 smooth-scroll-container"
           >
             {filteredTemplates.length === 0 ? (
-              <div className="bg-white rounded-3xl p-12 border border-slate-200 text-center space-y-4 max-w-md mx-auto my-12 shadow-sm">
-                <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
-                  <Search className="w-6 h-6" />
+              <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 text-center space-y-4 max-w-md mx-auto my-12 shadow-sm">
+                <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center mx-auto text-2xl shadow-inner">
+                  {selectedCategory === 'Favorites' ? '❤️' : <Search className="w-6 h-6 text-slate-400" />}
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-base text-slate-900">No matching templates found</h3>
-                  <p className="text-slate-500 font-medium text-xs mt-1">Try clearing your filters or searching for different keywords.</p>
+                  <h3 className="font-extrabold text-base text-slate-900">
+                    {selectedCategory === 'Favorites' ? 'No Saved Favorites Yet' : 'No matching templates found'}
+                  </h3>
+                  <p className="text-slate-500 font-medium text-xs mt-1 leading-relaxed">
+                    {selectedCategory === 'Favorites'
+                      ? 'Tap the heart icon ❤️ on any template card to save it to your favorites.'
+                      : 'Try clearing your filters or searching for different keywords.'}
+                  </p>
                 </div>
                 <button
                   onClick={resetAllFilters}
-                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-transform active:scale-95"
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-transform active:scale-95 cursor-pointer"
                 >
-                  Reset All Filters
+                  {selectedCategory === 'Favorites' ? 'Browse All 80+ Templates' : 'Reset All Filters'}
                 </button>
               </div>
             ) : (
@@ -567,12 +575,11 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                         {/* Favorite Button */}
                         <button
                           onClick={(e) => toggleFavorite(t.id, e)}
-                          onTouchEnd={(e) => toggleFavorite(t.id, e)}
-                          className="z-30 relative pointer-events-auto p-1.5 min-w-[34px] min-h-[34px] rounded-full bg-white/95 hover:bg-white text-slate-700 shadow-md border border-slate-200/90 flex items-center justify-center transition-transform active:scale-90 touch-manipulation cursor-pointer"
+                          className="z-30 relative pointer-events-auto p-1.5 min-w-[36px] min-h-[36px] rounded-full bg-white/95 hover:bg-white text-slate-700 shadow-md border border-slate-200/90 flex items-center justify-center transition-transform active:scale-90 cursor-pointer"
                           title={isFav ? 'Remove from favorites' : 'Save to favorites'}
                           aria-label="Toggle Favorite"
                         >
-                          <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
+                          <Heart className={`w-4 h-4 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
                         </button>
                       </div>
 

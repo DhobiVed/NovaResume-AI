@@ -14,7 +14,7 @@ import type { UserProfile } from './components/auth/AuthModal';
 import type { TemplateDefinition } from './lib/resumeTypes';
 import { NovaDashboard } from './components/dashboard/NovaDashboard';
 import { ALL_TEMPLATES } from './lib/templateData';
-import { Plus, ShieldCheck, Briefcase, Globe, Menu, X, Sparkles, History, Upload, Layout } from 'lucide-react';
+import { Plus, ShieldCheck, Briefcase, Globe, Menu, X, Sparkles, History, Upload, Layout, Film } from 'lucide-react';
 import { firebaseAuthService } from './services/firebaseAuth';
 
 export const AppContent: React.FC = () => {
@@ -132,10 +132,28 @@ export const AppContent: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
+  const [showDesktopIntroVideo, setShowDesktopIntroVideo] = useState(false);
+
+  const handleCloseDesktopIntroVideo = () => {
+    setShowDesktopIntroVideo(false);
+    try {
+      localStorage.setItem('seen_intro_video_v1', 'true');
+    } catch {}
+  };
+
   const handleLoginSuccess = (loggedInUser: UserProfile) => {
     setUser(loggedInUser);
     setIsAuthOpen(false);
     setShowIntroVideo(false);
+
+    // Trigger 3D Intro Video ONE TIME ONLY after login on desktop/laptop (>=1024px)
+    if (window.innerWidth >= 1024) {
+      try {
+        if (localStorage.getItem('seen_intro_video_v1') !== 'true') {
+          setTimeout(() => setShowDesktopIntroVideo(true), 400);
+        }
+      } catch {}
+    }
   };
 
   const handleLogout = async () => {
@@ -395,8 +413,22 @@ export const AppContent: React.FC = () => {
               </div>
             )}
 
-            <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider mb-2">Navigation Menu</h3>
-            
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setSelectedTemplate(null);
+                setCurrentRoute('dashboard');
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm min-h-[44px] ${
+                currentRoute === 'dashboard' && !selectedTemplate
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+              }`}
+            >
+              <Layout className="w-5 h-5 text-teal-600" />
+              <span>Dashboard &amp; Analytics</span>
+            </button>
+
             <button
               onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setSelectedTemplate(ALL_TEMPLATES[0])); }}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm min-h-[44px]"
@@ -541,7 +573,82 @@ export const AppContent: React.FC = () => {
                 onClick={closeIntroVideo}
                 className="absolute bottom-4 right-4 px-4 py-2 bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-extrabold rounded-xl backdrop-blur-md border border-slate-700 shadow-xl flex items-center gap-1.5 z-20 transition-transform active:scale-95"
               >
-                <span>Skip & Start Building ➔</span>
+                <span>Skip &amp; Start Building ➔</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── DESKTOP 3D INTRO SHOWCASE VIDEO MODAL (1-TIME AFTER LOGIN ON DESKTOP/LAPTOP) ── */}
+      {showDesktopIntroVideo && (
+        <div
+          onClick={handleCloseDesktopIntroVideo}
+          className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[100000] flex items-center justify-center p-6 animate-scale-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-gradient-to-br from-slate-900 via-slate-950 to-[#04282f] rounded-3xl max-w-4xl w-full overflow-hidden shadow-[0_25px_60px_-15px_rgba(16,185,129,0.35)] border-2 border-emerald-500/40 relative flex flex-col transform-gpu hover:scale-[1.005] transition-all duration-300"
+          >
+            {/* Header */}
+            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/80 backdrop-blur-md z-20">
+              <div className="flex items-center gap-3 text-white">
+                <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-green-500 flex items-center justify-center font-black text-xl shadow-lg text-white">
+                  <Film className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-white flex items-center gap-2">
+                    <span>NovaResume AI Platform Showcase</span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-extrabold border border-emerald-500/30">
+                      3D Overview
+                    </span>
+                  </h3>
+                  <span className="text-[10px] text-teal-300 font-bold uppercase tracking-wider block">One-time intro overview for desktop</span>
+                </div>
+              </div>
+
+              <button
+                onClick={handleCloseDesktopIntroVideo}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md flex items-center gap-2 transition-transform active:scale-95 cursor-pointer"
+              >
+                <span>Explore Platform 🚀</span>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Video Canvas Box */}
+            <div className="relative aspect-video bg-black flex items-center justify-center overflow-hidden">
+              <video
+                src="/promo.mp4"
+                autoPlay
+                muted
+                playsInline
+                loop
+                className="w-full h-full object-cover pointer-events-none"
+              />
+              
+              {/* Floating 3D Badges */}
+              <div className="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md text-white text-xs font-black px-3.5 py-1.5 rounded-full shadow-lg border border-slate-700 flex items-center gap-1.5 animate-float-badge-1">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>AI Resume Mentor</span>
+              </div>
+
+              <div className="absolute top-4 right-4 bg-slate-900/80 backdrop-blur-md text-white text-xs font-black px-3.5 py-1.5 rounded-full shadow-lg border border-slate-700 flex items-center gap-1.5 animate-float-badge-2">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>100% ATS Passed</span>
+              </div>
+
+              <div className="absolute bottom-4 left-4 bg-slate-900/80 backdrop-blur-md text-white text-xs font-black px-3.5 py-1.5 rounded-full shadow-lg border border-slate-700 flex items-center gap-1.5 animate-float-badge-2">
+                <Globe className="w-3.5 h-3.5 text-teal-400" />
+                <span>Web Portfolio Generator</span>
+              </div>
+
+              {/* Bottom Right Dismiss Button */}
+              <button
+                onClick={handleCloseDesktopIntroVideo}
+                className="absolute bottom-4 right-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-xl flex items-center gap-1.5 z-20 cursor-pointer transition-transform active:scale-95"
+              >
+                <span>Explore Platform ➔</span>
               </button>
             </div>
           </div>
