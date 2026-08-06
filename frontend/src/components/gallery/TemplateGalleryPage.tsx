@@ -190,17 +190,24 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
   const [visibleCount, setVisibleCount] = useState(16);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  const [favToast, setFavToast] = useState<string | null>(null);
+
   const toggleFavorite = (id: string, e?: React.SyntheticEvent) => {
     if (e) {
       e.stopPropagation();
+      if ('preventDefault' in e) e.preventDefault();
     }
     setFavorites(prev => {
-      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      const isAlreadyFav = prev.includes(id);
+      const next = isAlreadyFav ? prev.filter(x => x !== id) : [...prev, id];
       try {
         localStorage.setItem('fav_templates', JSON.stringify(next));
       } catch (err) {
         console.error(err);
       }
+      const t = ALL_TEMPLATES.find(x => x.id === id);
+      setFavToast(isAlreadyFav ? `Removed "${t?.name || 'Template'}" from Favorites` : `Saved "${t?.name || 'Template'}" to ❤️ Favorites!`);
+      setTimeout(() => setFavToast(null), 2500);
       return next;
     });
   };
@@ -566,7 +573,7 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                       className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-200 overflow-hidden flex flex-col group relative gpu-accelerated"
                     >
                       {/* ATS & Favorite Badge Overlay */}
-                      <div className="absolute top-2 left-2 right-2 z-10 flex justify-between items-center pointer-events-none">
+                      <div className="absolute top-2 left-2 right-2 z-40 flex justify-between items-center pointer-events-none">
                         <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold bg-white/95 text-emerald-800 shadow-md border border-emerald-200 flex items-center gap-1">
                           <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600" />
                           <span>{t.atsScore}% ATS</span>
@@ -574,12 +581,17 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
 
                         {/* Favorite Button */}
                         <button
-                          onClick={(e) => toggleFavorite(t.id, e)}
-                          className="z-30 relative pointer-events-auto p-1.5 min-w-[36px] min-h-[36px] rounded-full bg-white/95 hover:bg-white text-slate-700 shadow-md border border-slate-200/90 flex items-center justify-center transition-transform active:scale-90 cursor-pointer"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            toggleFavorite(t.id, e);
+                          }}
+                          className="z-50 relative pointer-events-auto p-2 min-w-[38px] min-h-[38px] rounded-full bg-white/95 hover:bg-white text-slate-700 shadow-md border border-slate-200/90 flex items-center justify-center transition-transform active:scale-90 cursor-pointer hover:scale-110"
                           title={isFav ? 'Remove from favorites' : 'Save to favorites'}
                           aria-label="Toggle Favorite"
                         >
-                          <Heart className={`w-4 h-4 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
+                          <Heart className={`w-4 h-4 transition-colors ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
                         </button>
                       </div>
 
@@ -875,6 +887,14 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
           </div>
         </div>,
         document.body
+      )}
+
+      {/* Favorite Toast Notification */}
+      {favToast && (
+        <div className="fixed bottom-6 right-6 z-[999999] bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl border border-emerald-500/50 flex items-center gap-2.5 text-xs font-black animate-scale-in backdrop-blur-md">
+          <Heart className="w-4 h-4 text-rose-500 fill-rose-500 flex-shrink-0" />
+          <span>{favToast}</span>
+        </div>
       )}
 
       {/* Developer Branding Footer */}
