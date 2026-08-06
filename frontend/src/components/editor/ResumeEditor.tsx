@@ -1345,27 +1345,43 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
         </div>
       )}
 
-      {/* ── TEMPLATE SWITCHER MODAL ── */}
+      {/* ── TEMPLATE SWITCHER FULL SCREEN MOBILE / DESKTOP MODAL ── */}
       {isTemplateModalOpen && (
-        <div className="fixed inset-0 z-[99999] overflow-y-auto flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <div>
-                <h2 className="text-lg font-black text-slate-900">Switch Resume Template</h2>
-                <p className="text-xs text-slate-500 font-semibold">Your resume candidate data will be preserved 100%.</p>
+        <div className="fixed inset-0 z-[99999] overflow-hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 animate-fadeIn">
+          <div className="bg-slate-50 sm:bg-white rounded-none sm:rounded-3xl border-0 sm:border border-slate-200 shadow-2xl w-full h-full sm:h-auto sm:max-w-4xl sm:max-h-[88vh] flex flex-col overflow-hidden">
+            
+            {/* Top Navigation Bar Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-200 flex justify-between items-center bg-white sticky top-0 z-30 flex-shrink-0 shadow-xs">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setIsTemplateModalOpen(false)}
+                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1 cursor-pointer min-h-[40px]"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="hidden xs:inline">Back to Editor</span>
+                </button>
+                <div>
+                  <h2 className="text-base sm:text-lg font-black text-slate-900 leading-none">Switch Resume Template</h2>
+                  <p className="text-[11px] text-emerald-700 font-extrabold mt-0.5">✓ Candidate data preserved 100%</p>
+                </div>
               </div>
-              <button onClick={() => setIsTemplateModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-700 rounded-full cursor-pointer">
+
+              <button
+                onClick={() => setIsTemplateModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-700 bg-slate-100 sm:bg-transparent rounded-full cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="px-5 py-2 border-b border-slate-100 flex gap-2 overflow-x-auto no-scrollbar">
+            {/* Category Navigation Pills Bar */}
+            <div className="px-4 py-2.5 bg-white border-b border-slate-200 flex gap-2 overflow-x-auto scrollbar-none flex-shrink-0">
               {TEMPLATE_CATEGORIES.map(cat => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-extrabold cursor-pointer whitespace-nowrap ${
-                    selectedCategory === cat ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold cursor-pointer whitespace-nowrap transition-colors min-h-[36px] ${
+                    selectedCategory === cat ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
                   {cat}
@@ -1373,13 +1389,14 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
               ))}
             </div>
 
-            <div className="p-5 flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {/* Template Cards Grid */}
+            <div className="p-4 sm:p-5 flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
               {ALL_TEMPLATES.filter(t => selectedCategory === 'All' || t.category === selectedCategory).map(t => (
                 <div
                   key={t.id}
                   onClick={() => handleSwitchTemplate(t)}
-                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                    activeTemplate.id === t.id ? 'border-emerald-600 bg-emerald-50/20 shadow-md' : 'border-slate-200 hover:border-slate-300'
+                  className={`p-4 rounded-2xl border-2 bg-white cursor-pointer transition-all flex flex-col justify-between hover:shadow-md ${
+                    activeTemplate.id === t.id ? 'border-emerald-600 bg-emerald-50/20 ring-2 ring-emerald-200' : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <div>
@@ -1389,8 +1406,10 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
                     </div>
                     <p className="text-[11px] text-slate-500 font-medium line-clamp-2">{t.description}</p>
                   </div>
-                  <button className="mt-3 w-full py-1.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl">
-                    {activeTemplate.id === t.id ? 'Active ✓' : 'Use Template'}
+                  <button className={`mt-3.5 w-full py-2 text-xs font-extrabold rounded-xl transition-all cursor-pointer min-h-[38px] ${
+                    activeTemplate.id === t.id ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-emerald-600 hover:text-white'
+                  }`}>
+                    {activeTemplate.id === t.id ? 'Active Template ✓' : 'Use Template'}
                   </button>
                 </div>
               ))}
