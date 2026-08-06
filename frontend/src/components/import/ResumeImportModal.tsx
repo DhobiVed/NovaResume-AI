@@ -4,11 +4,13 @@ import {
 } from 'lucide-react';
 import mammoth from 'mammoth';
 import { API_BASE } from '../../config';
+import { TemplateSelectModal } from './TemplateSelectModal';
+import type { TemplateDefinition } from '../../lib/resumeTypes';
 
 interface ResumeImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImportComplete: (parsedData: any) => void;
+  onImportComplete: (parsedData: any, selectedTemplate?: TemplateDefinition) => void;
 }
 
 export const ResumeImportModal: React.FC<ResumeImportModalProps> = ({
@@ -295,11 +297,20 @@ export const ResumeImportModal: React.FC<ResumeImportModalProps> = ({
     }
   };
 
+  const [isTemplateSelectOpen, setIsTemplateSelectOpen] = useState(false);
+
+  if (!isOpen && !isTemplateSelectOpen) return null;
+
   const handleConfirmImport = () => {
     if (parsedPreview) {
-      onImportComplete(parsedPreview);
-      onClose();
+      setIsTemplateSelectOpen(true);
     }
+  };
+
+  const handleTemplateChosen = (template: TemplateDefinition) => {
+    setIsTemplateSelectOpen(false);
+    onImportComplete(parsedPreview, template);
+    onClose();
   };
 
   return (
@@ -464,10 +475,18 @@ export const ResumeImportModal: React.FC<ResumeImportModalProps> = ({
             className="flex items-center gap-1.5 px-5 py-2 text-xs font-black rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg disabled:opacity-50 transition-transform active:scale-95 cursor-pointer"
           >
             <Sparkles className="w-4 h-4" />
-            <span>Confirm & Open in Resume Editor</span>
+            <span>Select Template & Open Editor</span>
           </button>
         </div>
       </div>
+
+      {/* Step 2: Template Selection Screen */}
+      <TemplateSelectModal
+        isOpen={isTemplateSelectOpen}
+        onClose={() => setIsTemplateSelectOpen(false)}
+        onSelectTemplate={handleTemplateChosen}
+        parsedData={parsedPreview}
+      />
     </div>
   );
 };

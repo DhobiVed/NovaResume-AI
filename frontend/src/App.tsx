@@ -12,11 +12,41 @@ import { JobTrackerModal } from './components/tracker/JobTrackerModal';
 import { AuthModal } from './components/auth/AuthModal';
 import type { UserProfile } from './components/auth/AuthModal';
 import type { TemplateDefinition } from './lib/resumeTypes';
+import { NovaDashboard } from './components/dashboard/NovaDashboard';
 import { ALL_TEMPLATES } from './lib/templateData';
-import { Plus, ShieldCheck, Briefcase, Globe, Menu, X, Sparkles, History, Upload } from 'lucide-react';
+import { Plus, ShieldCheck, Briefcase, Globe, Menu, X, Sparkles, History, Upload, Layout } from 'lucide-react';
 import { firebaseAuthService } from './services/firebaseAuth';
 
 export const AppContent: React.FC = () => {
+  // Page Route State with Persistence
+  const [currentRoute, setCurrentRoute] = useState<'gallery' | 'editor' | 'dashboard'>(() => {
+    try {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'editor' || hash === 'dashboard' || hash === 'gallery') return hash as any;
+      const cached = localStorage.getItem('nova_app_state');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.route) return parsed.route;
+      }
+    } catch {}
+    return 'gallery';
+  });
+
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateDefinition | null>(() => {
+    try {
+      const cached = localStorage.getItem('nova_app_state');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.templateId) {
+          return ALL_TEMPLATES.find(t => t.id === parsed.templateId) || null;
+        }
+      }
+    } catch {}
+    return null;
+  });
+
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
   // Persistent User State with LocalStorage Fallback
   const [user, setUser] = useState<UserProfile | null>(() => {
     try {
@@ -26,19 +56,6 @@ export const AppContent: React.FC = () => {
       return null;
     }
   });
-
-  // Page State Persistence — restore which template the user was editing on refresh
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateDefinition | null>(() => {
-    try {
-      const cachedUser = localStorage.getItem('nova_user_profile');
-      if (!cachedUser) return null; // Only restore if user was logged in
-      const saved = localStorage.getItem('nova_active_template');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Intro Video Splash State (Only shows on FIRST session visit if user is not logged in)
   const [showIntroVideo, setShowIntroVideo] = useState(() => {
@@ -61,31 +78,17 @@ export const AppContent: React.FC = () => {
     }
   };
 
-  // Sync user state to LocalStorage
-  useEffect(() => {
-    if (user) {
-      try {
-        localStorage.setItem('nova_user_profile', JSON.stringify(user));
-        setShowIntroVideo(false); // Instantly dismiss splash when user is logged in
-      } catch {}
-    } else {
-      try {
-        localStorage.removeItem('nova_user_profile');
-        localStorage.removeItem('nova_active_template'); // Clear page state on logout
-      } catch {}
-    }
-  }, [user]);
-
-  // Sync selected template to localStorage for page refresh persistence
+  // Persist Route & Template Selection to LocalStorage and Window Location Hash
   useEffect(() => {
     try {
-      if (selectedTemplate && user) {
-        localStorage.setItem('nova_active_template', JSON.stringify(selectedTemplate));
-      } else {
-        localStorage.removeItem('nova_active_template');
-      }
+      const state = {
+        route: selectedTemplate ? 'editor' : currentRoute,
+        templateId: selectedTemplate?.id || null,
+      };
+      localStorage.setItem('nova_app_state', JSON.stringify(state));
+      window.location.hash = selectedTemplate ? 'editor' : currentRoute;
     } catch {}
-  }, [selectedTemplate, user]);
+  }, [selectedTemplate, currentRoute]);
 
   // Force guaranteed native HTML5 video autoplay
   useEffect(() => {
@@ -141,7 +144,6 @@ export const AppContent: React.FC = () => {
     setSelectedTemplate(null);
     try {
       localStorage.removeItem('nova_user_profile');
-      localStorage.removeItem('nova_active_template');
     } catch {}
     await firebaseAuthService.logout();
   };
@@ -184,7 +186,7 @@ export const AppContent: React.FC = () => {
     requireAuth(() => setSelectedTemplate(template));
   };
 
-  const handleImportComplete = (parsedData: any) => {
+  const handleImportComplete = (parsedData: any, chosenTemplate?: TemplateDefinition) => {
     if (parsedData) {
       const formattedData = {
         fullName: parsedData.fullName || 'Imported Candidate',
@@ -205,7 +207,7 @@ export const AppContent: React.FC = () => {
         achievements: parsedData.achievements || '',
       };
       setImportedResumeData(formattedData);
-      setSelectedTemplate(ALL_TEMPLATES[0]);
+      setSelectedTemplate(chosenTemplate || ALL_TEMPLATES[0]);
     }
   };
 
@@ -213,25 +215,47 @@ export const AppContent: React.FC = () => {
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-50 text-slate-900 font-sans">
       {/* Platform Header */}
       <header className="h-16 px-4 md:px-6 bg-white border-b border-slate-200 flex items-center justify-between z-20 flex-shrink-0">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setSelectedTemplate(null)}>
-          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-green-700 flex items-center justify-center text-white font-extrabold text-xl shadow-md">
+        <div
+          className="flex items-center gap-3 cursor-pointer"
+          onClick={() => {
+            setSelectedTemplate(null);
+            setCurrentRoute('gallery');
+          }}
+        >
+          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-green-700 flex items-center justify-center text-white font-extrabold text-xl shadow-md flex-shrink-0">
             N
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-black text-base md:text-lg tracking-wide text-slate-900">
+              <h1 className="font-black text-base md:text-lg tracking-wide text-slate-900 leading-none">
                 NovaResume AI
               </h1>
               <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px] hidden md:inline-block">
                 Dev: Ved Dhobi
               </span>
             </div>
-            <p className="text-[10px] text-emerald-700 font-bold tracking-wider uppercase">Developed by Ved Dhobi (veddhobi252@gmail.com)</p>
+            <p className="text-[9px] text-emerald-700 font-bold tracking-tight uppercase leading-snug truncate max-w-[200px] sm:max-w-none">
+              Developed by Ved Dhobi (veddhobi252@gmail.com)
+            </p>
           </div>
         </div>
 
         {/* Desktop Global Action Shortcuts */}
         <div className="hidden md:flex items-center gap-2">
+          <button
+            onClick={() => {
+              setSelectedTemplate(null);
+              setCurrentRoute('dashboard');
+            }}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors min-h-[40px] cursor-pointer ${
+              currentRoute === 'dashboard' && !selectedTemplate
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            <Layout className="w-4 h-4 text-teal-600" />
+            <span>Dashboard</span>
+          </button>
           <button
             onClick={() => requireAuth(() => setSelectedTemplate(ALL_TEMPLATES[0]))}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow hover:bg-emerald-700 transition-transform active:scale-95 min-h-[40px]"
@@ -439,7 +463,25 @@ export const AppContent: React.FC = () => {
           <ResumeEditor
             template={selectedTemplate}
             initialData={importedResumeData}
-            onBackToGallery={() => setSelectedTemplate(null)}
+            onBackToGallery={() => {
+              setSelectedTemplate(null);
+              setCurrentRoute('gallery');
+            }}
+          />
+        ) : currentRoute === 'dashboard' ? (
+          <NovaDashboard
+            onCreateNew={() => {
+              setCurrentRoute('gallery');
+            }}
+            onEditResume={(item) => {
+              setImportedResumeData(item.data);
+              const found = ALL_TEMPLATES.find(t => t.id === item.templateId) || ALL_TEMPLATES[0];
+              setSelectedTemplate(found);
+            }}
+            onOpenAtsAnalyzer={() => setIsAtsOpen(true)}
+            onOpenCoverLetter={() => setIsCoverLetterOpen(true)}
+            onOpenPortfolio={() => setIsPortfolioOpen(true)}
+            onOpenImport={() => setIsImportOpen(true)}
           />
         ) : (
           <TemplateGalleryPage onSelectTemplate={handleSelectTemplate} />

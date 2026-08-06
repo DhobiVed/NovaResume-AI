@@ -1,23 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  FileText, Plus, Sparkles, CheckCircle, Search, Award,
-  Edit3, Trash2, ShieldCheck, Zap, ArrowRight, Upload, Briefcase
+  FileText, Plus, Sparkles, Search, Award,
+  Edit3, Trash2, ShieldCheck, Zap, ArrowRight, Upload, Briefcase,
+  Star, Pin, Copy, Activity, AlertTriangle
 } from 'lucide-react';
-
-interface SavedResumeItem {
-  id: string;
-  title: string;
-  template_id: string;
-  ats_score: number;
-  updated_at?: string;
-  target_role?: string;
-}
+import {
+  getSavedResumes, deleteResumeItem, duplicateResumeItem,
+  toggleFavoriteResume, togglePinResume, getActivityLogs,
+  type SavedResumeItem, type ActivityLogItem
+} from '../../lib/resumeStorage';
 
 interface NovaDashboardProps {
-  resumes: SavedResumeItem[];
   onCreateNew: () => void;
   onEditResume: (resume: SavedResumeItem) => void;
-  onDeleteResume: (id: string) => void;
   onOpenAtsAnalyzer: () => void;
   onOpenCoverLetter: () => void;
   onOpenPortfolio: () => void;
@@ -25,30 +20,97 @@ interface NovaDashboardProps {
 }
 
 export const NovaDashboard: React.FC<NovaDashboardProps> = ({
-  resumes,
   onCreateNew,
   onEditResume,
-  onDeleteResume,
   onOpenAtsAnalyzer,
   onOpenCoverLetter,
   onOpenPortfolio,
   onOpenImport
 }) => {
+  const [resumes, setResumes] = useState<SavedResumeItem[]>([]);
+  const [activityLogs, setActivityLogs] = useState<ActivityLogItem[]>([]);
+  const [activeTab, setActiveTab] = useState<'all' | 'drafts' | 'completed' | 'published' | 'archived'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [selectedSort, setSelectedSort] = useState<'updated' | 'title' | 'completion'>('updated');
 
-  const filteredResumes = resumes.filter((r) =>
-    r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (r.target_role && r.target_role.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const refreshData = () => {
+    setResumes(getSavedResumes());
+    setActivityLogs(getActivityLogs());
+  };
+
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  // Filter resumes by Tab & Search
+  const filteredResumes = resumes.filter(r => {
+    const matchesSearch = r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.targetRole && r.targetRole.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    if (!matchesSearch) return false;
+
+    if (activeTab === 'drafts') return r.status === 'draft' || r.status === 'in_progress';
+    if (activeTab === 'completed') return r.status === 'ready';
+    if (activeTab === 'published') return r.status === 'published';
+    if (activeTab === 'archived') return r.status === 'archived';
+    return true; // 'all'
+  }).sort((a, b) => {
+    // Pinned items first
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+
+    if (selectedSort === 'title') return a.title.localeCompare(b.title);
+    if (selectedSort === 'completion') return b.completionPercentage - a.completionPercentage;
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+  });
+
+  const handleDelete = (id: string) => {
+    deleteResumeItem(id);
+    setDeleteConfirmId(null);
+    refreshData();
+  };
+
+  const handleDuplicate = (id: string) => {
+    duplicateResumeItem(id);
+    refreshData();
+  };
+
+  const handleToggleFavorite = (id: string) => {
+    toggleFavoriteResume(id);
+    refreshData();
+  };
+
+  const handleTogglePin = (id: string) => {
+    togglePinResume(id);
+    refreshData();
+  };
+
+  const getStatusBadge = (status: SavedResumeItem['status'], completion: number) => {
+    switch (status) {
+      case 'ready':
+        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Ready ({completion}%)</span>;
+      case 'published':
+        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20">Published</span>;
+      case 'archived':
+        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-slate-500/10 text-slate-400 border border-slate-500/20">Archived</span>;
+      case 'in_progress':
+        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/10 text-amber-400 border border-amber-500/20">In Progress ({completion}%)</span>;
+      case 'draft':
+      default:
+        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-slate-700/50 text-slate-300 border border-slate-600">Draft ({completion}%)</span>;
+    }
+  };
 
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
+      
       {/* Hero Header */}
-      <div className="relative rounded-3xl p-6 md:p-10 bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 text-white shadow-2xl overflow-hidden border border-indigo-500/20">
-        <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="relative rounded-3xl p-6 md:p-10 bg-gradient-to-r from-blue-950 via-indigo-950 to-purple-950 text-white shadow-2xl overflow-hidden border border-indigo-500/20">
+        <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-purple-300 text-xs font-bold backdrop-blur-md">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 text-purple-300 text-xs font-bold backdrop-blur-md">
+            <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
             <span>NovaResume AI 2.0 Enterprise</span>
           </div>
           <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight">
@@ -61,17 +123,17 @@ export const NovaDashboard: React.FC<NovaDashboardProps> = ({
           <div className="pt-2 flex flex-wrap gap-3">
             <button
               onClick={onCreateNew}
-              className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs md:text-sm font-bold shadow-lg transition-transform active:scale-95"
+              className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs md:text-sm font-bold shadow-lg transition-transform active:scale-95 cursor-pointer min-h-[44px]"
             >
               <Plus className="w-4 h-4" />
               <span>Create New Resume</span>
             </button>
             <button
               onClick={onOpenImport}
-              className="flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs md:text-sm font-bold backdrop-blur-md transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs md:text-sm font-bold backdrop-blur-md transition-colors cursor-pointer min-h-[44px]"
             >
-              <Upload className="w-4 h-4" />
-              <span>Import Existing PDF / LinkedIn</span>
+              <Upload className="w-4 h-4 text-emerald-400" />
+              <span>Import Resume (PDF / DOCX)</span>
             </button>
           </div>
         </div>
@@ -107,36 +169,77 @@ export const NovaDashboard: React.FC<NovaDashboardProps> = ({
         })}
       </div>
 
-      {/* Saved Resumes Section */}
+      {/* Workspace & Drafts Section */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
           <div>
-            <h2 className="text-lg font-extrabold text-slate-800 dark:text-slate-100">Saved Resumes & History</h2>
-            <p className="text-xs text-slate-400">Manage, edit, or export your saved resume versions</p>
+            <h2 className="text-lg font-black text-slate-900 dark:text-white">Workspace & Drafts</h2>
+            <p className="text-xs text-slate-500 font-medium">Manage, edit, duplicate, or export your resume drafts</p>
           </div>
 
-          <div className="relative w-full sm:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search resumes..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"
-            />
+          {/* Search & Sort Controls */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-64">
+              <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search resumes..."
+                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500 min-h-[38px]"
+              />
+            </div>
+
+            <select
+              value={selectedSort}
+              onChange={(e) => setSelectedSort(e.target.value as any)}
+              className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 rounded-xl min-h-[38px]"
+            >
+              <option value="updated">Last Edited</option>
+              <option value="title">Title</option>
+              <option value="completion">Completion %</option>
+            </select>
           </div>
         </div>
 
+        {/* Category Tabs: All, Drafts, Completed, Published, Archived */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth">
+          {[
+            { id: 'all', label: 'All Resumes' },
+            { id: 'drafts', label: 'Drafts' },
+            { id: 'completed', label: 'Completed' },
+            { id: 'published', label: 'Published' },
+            { id: 'archived', label: 'Archived' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap min-h-[38px] ${
+                activeTab === tab.id
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Resumes Grid */}
         {filteredResumes.length === 0 ? (
           <div className="p-8 text-center bg-slate-100 dark:bg-slate-900/60 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto">
               <FileText className="w-6 h-6" />
             </div>
-            <h3 className="font-bold text-sm text-slate-700 dark:text-slate-300">No Resumes Saved Yet</h3>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">Create your first resume using Canva-style designer templates or import an existing PDF.</p>
+            <h3 className="font-bold text-sm text-slate-700 dark:text-slate-300">No Resumes Found</h3>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              {activeTab === 'all'
+                ? 'Create your first resume using Canva-style designer templates or import an existing PDF.'
+                : `No resumes currently in "${activeTab}" state.`}
+            </p>
             <button
               onClick={onCreateNew}
-              className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold shadow hover:bg-primary-hover transition-colors"
+              className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow hover:bg-emerald-700 transition-colors cursor-pointer"
             >
               + Create Resume Now
             </button>
@@ -146,40 +249,88 @@ export const NovaDashboard: React.FC<NovaDashboardProps> = ({
             {filteredResumes.map((r) => (
               <div
                 key={r.id}
-                className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all space-y-3 flex flex-col justify-between"
+                className={`p-4 rounded-2xl bg-white dark:bg-slate-900 border transition-all space-y-3 flex flex-col justify-between relative group ${
+                  r.isPinned ? 'border-emerald-500 shadow-md' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                }`}
               >
                 <div>
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
-                        <FileText className="w-4 h-4" />
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600">
+                        <FileText className="w-5 h-5" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-xs md:text-sm text-slate-800 dark:text-slate-100 line-clamp-1">{r.title}</h3>
-                        <span className="text-[10px] text-slate-400">{r.target_role || 'Software Engineer'}</span>
+                        <h3 className="font-extrabold text-sm text-slate-900 dark:text-white line-clamp-1 flex items-center gap-1.5">
+                          <span>{r.title}</span>
+                          {r.isPinned && <Pin className="w-3 h-3 text-emerald-500 fill-emerald-500" />}
+                        </h3>
+                        <span className="text-[11px] text-slate-400 font-medium block">{r.targetRole || 'Professional'}</span>
                       </div>
                     </div>
 
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500 flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" />
-                      <span>{r.ats_score || 85}% ATS</span>
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleTogglePin(r.id)}
+                        className={`p-1 rounded-lg transition-colors cursor-pointer ${
+                          r.isPinned ? 'text-emerald-500 bg-emerald-50' : 'text-slate-400 hover:text-slate-600'
+                        }`}
+                        title="Pin resume"
+                      >
+                        <Pin className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleFavorite(r.id)}
+                        className={`p-1 rounded-lg transition-colors cursor-pointer ${
+                          r.isFavorite ? 'text-amber-500 bg-amber-50' : 'text-slate-400 hover:text-slate-600'
+                        }`}
+                        title="Favorite"
+                      >
+                        <Star className={`w-3.5 h-3.5 ${r.isFavorite ? 'fill-amber-500' : ''}`} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar & Status */}
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex justify-between items-center">
+                      {getStatusBadge(r.status, r.completionPercentage)}
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {new Date(r.updatedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className="bg-gradient-to-r from-teal-500 to-emerald-500 h-full rounded-full"
+                        style={{ width: `${r.completionPercentage}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                {/* Card Action Buttons */}
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center gap-2">
                   <button
                     onClick={() => onEditResume(r)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold transition-colors"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold transition-colors cursor-pointer min-h-[38px]"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
-                    <span>Open Editor</span>
+                    <span>Continue Editing</span>
                   </button>
 
                   <button
-                    onClick={() => onDeleteResume(r.id)}
-                    className="p-1.5 hover:bg-red-500/10 text-slate-400 hover:text-red-500 rounded-lg transition-colors"
-                    title="Delete"
+                    onClick={() => handleDuplicate(r.id)}
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 rounded-xl transition-colors cursor-pointer"
+                    title="Duplicate Resume"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => setDeleteConfirmId(r.id)}
+                    className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-xl transition-colors cursor-pointer"
+                    title="Delete Resume"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -188,7 +339,61 @@ export const NovaDashboard: React.FC<NovaDashboardProps> = ({
             ))}
           </div>
         )}
+
+        {/* Recent Activity Log Feed Panel */}
+        {activityLogs.length > 0 && (
+          <div className="pt-6 border-t border-slate-200 dark:border-slate-800 space-y-3">
+            <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <Activity className="w-4 h-4 text-teal-500" />
+              <span>Recent Activity Feed</span>
+            </h3>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2.5 max-h-48 overflow-y-auto">
+              {activityLogs.slice(0, 10).map((log) => (
+                <div key={log.id} className="flex justify-between items-center text-xs font-semibold border-b border-slate-100 dark:border-slate-800/60 pb-2 last:border-0 last:pb-0">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-slate-800 dark:text-slate-200">{log.description}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[99999] overflow-y-auto flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 max-w-sm w-full space-y-4 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <h3 className="font-extrabold text-base text-slate-900 dark:text-white">Delete Resume?</h3>
+            <p className="text-xs text-slate-500 font-medium leading-relaxed">
+              Are you sure you want to delete this resume draft? This action cannot be undone.
+            </p>
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl hover:bg-slate-200 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(deleteConfirmId)}
+                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-xl shadow-lg cursor-pointer"
+              >
+                Delete Forever
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

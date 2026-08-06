@@ -1,7 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
-import type { TemplateDefinition, ResumeData, ThemeConfig, LayoutType } from '../../lib/resumeTypes';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import type { TemplateDefinition, ResumeData, ThemeConfig } from '../../lib/resumeTypes';
 import { PALETTES, FONTS } from '../../lib/resumeTypes';
+import { ALL_TEMPLATES, TEMPLATE_CATEGORIES } from '../../lib/templateData';
 import { exportToPdf, exportSinglePagePdf, triggerPrintPdf } from '../../lib/pdfExport';
+import { saveResumeItem, calculateCompletionPercentage, addActivityLog } from '../../lib/resumeStorage';
+
 import { ModernSidebarTemplate } from '../templates/ModernSidebarTemplate';
 import { ExecutiveHeaderTemplate } from '../templates/ExecutiveHeaderTemplate';
 import { AtsClassicTemplate } from '../templates/AtsClassicTemplate';
@@ -12,30 +15,41 @@ import { CorporateTemplate } from '../templates/CorporateTemplate';
 import { CreativeCardTemplate } from '../templates/CreativeCardTemplate';
 import { StartupTemplate } from '../templates/StartupTemplate';
 import { ElegantTemplate } from '../templates/ElegantTemplate';
-import {
-  Download, Sparkles, Palette as PaletteIcon, Type, Layout as LayoutIcon,
-  FileText, Plus, Trash2, ArrowLeft, Check, Camera, Printer, Cloud
-} from 'lucide-react';
 
-const DRAFT_KEY = (templateId: string) => `nova_draft_${templateId}`;
+import {
+  Download, Sparkles, Palette as PaletteIcon, Type,
+  FileText, Plus, Trash2, ArrowLeft, Check, Camera, Printer, RotateCcw, RotateCw,
+  ArrowUp, ArrowDown, Layout, X
+} from 'lucide-react';
 
 interface Props {
   template: TemplateDefinition;
   onBackToGallery: () => void;
   initialData?: any;
+  resumeId?: string;
 }
 
-export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery, initialData }) => {
+export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBackToGallery, initialData, resumeId: initialResumeId }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Template Switcher State
+  const [activeTemplate, setActiveTemplate] = useState<TemplateDefinition>(initialTemplate);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  // Active Resume ID & Storage
+  const [currentResumeId] = useState<string>(
+    initialResumeId || `resume_${Date.now()}`
+  );
+
   const [previewScale, setPreviewScale] = useState(0.85);
   const [editorTab, setEditorTab] = useState<'content' | 'design' | 'colors' | 'layout' | 'ai'>('content');
-  const [contentSection, setContentSection] = useState<'personal' | 'experience' | 'education' | 'skills' | 'projects' | 'custom'>('personal');
+  const [contentSection, setContentSection] = useState<'personal' | 'experience' | 'education' | 'skills' | 'projects' | 'languages' | 'custom'>('personal');
   const [mobileViewMode, setMobileViewMode] = useState<'edit' | 'preview'>('edit');
   const [isExporting, setIsExporting] = useState(false);
   const [aiNotice, setAiNotice] = useState<string | null>(null);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'saving' | 'saved'>('saved');
 
   // Auto-calculate exact zoom scale so canvas fits preview area with zero border clipping
   useEffect(() => {
@@ -55,42 +69,24 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery, initi
     };
   }, [mobileViewMode]);
 
-  // Default theme state based on template selection (restore draft theme if available)
-  const defaultPalette = PALETTES.find(p => p.id === template.defaultPaletteId) || PALETTES[0];
-  const defaultFont = FONTS.find(f => f.id === template.defaultFontId) || FONTS[0];
+  // Default theme state based on active template selection
+  const defaultPalette = PALETTES.find(p => p.id === activeTemplate.defaultPaletteId) || PALETTES[0];
+  const defaultFont = FONTS.find(f => f.id === activeTemplate.defaultFontId) || FONTS[0];
 
-  const getRestoredTheme = (): ThemeConfig => {
-    if (!initialData) {
-      try {
-        const draft = JSON.parse(localStorage.getItem(DRAFT_KEY(template.id)) || '{}');
-        if (draft?.theme?.paletteId) return draft.theme;
-      } catch {}
-    }
-    return {
-      paletteId: defaultPalette.id,
-      palette: defaultPalette,
-      fontId: defaultFont.id,
-      font: defaultFont,
-      fontSize: 11,
-      lineHeight: 1.5,
-      sectionSpacing: 14,
-      sidebarWidth: 32,
-      layout: template.layout
-    };
-  };
+  const [theme, setTheme] = useState<ThemeConfig>({
+    paletteId: defaultPalette.id,
+    palette: defaultPalette,
+    fontId: defaultFont.id,
+    font: defaultFont,
+    fontSize: 11,
+    lineHeight: 1.5,
+    sectionSpacing: 14,
+    sidebarWidth: 32,
+    layout: activeTemplate.layout
+  });
 
-  const [theme, setTheme] = useState<ThemeConfig>(getRestoredTheme);
-
-  // Resume Content State — restore from draft or use imported/default data
-  const [data, setData] = useState<ResumeData>(() => {
-    // Prefer imported data; otherwise restore from auto-saved draft
-    if (!initialData) {
-      try {
-        const saved = JSON.parse(localStorage.getItem(DRAFT_KEY(template.id)) || '{}');
-        if (saved?.data?.fullName) return saved.data;
-      } catch {}
-    }
-    return ({
+  // Resume Content State (Populates imported data if present)
+  const [data, setData] = useState<ResumeData>(() => ({
     fullName: initialData?.fullName || 'Alex Vance',
     title: initialData?.title || 'Senior AI & Systems Engineer',
     email: initialData?.email || 'alex.vance@example.com',
@@ -124,7 +120,7 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery, initi
     ],
     skills: initialData?.skills || 'Python, FastAPI, Groq API, LangChain, PyTorch, React, TypeScript, PostgreSQL, Docker, Git, REST APIs',
     certifications: initialData?.certifications || 'AWS Certified Machine Learning Specialist, TensorFlow Developer Certificate',
-    languages: initialData?.languages || 'English (Native), Spanish (Professional)',
+    languages: initialData?.languages || 'English (Native), Spanish (Professional), German (Intermediate)',
     achievements: initialData?.achievements || 'Winner of Global AI Innovation Hackathon (1st place out of 400 teams)\nPublished research paper on Context Window Compression in LLMs',
     showPhoto: true,
     photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
@@ -132,8 +128,103 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery, initi
     customSections: initialData?.customSections || [
       { title: 'Research & Publications', content: 'Co-authored paper: "Optimizing Context Retrieval Overhead in High-Concurrency Agentic Workflows" (2025)' }
     ]
-  });
-  });
+  }));
+
+  // Structured Language List State
+  const [languageList, setLanguageList] = useState<Array<{ name: string; level: string }>>([
+    { name: 'English', level: 'Native' },
+    { name: 'Spanish', level: 'Professional Working' },
+    { name: 'German', level: 'Intermediate' }
+  ]);
+
+  // Sync data to languageList when data.languages string updates
+  useEffect(() => {
+    if (typeof data.languages === 'string' && data.languages.trim().length > 0) {
+      const parts = data.languages.split(/[,|;]/).map(s => s.trim()).filter(Boolean);
+      if (parts.length > 0) {
+        const parsed = parts.map(p => {
+          const match = p.match(/^(.+?)\s*\((.+?)\)$/);
+          if (match) return { name: match[1].trim(), level: match[2].trim() };
+          return { name: p, level: 'Fluent' };
+        });
+        setLanguageList(parsed);
+      }
+    }
+  }, []);
+
+  // Sync languageList back into data.languages string
+  const updateLanguageData = (newList: Array<{ name: string; level: string }>) => {
+    setLanguageList(newList);
+    const text = newList.map(l => `${l.name} (${l.level})`).join(', ');
+    setData(prev => ({ ...prev, languages: text }));
+  };
+
+  // Undo / Redo History Stack
+  const [history, setHistory] = useState<ResumeData[]>([data]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+
+  const pushHistoryState = useCallback((newData: ResumeData) => {
+    setHistory(prev => {
+      const sliced = prev.slice(0, historyIndex + 1);
+      return [...sliced, newData];
+    });
+    setHistoryIndex(prev => prev + 1);
+  }, [historyIndex]);
+
+  const undo = () => {
+    if (historyIndex > 0) {
+      const newIdx = historyIndex - 1;
+      setHistoryIndex(newIdx);
+      setData(history[newIdx]);
+    }
+  };
+
+  const redo = () => {
+    if (historyIndex < history.length - 1) {
+      const newIdx = historyIndex + 1;
+      setHistoryIndex(newIdx);
+      setData(history[newIdx]);
+    }
+  };
+
+  // Keyboard Shortcuts (Ctrl+Z, Ctrl+Y, Ctrl+S)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          redo();
+        } else {
+          e.preventDefault();
+          undo();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        triggerAutoSave();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [historyIndex, history, data]);
+
+  // Auto-Save Mechanism (Debounced 2.5s)
+  const triggerAutoSave = useCallback(() => {
+    setSaveStatus('saving');
+    saveResumeItem(data, activeTemplate.id, currentResumeId);
+    setTimeout(() => {
+      setSaveStatus('saved');
+    }, 600);
+  }, [data, activeTemplate, currentResumeId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      triggerAutoSave();
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [data, activeTemplate, triggerAutoSave]);
 
   // Sync state if initialData changes dynamically
   useEffect(() => {
@@ -160,30 +251,6 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery, initi
     }
   }, [initialData]);
 
-  // ── AUTO-SAVE DRAFT (debounced 2s) ───────────────────────────────────────
-  useEffect(() => {
-    setSaveStatus('saving');
-    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    autoSaveTimerRef.current = setTimeout(() => {
-      try {
-        const draft = {
-          data,
-          theme,
-          savedAt: new Date().toISOString(),
-          templateId: template.id,
-          templateName: template.name
-        };
-        localStorage.setItem(DRAFT_KEY(template.id), JSON.stringify(draft));
-        setSaveStatus('saved');
-        setTimeout(() => setSaveStatus('idle'), 2500);
-      } catch (e) {
-        console.warn('Auto-save failed:', e);
-        setSaveStatus('idle');
-      }
-    }, 2000);
-    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
-  }, [data, theme]);
-
   // Export handlers
   const handleDownloadPdf = async (singlePage: boolean = true) => {
     if (!canvasRef.current) return;
@@ -195,6 +262,7 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery, initi
       } else {
         await exportToPdf(canvasRef.current, `${data.fullName || 'Resume'}_Resume`);
       }
+      addActivityLog('pdf_download', `Downloaded PDF for "${data.fullName || 'Resume'}"`);
       setAiNotice('PDF exported successfully!');
     } catch (e) {
       console.error(e);
@@ -216,10 +284,31 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery, initi
       const file = e.target.files[0];
       const reader = new FileReader();
       reader.onloadend = () => {
-        setData(prev => ({ ...prev, photoUrl: reader.result as string, showPhoto: true }));
+        const newData = { ...data, photoUrl: reader.result as string, showPhoto: true };
+        setData(newData);
+        pushHistoryState(newData);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // Switch template without losing data
+  const handleSwitchTemplate = (newTemplate: TemplateDefinition) => {
+    setActiveTemplate(newTemplate);
+    const newPalette = PALETTES.find(p => p.id === newTemplate.defaultPaletteId) || PALETTES[0];
+    const newFont = FONTS.find(f => f.id === newTemplate.defaultFontId) || FONTS[0];
+    setTheme(prev => ({
+      ...prev,
+      paletteId: newPalette.id,
+      palette: newPalette,
+      fontId: newFont.id,
+      font: newFont,
+      layout: newTemplate.layout
+    }));
+    setIsTemplateModalOpen(false);
+    addActivityLog('template_change', `Switched template to "${newTemplate.name}"`);
+    setAiNotice(`Template switched to ${newTemplate.name}! All your data remains intact.`);
+    setTimeout(() => setAiNotice(null), 4000);
   };
 
   // AI Assistant actions
@@ -227,25 +316,31 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery, initi
     setAiNotice(null);
     setTimeout(() => {
       if (actionType === 'summary') {
-        setData(prev => ({
-          ...prev,
+        const newData = {
+          ...data,
           summary: 'High-impact Senior AI Engineer specializing in LLM production orchestration, RAG retrieval architectures, and scalable async Python microservices with a proven track record of boosting system performance.'
-        }));
+        };
+        setData(newData);
+        pushHistoryState(newData);
         setAiNotice('Executive Summary enhanced for ATS readability & impact!');
       } else if (actionType === 'skills') {
-        setData(prev => ({
-          ...prev,
-          skills: `${prev.skills}, Vector DBs, Prompt Optimization, RAG Architectures, Microservices`
-        }));
+        const newData = {
+          ...data,
+          skills: `${data.skills}, Vector DBs, Prompt Optimization, RAG Architectures, Microservices`
+        };
+        setData(newData);
+        pushHistoryState(newData);
         setAiNotice('Top ATS technical keywords injected!');
       }
       setTimeout(() => setAiNotice(null), 4000);
     }, 400);
   };
 
+  const completionPercentage = calculateCompletionPercentage(data);
+
   // Render proper template component inside live canvas
   const renderCanvasTemplate = () => {
-    switch (template.rendererFamily) {
+    switch (activeTemplate.rendererFamily) {
       case 'ExecutiveHeader': return <ExecutiveHeaderTemplate data={data} theme={theme} />;
       case 'AtsClassic': return <AtsClassicTemplate data={data} theme={theme} />;
       case 'MinimalLine': return <MinimalLineTemplate data={data} theme={theme} />;
@@ -262,811 +357,888 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery, initi
 
   return (
     <div className="fixed inset-0 bg-slate-900 z-50 flex flex-col font-sans overflow-hidden animate-fade-in">
-      {/* Top Action Navbar */}
+      
+      {/* ── TOP NAV ACTION BAR ── */}
       <header className="h-16 px-4 md:px-6 bg-slate-900 border-b border-slate-800 flex items-center justify-between z-20 text-white flex-shrink-0">
+        
+        {/* Left Brand & Back Actions */}
         <div className="flex items-center gap-3">
           <button
             onClick={onBackToGallery}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors cursor-pointer min-h-[40px]"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Templates</span>
+            <span className="hidden sm:inline">Templates</span>
           </button>
+
           <div className="h-5 w-[1px] bg-slate-700 hidden sm:block" />
-          <div>
-            <h1 className="font-extrabold text-sm text-white">{template.name}</h1>
-            <span className="text-[10px] text-emerald-400 font-semibold">{template.category} Layout</span>
-          </div>
-          {/* Auto-save status chip */}
-          {saveStatus !== 'idle' && (
-            <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all duration-300 ${
-              saveStatus === 'saving'
-                ? 'bg-slate-800 border-slate-700 text-slate-400 animate-save-pulse'
-                : 'bg-emerald-900/50 border-emerald-700/60 text-emerald-400'
-            }`}>
-              {saveStatus === 'saving' ? (
-                <><Cloud className="w-3 h-3" /><span>Saving...</span></>
-              ) : (
-                <><Check className="w-3 h-3" /><span>Saved</span></>
-              )}
+
+          {/* Active Template & Switch Button */}
+          <div className="flex items-center gap-2">
+            <div>
+              <h1 className="font-extrabold text-sm text-white flex items-center gap-1.5">
+                <span>{activeTemplate.name}</span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-extrabold text-[10px] uppercase border border-emerald-500/30 hidden md:inline-block">
+                  ATS {activeTemplate.atsScore}%
+                </span>
+              </h1>
+              <p className="text-[10px] text-slate-400 font-medium hidden sm:block">
+                {activeTemplate.category} Layout
+              </p>
             </div>
-          )}
+
+            <button
+              onClick={() => setIsTemplateModalOpen(true)}
+              className="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-[11px] font-bold border border-emerald-500/30 transition-colors flex items-center gap-1 cursor-pointer min-h-[36px]"
+              title="Change template without losing data"
+            >
+              <Layout className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Change Template</span>
+            </button>
+          </div>
         </div>
 
+        {/* Center: Save Status & Completion Percentage */}
+        <div className="hidden lg:flex items-center gap-4 bg-slate-950/80 px-4 py-1.5 rounded-full border border-slate-800">
+          <div className="flex items-center gap-2 text-xs font-bold">
+            <span className="text-slate-400">Completion:</span>
+            <span className="text-emerald-400">{completionPercentage}%</span>
+            <div className="w-20 bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div
+                className="bg-emerald-500 h-full rounded-full transition-all duration-300"
+                style={{ width: `${completionPercentage}%` }}
+              />
+            </div>
+          </div>
 
-        {/* Export CTA Buttons */}
+          <div className="h-4 w-[1px] bg-slate-800" />
+
+          {/* Auto-Save Indicator */}
+          <div className="flex items-center gap-1.5 text-xs font-bold">
+            {saveStatus === 'saving' ? (
+              <>
+                <div className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                <span className="text-amber-400">Saving...</span>
+              </>
+            ) : (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-emerald-400">Saved ✓</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Right CTA Actions: Undo/Redo, Print, Download */}
         <div className="flex items-center gap-2">
+          
+          {/* Undo / Redo */}
+          <div className="hidden md:flex items-center gap-1 bg-slate-800 p-1 rounded-xl border border-slate-700">
+            <button
+              onClick={undo}
+              disabled={historyIndex === 0}
+              className="p-1.5 text-slate-300 hover:text-white disabled:opacity-30 transition-colors cursor-pointer"
+              title="Undo (Ctrl+Z)"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+            <button
+              onClick={redo}
+              disabled={historyIndex === history.length - 1}
+              className="p-1.5 text-slate-300 hover:text-white disabled:opacity-30 transition-colors cursor-pointer"
+              title="Redo (Ctrl+Y)"
+            >
+              <RotateCw className="w-4 h-4" />
+            </button>
+          </div>
+
           <button
             onClick={handlePrintPdf}
-            className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition-colors"
+            className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer min-h-[44px]"
             title="Open browser print dialog to save as A4 PDF"
           >
             <Printer className="w-4 h-4 text-emerald-400" />
-            <span>Print / Save PDF</span>
+            <span className="hidden md:inline">Print PDF</span>
           </button>
 
           <button
             onClick={() => handleDownloadPdf(true)}
             disabled={isExporting}
-            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 min-h-[44px]"
+            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 min-h-[44px] cursor-pointer"
           >
             <Download className="w-4 h-4" />
-            <span>{isExporting ? 'Generating...' : 'Download PDF (A4)'}</span>
+            <span>{isExporting ? 'Exporting...' : 'Download PDF'}</span>
           </button>
         </div>
       </header>
 
-      {/* Mobile Top View Switcher (Edit vs Preview) */}
-      <div className="flex md:hidden bg-slate-950 p-2 border-b border-slate-800 gap-2 flex-shrink-0">
+      {/* Toast Notification */}
+      {aiNotice && (
+        <div className="bg-emerald-600 text-white text-xs font-bold px-4 py-2 flex items-center justify-between shadow-md z-30 animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4" />
+            <span>{aiNotice}</span>
+          </div>
+          <button onClick={() => setAiNotice(null)} className="p-1 hover:bg-emerald-700 rounded-lg">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Mobile Mode Switcher Bar (Edit Form vs Preview) */}
+      <div className="md:hidden flex bg-slate-950 p-2 border-b border-slate-800 gap-2 text-xs font-extrabold text-white">
         <button
           onClick={() => setMobileViewMode('edit')}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all min-h-[44px] ${
-            mobileViewMode === 'edit' ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+          className={`flex-1 py-2.5 rounded-xl transition-colors min-h-[44px] cursor-pointer ${
+            mobileViewMode === 'edit' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'
           }`}
         >
-          📝 Form Editor
+          ✏️ Edit Content
         </button>
         <button
           onClick={() => setMobileViewMode('preview')}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all min-h-[44px] ${
-            mobileViewMode === 'preview' ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+          className={`flex-1 py-2.5 rounded-xl transition-colors min-h-[44px] cursor-pointer ${
+            mobileViewMode === 'preview' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'
           }`}
         >
           👁️ Live Preview
         </button>
       </div>
 
-      {/* Main Studio Area */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-        {/* Left Controls Panel */}
-        <div className={`w-full md:w-[420px] bg-white border-r border-slate-200 flex flex-col flex-shrink-0 z-10 overflow-y-auto min-h-0 ${
-          mobileViewMode === 'edit' ? 'flex flex-1' : 'hidden md:flex'
+      {/* Main Workspace split */}
+      <div className="flex-1 flex overflow-hidden relative">
+
+        {/* ── LEFT SIDEBAR EDITOR CONTROLS ── */}
+        <div className={`w-full md:w-[480px] lg:w-[520px] bg-slate-950 border-r border-slate-800 flex flex-col flex-shrink-0 z-10 ${
+          mobileViewMode === 'preview' ? 'hidden md:flex' : 'flex'
         }`}>
-          {/* Top 5 Control Tabs */}
-          <div className="flex items-center gap-1 p-2 bg-slate-100 border-b border-slate-200">
-            {[
-              { id: 'content', label: 'Content', icon: FileText },
-              { id: 'design', label: 'Fonts', icon: Type },
-              { id: 'colors', label: 'Palettes', icon: PaletteIcon },
-              { id: 'layout', label: 'Layout', icon: LayoutIcon },
-              { id: 'ai', label: 'AI Tools', icon: Sparkles }
-            ].map(tab => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setEditorTab(tab.id as any)}
-                  className={`flex-1 flex flex-col items-center justify-center py-2 text-[11px] font-bold rounded-xl transition-all min-h-[44px] ${
-                    editorTab === tab.id
-                      ? 'bg-white text-emerald-700 shadow-sm border border-slate-200'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <Icon className="w-4 h-4 mb-0.5" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
+          
+          {/* Main Tabs */}
+          <div className="flex bg-slate-900 border-b border-slate-800 p-2 gap-1 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setEditorTab('content')}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[40px] whitespace-nowrap ${
+                editorTab === 'content' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Content</span>
+            </button>
+
+            <button
+              onClick={() => setEditorTab('colors')}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[40px] whitespace-nowrap ${
+                editorTab === 'colors' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <PaletteIcon className="w-3.5 h-3.5" />
+              <span>Palette</span>
+            </button>
+
+            <button
+              onClick={() => setEditorTab('design')}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[40px] whitespace-nowrap ${
+                editorTab === 'design' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Type className="w-3.5 h-3.5" />
+              <span>Typography</span>
+            </button>
+
+            <button
+              onClick={() => setEditorTab('ai')}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[40px] whitespace-nowrap ${
+                editorTab === 'ai' ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-md' : 'text-amber-400 hover:text-amber-300'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>AI Optimizer</span>
+            </button>
           </div>
 
-          {/* AI Banner / Feedback */}
-          {aiNotice && (
-            <div className="p-2.5 bg-emerald-50 text-emerald-700 text-xs font-semibold flex items-center gap-2 border-b border-emerald-200">
-              <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-              <span>{aiNotice}</span>
+          {/* Sub-Section Pills (for Content Tab) */}
+          {editorTab === 'content' && (
+            <div className="flex items-center gap-1.5 p-3 bg-slate-900/60 border-b border-slate-800/80 overflow-x-auto no-scrollbar scroll-smooth">
+              {[
+                { id: 'personal', label: 'Personal' },
+                { id: 'experience', label: 'Experience' },
+                { id: 'education', label: 'Education' },
+                { id: 'skills', label: 'Skills' },
+                { id: 'projects', label: 'Projects' },
+                { id: 'languages', label: 'Languages' },
+                { id: 'custom', label: 'Custom' },
+              ].map(sec => (
+                <button
+                  key={sec.id}
+                  onClick={() => setContentSection(sec.id as any)}
+                  className={`px-3 py-1.5 rounded-lg text-[11px] font-extrabold transition-all cursor-pointer whitespace-nowrap min-h-[34px] ${
+                    contentSection === sec.id ? 'bg-slate-800 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {sec.label}
+                </button>
+              ))}
             </div>
           )}
 
-          {/* TAB 1: Content Forms */}
-          {editorTab === 'content' && (
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* Content Sub-tabs */}
-              <div className="flex flex-wrap gap-1 p-2 border-b border-slate-200 bg-slate-50">
-                {[
-                  { id: 'personal', label: 'Personal' },
-                  { id: 'experience', label: 'Experience' },
-                  { id: 'education', label: 'Education' },
-                  { id: 'skills', label: 'Skills' },
-                  { id: 'projects', label: 'Projects' },
-                  { id: 'custom', label: 'Custom' }
-                ].map(sub => (
-                  <button
-                    key={sub.id}
-                    onClick={() => setContentSection(sub.id as any)}
-                    className={`px-3 py-2 text-xs font-semibold rounded-lg transition-colors min-h-[40px] ${
-                      contentSection === sub.id ? 'bg-emerald-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    {sub.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {/* 1. PERSONAL */}
+          {/* Content Inputs Section */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 text-white text-xs">
+            
+            {editorTab === 'content' && (
+              <>
+                {/* 1. Personal Info */}
                 {contentSection === 'personal' && (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 block mb-1">Full Name</label>
-                        <input
-                          type="text"
-                          value={data.fullName}
-                          onChange={(e) => setData({ ...data, fullName: e.target.value })}
-                          className="w-full p-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-bold min-h-[44px]"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 block mb-1">Job Title</label>
-                        <input
-                          type="text"
-                          value={data.title}
-                          onChange={(e) => setData({ ...data, title: e.target.value })}
-                          className="w-full p-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-bold min-h-[44px]"
-                        />
-                      </div>
+                  <div className="space-y-4 animate-fadeIn">
+                    <h3 className="text-sm font-black text-white border-b border-slate-800 pb-2">Personal & Contact Info</h3>
+
+                    <div className="space-y-1">
+                      <label className="text-slate-400 font-bold block">Full Name</label>
+                      <input
+                        type="text"
+                        value={data.fullName}
+                        onChange={e => {
+                          const nd = { ...data, fullName: e.target.value };
+                          setData(nd);
+                        }}
+                        className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl font-bold text-white focus:border-emerald-500 focus:outline-none min-h-[44px]"
+                      />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 block mb-1">Email</label>
+                    <div className="space-y-1">
+                      <label className="text-slate-400 font-bold block">Professional Title</label>
+                      <input
+                        type="text"
+                        value={data.title}
+                        onChange={e => setData({ ...data, title: e.target.value })}
+                        className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl font-bold text-white focus:border-emerald-500 focus:outline-none min-h-[44px]"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-slate-400 font-bold block">Email</label>
                         <input
                           type="email"
                           value={data.email}
-                          onChange={(e) => setData({ ...data, email: e.target.value })}
-                          className="w-full p-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 min-h-[44px]"
+                          onChange={e => setData({ ...data, email: e.target.value })}
+                          className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white focus:border-emerald-500 focus:outline-none min-h-[44px]"
                         />
                       </div>
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 block mb-1">Phone</label>
+                      <div className="space-y-1">
+                        <label className="text-slate-400 font-bold block">Phone</label>
                         <input
                           type="text"
                           value={data.phone}
-                          onChange={(e) => setData({ ...data, phone: e.target.value })}
-                          className="w-full p-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 min-h-[44px]"
+                          onChange={e => setData({ ...data, phone: e.target.value })}
+                          className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white focus:border-emerald-500 focus:outline-none min-h-[44px]"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 block mb-1">Location</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-slate-400 font-bold block">Location</label>
                         <input
                           type="text"
                           value={data.location}
-                          onChange={(e) => setData({ ...data, location: e.target.value })}
-                          className="w-full p-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 min-h-[44px]"
+                          onChange={e => setData({ ...data, location: e.target.value })}
+                          className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white focus:border-emerald-500 focus:outline-none min-h-[44px]"
                         />
                       </div>
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 block mb-1">LinkedIn</label>
+                      <div className="space-y-1">
+                        <label className="text-slate-400 font-bold block">LinkedIn URL</label>
                         <input
                           type="text"
                           value={data.linkedin}
-                          onChange={(e) => setData({ ...data, linkedin: e.target.value })}
-                          className="w-full p-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 min-h-[44px]"
+                          onChange={e => setData({ ...data, linkedin: e.target.value })}
+                          className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white focus:border-emerald-500 focus:outline-none min-h-[44px]"
                         />
                       </div>
                     </div>
 
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">GitHub / Website</label>
-                      <input
-                        type="text"
-                        value={data.github}
-                        onChange={(e) => setData({ ...data, github: e.target.value })}
-                        className="w-full p-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 min-h-[44px]"
+                    <div className="space-y-1">
+                      <label className="text-slate-400 font-bold block">Executive Summary</label>
+                      <textarea
+                        value={data.summary}
+                        onChange={e => setData({ ...data, summary: e.target.value })}
+                        rows={4}
+                        className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white focus:border-emerald-500 focus:outline-none"
                       />
                     </div>
 
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">Executive Summary</label>
-                      <textarea
-                        value={data.summary}
-                        onChange={(e) => setData({ ...data, summary: e.target.value })}
-                        rows={4}
-                        className="w-full p-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 leading-relaxed"
-                      />
+                    {/* Photo Upload Option */}
+                    <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-white">Profile Photo</span>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={data.showPhoto}
+                            onChange={e => setData({ ...data, showPhoto: e.target.checked })}
+                            className="rounded accent-emerald-600"
+                          />
+                          <span className="text-xs font-semibold text-slate-300">Show on Resume</span>
+                        </label>
+                      </div>
+
+                      {data.showPhoto && (
+                        <div className="flex items-center gap-3 pt-2">
+                          {data.photoUrl ? (
+                            <img src={data.photoUrl} alt="Profile" className="w-12 h-12 rounded-full object-cover border border-emerald-500" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-500">
+                              <Camera className="w-6 h-6" />
+                            </div>
+                          )}
+
+                          <label className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold text-xs cursor-pointer border border-slate-700 transition-colors">
+                            Upload Photo
+                            <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                          </label>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
 
-                {/* 2. EXPERIENCE */}
+                {/* 2. Experience Section */}
                 {contentSection === 'experience' && (
-                  <div className="space-y-3">
-                    {data.experience.map((exp, idx) => (
-                      <div key={idx} className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs font-bold text-slate-800">Position #{idx + 1}</span>
-                          <button
-                            onClick={() => setData({ ...data, experience: data.experience.filter((_, i) => i !== idx) })}
-                            className="text-red-500 hover:text-red-700 p-1"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <input
-                            type="text"
-                            value={exp.role}
-                            onChange={(e) => {
-                              const updated = [...data.experience];
-                              updated[idx].role = e.target.value;
-                              setData({ ...data, experience: updated });
-                            }}
-                            placeholder="Job Role / Title"
-                            className="p-2.5 text-xs rounded-xl bg-white border border-slate-200 font-bold min-h-[44px]"
-                          />
+                  <div className="space-y-4 animate-fadeIn">
+                    <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                      <h3 className="text-sm font-black text-white">Work Experience</h3>
+                      <button
+                        onClick={() => {
+                          const newExp = [...(data.experience || []), { company: 'New Company', role: 'Role Title', dates: '2024 - Present', bullets: 'Add key responsibility or achievement bullet.' }];
+                          const nd = { ...data, experience: newExp };
+                          setData(nd);
+                          pushHistoryState(nd);
+                        }}
+                        className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Add Experience
+                      </button>
+                    </div>
+
+                    {data.experience?.map((exp, idx) => (
+                      <div key={idx} className="p-4 bg-slate-900 border border-slate-800 rounded-2xl space-y-3 relative group">
+                        <button
+                          onClick={() => {
+                            const newExp = data.experience.filter((_, i) => i !== idx);
+                            const nd = { ...data, experience: newExp };
+                            setData(nd);
+                            pushHistoryState(nd);
+                          }}
+                          className="absolute top-3 right-3 p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+                          title="Delete entry"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pr-8">
                           <input
                             type="text"
                             value={exp.company}
-                            onChange={(e) => {
-                              const updated = [...data.experience];
-                              updated[idx].company = e.target.value;
-                              setData({ ...data, experience: updated });
+                            onChange={e => {
+                              const copy = [...data.experience];
+                              copy[idx].company = e.target.value;
+                              setData({ ...data, experience: copy });
                             }}
-                            placeholder="Company"
-                            className="p-2.5 text-xs rounded-xl bg-white border border-slate-200 min-h-[44px]"
+                            placeholder="Company Name"
+                            className="p-2 bg-slate-950 border border-slate-800 rounded-lg font-bold text-white"
+                          />
+                          <input
+                            type="text"
+                            value={exp.role}
+                            onChange={e => {
+                              const copy = [...data.experience];
+                              copy[idx].role = e.target.value;
+                              setData({ ...data, experience: copy });
+                            }}
+                            placeholder="Role / Job Title"
+                            className="p-2 bg-slate-950 border border-slate-800 rounded-lg font-bold text-emerald-400"
                           />
                         </div>
+
                         <input
                           type="text"
                           value={exp.dates}
-                          onChange={(e) => {
-                            const updated = [...data.experience];
-                            updated[idx].dates = e.target.value;
-                            setData({ ...data, experience: updated });
+                          onChange={e => {
+                            const copy = [...data.experience];
+                            copy[idx].dates = e.target.value;
+                            setData({ ...data, experience: copy });
                           }}
-                          placeholder="Dates (e.g. 2022 - Present)"
-                          className="w-full p-2.5 text-xs rounded-xl bg-white border border-slate-200 min-h-[44px]"
+                          placeholder="Dates (e.g., 2022 - Present)"
+                          className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300"
                         />
+
                         <textarea
                           value={exp.bullets}
-                          onChange={(e) => {
-                            const updated = [...data.experience];
-                            updated[idx].bullets = e.target.value;
-                            setData({ ...data, experience: updated });
+                          onChange={e => {
+                            const copy = [...data.experience];
+                            copy[idx].bullets = e.target.value;
+                            setData({ ...data, experience: copy });
                           }}
                           rows={3}
-                          placeholder="Bullet accomplishments (newline separated)..."
-                          className="w-full p-2.5 text-xs rounded-xl bg-white border border-slate-200"
+                          placeholder="Key responsibilities and achievements (separate lines with Enter)"
+                          className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-slate-200"
                         />
                       </div>
                     ))}
-                    <button
-                      onClick={() => setData({
-                        ...data,
-                        experience: [...data.experience, { company: 'New Tech Corp', role: 'Senior Engineer', dates: '2023 - Present', bullets: 'Led cross-functional engineering sprint\nOptimized infrastructure throughput by 40%' }]
-                      })}
-                      className="w-full py-3 bg-white border-2 border-dashed border-slate-300 rounded-2xl text-xs font-bold text-emerald-600 hover:bg-emerald-50 flex items-center justify-center gap-1.5 min-h-[44px]"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add Position</span>
-                    </button>
                   </div>
                 )}
 
-                {/* 3. EDUCATION */}
+                {/* 3. Education Section */}
                 {contentSection === 'education' && (
-                  <div className="space-y-3">
-                    {data.education.map((ed, idx) => (
-                      <div key={idx} className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs font-bold text-slate-800">Education #{idx + 1}</span>
-                          <button
-                            onClick={() => setData({ ...data, education: data.education.filter((_, i) => i !== idx) })}
-                            className="text-red-500 hover:text-red-700 p-1"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <input
-                          type="text"
-                          value={ed.degree}
-                          onChange={(e) => {
-                            const updated = [...data.education];
-                            updated[idx].degree = e.target.value;
-                            setData({ ...data, education: updated });
+                  <div className="space-y-4 animate-fadeIn">
+                    <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                      <h3 className="text-sm font-black text-white">Education & Degrees</h3>
+                      <button
+                        onClick={() => {
+                          const newEdu = [...(data.education || []), { degree: 'Degree Name', school: 'University Name', year: '2024' }];
+                          const nd = { ...data, education: newEdu };
+                          setData(nd);
+                          pushHistoryState(nd);
+                        }}
+                        className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Add Education
+                      </button>
+                    </div>
+
+                    {data.education?.map((edu, idx) => (
+                      <div key={idx} className="p-4 bg-slate-900 border border-slate-800 rounded-2xl space-y-3 relative">
+                        <button
+                          onClick={() => {
+                            const newEdu = data.education.filter((_, i) => i !== idx);
+                            const nd = { ...data, education: newEdu };
+                            setData(nd);
+                            pushHistoryState(nd);
                           }}
-                          placeholder="Degree"
-                          className="w-full p-2.5 text-xs rounded-xl bg-white border border-slate-200 font-bold min-h-[44px]"
-                        />
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          className="absolute top-3 right-3 p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pr-8">
                           <input
                             type="text"
-                            value={ed.school}
-                            onChange={(e) => {
-                              const updated = [...data.education];
-                              updated[idx].school = e.target.value;
-                              setData({ ...data, education: updated });
+                            value={edu.degree}
+                            onChange={e => {
+                              const copy = [...data.education];
+                              copy[idx].degree = e.target.value;
+                              setData({ ...data, education: copy });
                             }}
-                            placeholder="University / School"
-                            className="p-2.5 text-xs rounded-xl bg-white border border-slate-200 min-h-[44px]"
+                            placeholder="Degree"
+                            className="p-2 bg-slate-950 border border-slate-800 rounded-lg font-bold text-white"
                           />
                           <input
                             type="text"
-                            value={ed.year}
-                            onChange={(e) => {
-                              const updated = [...data.education];
-                              updated[idx].year = e.target.value;
-                              setData({ ...data, education: updated });
+                            value={edu.school}
+                            onChange={e => {
+                              const copy = [...data.education];
+                              copy[idx].school = e.target.value;
+                              setData({ ...data, education: copy });
+                            }}
+                            placeholder="School / University"
+                            className="p-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            value={edu.year}
+                            onChange={e => {
+                              const copy = [...data.education];
+                              copy[idx].year = e.target.value;
+                              setData({ ...data, education: copy });
                             }}
                             placeholder="Graduation Year"
-                            className="p-2.5 text-xs rounded-xl bg-white border border-slate-200 min-h-[44px]"
+                            className="p-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300"
+                          />
+                          <input
+                            type="text"
+                            value={edu.gpa || ''}
+                            onChange={e => {
+                              const copy = [...data.education];
+                              copy[idx].gpa = e.target.value;
+                              setData({ ...data, education: copy });
+                            }}
+                            placeholder="GPA / CGPA (Optional)"
+                            className="p-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300"
                           />
                         </div>
                       </div>
                     ))}
-                    <button
-                      onClick={() => setData({
-                        ...data,
-                        education: [...data.education, { degree: 'M.S. in Computer Science', school: 'Stanford University', year: '2021' }]
-                      })}
-                      className="w-full py-3 bg-white border-2 border-dashed border-slate-300 rounded-2xl text-xs font-bold text-emerald-600 hover:bg-emerald-50 flex items-center justify-center gap-1.5 min-h-[44px]"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add Education</span>
-                    </button>
                   </div>
                 )}
 
-                {/* 4. SKILLS & EXTRA */}
+                {/* 4. Skills Section */}
                 {contentSection === 'skills' && (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">Technical & Core Skills (Comma Separated)</label>
+                  <div className="space-y-4 animate-fadeIn">
+                    <h3 className="text-sm font-black text-white border-b border-slate-800 pb-2">Technical & Soft Skills</h3>
+                    <div className="space-y-1">
+                      <label className="text-slate-400 font-bold block">Skills (Comma separated list)</label>
                       <textarea
                         value={data.skills}
-                        onChange={(e) => setData({ ...data, skills: e.target.value })}
-                        rows={4}
-                        className="w-full p-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">Certifications</label>
-                      <textarea
-                        value={data.certifications || ''}
-                        onChange={(e) => setData({ ...data, certifications: e.target.value })}
-                        rows={2}
-                        className="w-full p-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900"
+                        onChange={e => setData({ ...data, skills: e.target.value })}
+                        rows={5}
+                        placeholder="Python, React, TypeScript, Node.js, SQL, Machine Learning..."
+                        className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white font-medium focus:border-emerald-500 focus:outline-none"
                       />
                     </div>
                   </div>
                 )}
 
-                {/* 5. PROJECTS */}
+                {/* 5. Projects Section */}
                 {contentSection === 'projects' && (
-                  <div className="space-y-3">
-                    {data.projects.map((proj, idx) => (
-                      <div key={idx} className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs font-bold text-slate-800">Project #{idx + 1}</span>
-                          <button
-                            onClick={() => setData({ ...data, projects: data.projects.filter((_, i) => i !== idx) })}
-                            className="text-red-500 hover:text-red-700 p-1"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                  <div className="space-y-4 animate-fadeIn">
+                    <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                      <h3 className="text-sm font-black text-white">Projects Showcase</h3>
+                      <button
+                        onClick={() => {
+                          const newProj = [...(data.projects || []), { name: 'Project Name', description: 'Project overview and metrics.', tech: 'Technologies used' }];
+                          const nd = { ...data, projects: newProj };
+                          setData(nd);
+                          pushHistoryState(nd);
+                        }}
+                        className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Add Project
+                      </button>
+                    </div>
+
+                    {data.projects?.map((proj, idx) => (
+                      <div key={idx} className="p-4 bg-slate-900 border border-slate-800 rounded-2xl space-y-3 relative">
+                        <button
+                          onClick={() => {
+                            const newProj = data.projects.filter((_, i) => i !== idx);
+                            const nd = { ...data, projects: newProj };
+                            setData(nd);
+                            pushHistoryState(nd);
+                          }}
+                          className="absolute top-3 right-3 p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+
                         <input
                           type="text"
                           value={proj.name}
-                          onChange={(e) => {
-                            const updated = [...data.projects];
-                            updated[idx].name = e.target.value;
-                            setData({ ...data, projects: updated });
+                          onChange={e => {
+                            const copy = [...data.projects];
+                            copy[idx].name = e.target.value;
+                            setData({ ...data, projects: copy });
                           }}
-                          placeholder="Project Name"
-                          className="w-full p-2.5 text-xs rounded-xl bg-white border border-slate-200 font-bold min-h-[44px]"
+                          placeholder="Project Title"
+                          className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg font-bold text-white pr-10"
                         />
-                        <input
-                          type="text"
-                          value={proj.tech || ''}
-                          onChange={(e) => {
-                            const updated = [...data.projects];
-                            updated[idx].tech = e.target.value;
-                            setData({ ...data, projects: updated });
-                          }}
-                          placeholder="Tech Stack (e.g. React, Python, AWS)"
-                          className="w-full p-2.5 text-xs rounded-xl bg-white border border-slate-200 min-h-[44px]"
-                        />
+
                         <textarea
                           value={proj.description}
-                          onChange={(e) => {
-                            const updated = [...data.projects];
-                            updated[idx].description = e.target.value;
-                            setData({ ...data, projects: updated });
+                          onChange={e => {
+                            const copy = [...data.projects];
+                            copy[idx].description = e.target.value;
+                            setData({ ...data, projects: copy });
                           }}
                           rows={2}
-                          placeholder="Description..."
-                          className="w-full p-2.5 text-xs rounded-xl bg-white border border-slate-200"
+                          placeholder="Description & Key Impact"
+                          className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200"
+                        />
+
+                        <input
+                          type="text"
+                          value={proj.tech}
+                          onChange={e => {
+                            const copy = [...data.projects];
+                            copy[idx].tech = e.target.value;
+                            setData({ ...data, projects: copy });
+                          }}
+                          placeholder="Tech Stack (e.g. React, Python, PostgreSQL)"
+                          className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-emerald-400 font-medium"
                         />
                       </div>
                     ))}
-                    <button
-                      onClick={() => setData({
-                        ...data,
-                        projects: [...data.projects, { name: 'AI Analytics Engine', description: 'Built an async real-time telemetry dashboard using React and Python.', tech: 'Python, FastAPI, React' }]
-                      })}
-                      className="w-full py-3 bg-white border-2 border-dashed border-slate-300 rounded-2xl text-xs font-bold text-emerald-600 hover:bg-emerald-50 flex items-center justify-center gap-1.5 min-h-[44px]"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add Project</span>
-                    </button>
                   </div>
                 )}
 
-                {/* 6. CUSTOM SECTIONS */}
-                {contentSection === 'custom' && (
-                  <div className="space-y-3">
-                    {data.customSections.map((sec, idx) => (
-                      <div key={idx} className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs font-bold text-slate-800">Custom Section #{idx + 1}</span>
+                {/* 6. Languages Section (Structured CRUD & Reordering) */}
+                {contentSection === 'languages' && (
+                  <div className="space-y-4 animate-fadeIn">
+                    <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                      <h3 className="text-sm font-black text-white">Languages & Proficiency</h3>
+                      <button
+                        onClick={() => {
+                          const newList = [...languageList, { name: 'New Language', level: 'Intermediate' }];
+                          updateLanguageData(newList);
+                        }}
+                        className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Add Language
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {languageList.map((lang, idx) => (
+                        <div key={idx} className="p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between gap-2">
+                          {/* Reorder Buttons */}
+                          <div className="flex flex-col gap-0.5">
+                            <button
+                              disabled={idx === 0}
+                              onClick={() => {
+                                if (idx === 0) return;
+                                const copy = [...languageList];
+                                const temp = copy[idx];
+                                copy[idx] = copy[idx - 1];
+                                copy[idx - 1] = temp;
+                                updateLanguageData(copy);
+                              }}
+                              className="p-0.5 text-slate-500 hover:text-white disabled:opacity-20 cursor-pointer"
+                            >
+                              <ArrowUp className="w-3 h-3" />
+                            </button>
+                            <button
+                              disabled={idx === languageList.length - 1}
+                              onClick={() => {
+                                if (idx === languageList.length - 1) return;
+                                const copy = [...languageList];
+                                const temp = copy[idx];
+                                copy[idx] = copy[idx + 1];
+                                copy[idx + 1] = temp;
+                                updateLanguageData(copy);
+                              }}
+                              className="p-0.5 text-slate-500 hover:text-white disabled:opacity-20 cursor-pointer"
+                            >
+                              <ArrowDown className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          <input
+                            type="text"
+                            value={lang.name}
+                            onChange={e => {
+                              const copy = [...languageList];
+                              copy[idx].name = e.target.value;
+                              updateLanguageData(copy);
+                            }}
+                            className="flex-1 p-2 bg-slate-950 border border-slate-800 rounded-lg text-white font-bold"
+                          />
+
+                          <select
+                            value={lang.level}
+                            onChange={e => {
+                              const copy = [...languageList];
+                              copy[idx].level = e.target.value;
+                              updateLanguageData(copy);
+                            }}
+                            className="p-2 bg-slate-950 border border-slate-800 rounded-lg text-emerald-400 font-bold text-xs"
+                          >
+                            <option value="Native">Native</option>
+                            <option value="Fluent">Fluent</option>
+                            <option value="Professional Working">Professional Working</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Basic">Basic</option>
+                          </select>
+
                           <button
-                            onClick={() => setData({ ...data, customSections: data.customSections.filter((_, i) => i !== idx) })}
-                            className="text-red-500 hover:text-red-700 p-1"
+                            onClick={() => {
+                              const copy = languageList.filter((_, i) => i !== idx);
+                              updateLanguageData(copy);
+                            }}
+                            className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-                        <input
-                          type="text"
-                          value={sec.title}
-                          onChange={(e) => {
-                            const updated = [...data.customSections];
-                            updated[idx].title = e.target.value;
-                            setData({ ...data, customSections: updated });
-                          }}
-                          placeholder="Section Title (e.g. Research, Volunteering)"
-                          className="w-full p-2.5 text-xs rounded-xl bg-white border border-slate-200 font-bold min-h-[44px]"
-                        />
-                        <textarea
-                          value={sec.content}
-                          onChange={(e) => {
-                            const updated = [...data.customSections];
-                            updated[idx].content = e.target.value;
-                            setData({ ...data, customSections: updated });
-                          }}
-                          rows={3}
-                          placeholder="Section content..."
-                          className="w-full p-2.5 text-xs rounded-xl bg-white border border-slate-200"
-                        />
-                      </div>
-                    ))}
-                    <button
-                      onClick={() => setData({
-                        ...data,
-                        customSections: [...data.customSections, { title: 'Awards & Honors', content: 'Received Outstanding Engineer Award 2025' }]
-                      })}
-                      className="w-full py-3 bg-white border-2 border-dashed border-slate-300 rounded-2xl text-xs font-bold text-emerald-600 hover:bg-emerald-50 flex items-center justify-center gap-1.5 min-h-[44px]"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add Custom Section</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: Typography & Spacing Controls */}
-          {editorTab === 'design' && (
-            <div className="p-4 space-y-4 text-xs overflow-y-auto">
-              <div>
-                <label className="font-bold text-slate-800 block mb-2">Typography Pairings</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {FONTS.map(f => (
-                    <button
-                      key={f.id}
-                      onClick={() => setTheme(prev => ({ ...prev, fontId: f.id, font: f }))}
-                      className={`p-3 rounded-2xl border text-left font-bold transition-all min-h-[44px] ${
-                        theme.fontId === f.id ? 'bg-emerald-50 border-emerald-600 text-emerald-900 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                      }`}
-                    >
-                      <span>{f.name}</span>
-                      <span className="block text-[10px] opacity-60 font-normal">Modern Font</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Granular Font Size Control */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex justify-between items-center">
-                  <label className="font-bold text-slate-800">Base Font Size ({theme.fontSize}px)</label>
-                  <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5 border border-slate-200">
-                    <button
-                      onClick={() => setTheme(prev => ({ ...prev, fontSize: Math.max(7, Number((prev.fontSize - 0.5).toFixed(1))) }))}
-                      className="px-2 py-0.5 rounded bg-white hover:bg-slate-200 font-bold text-slate-700 shadow-xs"
-                      title="Decrease font size"
-                    >
-                      -
-                    </button>
-                    <span className="px-1.5 font-mono font-bold text-[11px] text-emerald-700">{theme.fontSize}px</span>
-                    <button
-                      onClick={() => setTheme(prev => ({ ...prev, fontSize: Math.min(18, Number((prev.fontSize + 0.5).toFixed(1))) }))}
-                      className="px-2 py-0.5 rounded bg-white hover:bg-slate-200 font-bold text-slate-700 shadow-xs"
-                      title="Increase font size"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                {/* Quick Presets Grid */}
-                <div className="grid grid-cols-5 gap-1.5">
-                  {[
-                    { label: 'Compact', size: 8.5 },
-                    { label: 'Standard', size: 10 },
-                    { label: 'Medium', size: 11.5 },
-                    { label: 'Large', size: 13 },
-                    { label: 'XL', size: 15 }
-                  ].map(preset => (
-                    <button
-                      key={preset.label}
-                      onClick={() => setTheme(prev => ({ ...prev, fontSize: preset.size }))}
-                      className={`py-1.5 px-1 rounded-xl text-[10px] font-bold border transition-all text-center ${
-                        theme.fontSize === preset.size
-                          ? 'bg-emerald-600 text-white border-emerald-600 shadow'
-                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                      }`}
-                    >
-                      <div>{preset.label}</div>
-                      <div className="text-[9px] opacity-80">{preset.size}px</div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Granular Slider */}
-                <input
-                  type="range"
-                  min="7"
-                  max="18"
-                  step="0.5"
-                  value={theme.fontSize}
-                  onChange={(e) => setTheme({ ...theme, fontSize: Number(e.target.value) })}
-                  className="w-full accent-emerald-600 cursor-pointer"
-                />
-              </div>
-
-              {/* Line Height Control */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex justify-between items-center">
-                  <label className="font-bold text-slate-800">Line Spacing ({theme.lineHeight})</label>
-                  <span className="font-mono font-bold text-[11px] text-emerald-700">{theme.lineHeight}x</span>
-                </div>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {[
-                    { label: 'Tight', val: 1.25 },
-                    { label: 'Normal', val: 1.5 },
-                    { label: 'Relaxed', val: 1.75 }
-                  ].map(lh => (
-                    <button
-                      key={lh.label}
-                      onClick={() => setTheme(prev => ({ ...prev, lineHeight: lh.val }))}
-                      className={`py-1.5 rounded-xl text-[10px] font-bold border transition-all ${
-                        theme.lineHeight === lh.val
-                          ? 'bg-emerald-600 text-white border-emerald-600 shadow'
-                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                      }`}
-                    >
-                      {lh.label} ({lh.val})
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="range"
-                  min="1.1"
-                  max="2.0"
-                  step="0.05"
-                  value={theme.lineHeight}
-                  onChange={(e) => setTheme({ ...theme, lineHeight: Number(e.target.value) })}
-                  className="w-full accent-emerald-600 cursor-pointer"
-                />
-              </div>
-
-              {/* Section Spacing Control */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex justify-between items-center">
-                  <label className="font-bold text-slate-800">Section Gap ({theme.sectionSpacing}px)</label>
-                  <span className="font-mono font-bold text-[11px] text-emerald-700">{theme.sectionSpacing}px</span>
-                </div>
-                <input
-                  type="range"
-                  min="6"
-                  max="24"
-                  step="1"
-                  value={theme.sectionSpacing}
-                  onChange={(e) => setTheme({ ...theme, sectionSpacing: Number(e.target.value) })}
-                  className="w-full accent-emerald-600 cursor-pointer"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: Palettes */}
-          {editorTab === 'colors' && (
-            <div className="p-4 space-y-4 text-xs overflow-y-auto">
-              <label className="font-bold text-slate-800 block mb-2">White-First Accent Palettes</label>
-              <div className="grid grid-cols-2 gap-2">
-                {PALETTES.map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => setTheme(prev => ({ ...prev, paletteId: p.id, palette: p }))}
-                    className={`p-3 rounded-2xl border text-left font-bold flex items-center justify-between min-h-[44px] ${
-                      theme.paletteId === p.id ? 'border-2 border-emerald-600 shadow-sm' : 'border-slate-200 bg-slate-50'
-                    }`}
-                  >
-                    <span>{p.name}</span>
-                    <span className="w-5 h-5 rounded-full border border-slate-200 flex-shrink-0" style={{ backgroundColor: p.primary }} />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: Layout Customizer */}
-          {editorTab === 'layout' && (
-            <div className="p-4 space-y-4 text-xs overflow-y-auto">
-              <div>
-                <label className="font-bold text-slate-800 block mb-2">Layout Structure</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { id: 'two_col_left', label: '2-Col Left Sidebar' },
-                    { id: 'two_col_right', label: '2-Col Right Sidebar' },
-                    { id: 'one_col', label: 'Single Column ATS' },
-                    { id: 'top_header', label: 'Top Header Banner' }
-                  ].map(l => (
-                    <button
-                      key={l.id}
-                      onClick={() => setTheme(prev => ({ ...prev, layout: l.id as LayoutType }))}
-                      className={`p-2.5 rounded-xl border text-left font-bold text-xs min-h-[44px] ${
-                        theme.layout === l.id ? 'bg-emerald-50 border-emerald-600 text-emerald-800' : 'bg-slate-50 border-slate-200 text-slate-700'
-                      }`}
-                    >
-                      {l.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="font-bold text-slate-800">Sidebar Width ({theme.sidebarWidth}%)</label>
-                </div>
-                <input
-                  type="range"
-                  min="25"
-                  max="40"
-                  value={theme.sidebarWidth}
-                  onChange={(e) => setTheme({ ...theme, sidebarWidth: Number(e.target.value) })}
-                  className="w-full accent-emerald-600 cursor-pointer"
-                />
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-slate-800">Show Profile Photo</span>
-                  <input
-                    type="checkbox"
-                    checked={data.showPhoto || false}
-                    onChange={(e) => setData({ ...data, showPhoto: e.target.checked })}
-                    className="w-4 h-4 accent-emerald-600 min-w-[20px] min-h-[20px]"
-                  />
-                </div>
-                {data.showPhoto && (
-                  <div className="space-y-2 pt-1">
-                    <div className="flex items-center gap-3">
-                      <img src={data.photoUrl} alt="Avatar" className="w-12 h-12 rounded-full object-cover border border-slate-300" />
-                      <label className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold cursor-pointer flex items-center gap-1.5 min-h-[44px]">
-                        <Camera className="w-4 h-4" />
-                        <span>Upload Photo</span>
-                        <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-                      </label>
+                      ))}
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-          )}
 
-          {/* TAB 5: AI Assistance */}
-          {editorTab === 'ai' && (
-            <div className="p-4 space-y-3 text-xs">
-              <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl space-y-3">
-                <span className="font-bold text-emerald-900 flex items-center gap-1.5 text-xs">
-                  <Sparkles className="w-4 h-4 text-emerald-600" />
-                  <span>1-Click AI Optimizer</span>
-                </span>
-                <button
-                  onClick={() => handleAiAction('summary')}
-                  className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-left shadow text-xs min-h-[44px]"
-                >
-                  ✨ Enhance Executive Summary
-                </button>
-                <button
-                  onClick={() => handleAiAction('skills')}
-                  className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-left shadow text-xs min-h-[44px]"
-                >
-                  🎯 Inject Top ATS Keywords
-                </button>
+                {/* 7. Custom Section */}
+                {contentSection === 'custom' && (
+                  <div className="space-y-4 animate-fadeIn">
+                    <div className="space-y-1">
+                      <label className="text-slate-400 font-bold block">Certifications</label>
+                      <textarea
+                        value={data.certifications}
+                        onChange={e => setData({ ...data, certifications: e.target.value })}
+                        rows={3}
+                        className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-slate-400 font-bold block">Key Accomplishments</label>
+                      <textarea
+                        value={data.achievements}
+                        onChange={e => setData({ ...data, achievements: e.target.value })}
+                        rows={3}
+                        className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white"
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Colors Palette Tab */}
+            {editorTab === 'colors' && (
+              <div className="space-y-4 animate-fadeIn">
+                <h3 className="text-sm font-black text-white border-b border-slate-800 pb-2">Color Palettes</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {PALETTES.map(p => (
+                    <div
+                      key={p.id}
+                      onClick={() => setTheme({ ...theme, paletteId: p.id, palette: p })}
+                      className={`p-3 rounded-2xl border-2 cursor-pointer transition-all ${
+                        theme.paletteId === p.id ? 'border-emerald-500 bg-slate-900 shadow-lg' : 'border-slate-800 bg-slate-950 hover:border-slate-700'
+                      }`}
+                    >
+                      <span className="font-bold text-xs text-white block mb-2">{p.name}</span>
+                      <div className="flex h-5 rounded-lg overflow-hidden border border-slate-800">
+                        <div style={{ backgroundColor: p.primary }} className="flex-1" />
+                        <div style={{ backgroundColor: p.accent }} className="flex-1" />
+                        <div style={{ backgroundColor: p.body }} className="flex-1" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Typography Tab */}
+            {editorTab === 'design' && (
+              <div className="space-y-4 animate-fadeIn">
+                <h3 className="text-sm font-black text-white border-b border-slate-800 pb-2">Font Families</h3>
+                <div className="space-y-2">
+                  {FONTS.map(f => (
+                    <div
+                      key={f.id}
+                      onClick={() => setTheme({ ...theme, fontId: f.id, font: f })}
+                      className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                        theme.fontId === f.id ? 'border-emerald-500 bg-slate-900' : 'border-slate-800 bg-slate-950'
+                      }`}
+                    >
+                      <span className="font-bold text-xs text-white block">{f.name}</span>
+                      <span className="text-[10px] text-slate-400 block">{f.css}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* AI Assistant Tab */}
+            {editorTab === 'ai' && (
+              <div className="space-y-4 animate-fadeIn">
+                <div className="p-4 bg-gradient-to-br from-teal-900/40 via-slate-900 to-emerald-900/40 rounded-2xl border border-teal-500/30 space-y-3">
+                  <div className="flex items-center gap-2 text-amber-300 font-extrabold text-sm">
+                    <Sparkles className="w-5 h-5" />
+                    <span>AI Resume Optimizer</span>
+                  </div>
+                  <p className="text-slate-300 text-xs leading-relaxed font-medium">
+                    Auto-tune your resume with AI keyword injection, active verbs, and executive phrasing.
+                  </p>
+                  <div className="space-y-2 pt-2">
+                    <button
+                      onClick={() => handleAiAction('summary')}
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-transform active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>Optimize Executive Summary</span>
+                    </button>
+                    <button
+                      onClick={() => handleAiAction('skills')}
+                      className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs rounded-xl border border-slate-700 transition-colors cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <Plus className="w-4 h-4 text-emerald-400" />
+                      <span>Inject Top ATS Keywords</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Right Live Canvas Preview Area */}
+        {/* ── RIGHT CANVAS LIVE PREVIEW AREA ── */}
         <div
           ref={previewContainerRef}
-          className={`flex-1 bg-slate-950 p-2 sm:p-4 md:p-6 overflow-auto flex justify-center items-start min-h-0 ${
-            mobileViewMode === 'preview' ? 'flex flex-1' : 'hidden md:flex'
+          className={`flex-1 bg-slate-950 p-4 sm:p-8 flex items-start justify-center overflow-auto relative ${
+            mobileViewMode === 'edit' ? 'hidden md:flex' : 'flex'
           }`}
         >
+          {/* Zoom scale wrapper */}
           <div
-            className="shadow-2xl rounded-sm overflow-hidden flex-shrink-0 my-3 transition-all duration-150"
             style={{
-              width: `${794 * previewScale}px`,
-              height: `${1123 * previewScale}px`,
+              transform: `scale(${previewScale})`,
+              transformOrigin: 'top center',
+              width: 794,
+              minHeight: 1123
             }}
+            className="transition-transform duration-200 shadow-2xl rounded-sm"
           >
-            <div
-              ref={canvasRef}
-              style={{
-                width: 794,
-                minHeight: 1123,
-                margin: 0,
-                padding: 0,
-                backgroundColor: '#ffffff',
-                transform: `scale(${previewScale})`,
-                transformOrigin: 'top left',
-              }}
-            >
+            <div ref={canvasRef} className="w-[794px] min-h-[1123px] bg-white text-slate-900 shadow-2xl relative overflow-hidden">
               {renderCanvasTemplate()}
             </div>
           </div>
         </div>
+
       </div>
 
-      {/* Sticky Mobile Bottom Bar */}
-      <div className="md:hidden bg-slate-900 border-t border-slate-800 p-3 flex items-center justify-between gap-2 z-30 flex-shrink-0">
-        <button
-          onClick={onBackToGallery}
-          className="px-3 py-2 bg-slate-800 text-slate-300 font-bold text-xs rounded-xl flex items-center gap-1 min-h-[44px]"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Templates</span>
-        </button>
+      {/* ── TEMPLATE SWITCHER MODAL INSIDE EDITOR ── */}
+      {isTemplateModalOpen && (
+        <div className="fixed inset-0 z-[99999] overflow-y-auto flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
+            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <div>
+                <h2 className="text-lg font-black text-slate-900">Switch Resume Template</h2>
+                <p className="text-xs text-slate-500 font-semibold">Your resume content will be preserved 100%.</p>
+              </div>
+              <button onClick={() => setIsTemplateModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-700 rounded-full">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-        <button
-          onClick={() => handleDownloadPdf(true)}
-          disabled={isExporting}
-          className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-lg flex items-center justify-center gap-1.5 min-h-[44px]"
-        >
-          <Download className="w-4 h-4" />
-          <span>{isExporting ? 'Generating...' : 'Download PDF'}</span>
-        </button>
-      </div>
+            <div className="px-5 py-2 border-b border-slate-100 flex gap-2 overflow-x-auto no-scrollbar">
+              {TEMPLATE_CATEGORIES.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-extrabold cursor-pointer whitespace-nowrap ${
+                    selectedCategory === cat ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            <div className="p-5 flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {ALL_TEMPLATES.filter(t => selectedCategory === 'All' || t.category === selectedCategory).map(t => (
+                <div
+                  key={t.id}
+                  onClick={() => handleSwitchTemplate(t)}
+                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                    activeTemplate.id === t.id ? 'border-emerald-600 bg-emerald-50/20 shadow-md' : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-extrabold text-xs text-slate-900">{t.name}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-black">ATS {t.atsScore}%</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium line-clamp-2">{t.description}</p>
+                  </div>
+                  <button className="mt-3 w-full py-1.5 bg-slate-100 group-hover:bg-emerald-600 text-slate-700 text-xs font-bold rounded-xl">
+                    {activeTemplate.id === t.id ? 'Active ✓' : 'Use Template'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

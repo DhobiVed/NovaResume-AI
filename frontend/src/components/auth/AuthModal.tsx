@@ -38,9 +38,7 @@ const SignupSuccessPopup: React.FC<{
         setTimeout(() => confetti({ particleCount: 40, spread: 60, origin: { x: 0.9, y: 0.6 }, colors: ['#f59e0b', '#6366f1'] }), 450);
       } catch {}
     }, 200);
-    // Auto-advance after 3s if user hasn't clicked
-    const t3 = setTimeout(() => { handleContinue(); }, 3000);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
   const handleContinue = () => {
@@ -55,15 +53,6 @@ const SignupSuccessPopup: React.FC<{
       <div className={`relative bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-sm mx-auto overflow-hidden transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
         visible && !exiting ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-90 translate-y-8'
       }`}>
-
-        {/* X Close Button */}
-        <button
-          onClick={handleContinue}
-          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-all active:scale-90 cursor-pointer"
-          aria-label="Close"
-        >
-          <X className="w-4 h-4" />
-        </button>
 
         {/* Top green gradient bar */}
         <div className="h-2 bg-gradient-to-r from-teal-500 via-emerald-500 to-green-400" />
@@ -101,9 +90,9 @@ const SignupSuccessPopup: React.FC<{
             Please sign in to continue.
           </p>
 
-          {/* Progress bar — auto-advances in 3s */}
+          {/* Progress bar — auto-advances */}
           <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-6">
-            <div className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full" style={{ animation: 'progressBar 3s linear forwards' }} />
+            <div className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full animate-progress-bar" />
           </div>
 
           {/* CTA */}
@@ -131,13 +120,6 @@ const LoginSuccessPopup: React.FC<{
   const [visible, setVisible] = useState(false);
   const [exiting, setExiting] = useState(false);
 
-  const handleDismiss = () => {
-    if (!exiting) {
-      setExiting(true);
-      setTimeout(onDone, 350);
-    }
-  };
-
   useEffect(() => {
     const t1 = setTimeout(() => setVisible(true), 20);
     // Subtle confetti for login too
@@ -150,8 +132,11 @@ const LoginSuccessPopup: React.FC<{
   }, []);
 
   useEffect(() => {
-    // Auto-dismiss after 3s
-    const timer = setTimeout(handleDismiss, 3000);
+    // Auto-dismiss after 2s
+    const timer = setTimeout(() => {
+      setExiting(true);
+      setTimeout(onDone, 350);
+    }, 2000);
     return () => clearTimeout(timer);
   }, [onDone]);
 
@@ -162,15 +147,6 @@ const LoginSuccessPopup: React.FC<{
       <div className={`relative bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-sm mx-auto overflow-hidden transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
         visible && !exiting ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-90 translate-y-8'
       }`}>
-
-        {/* X Close Button */}
-        <button
-          onClick={handleDismiss}
-          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-all active:scale-90 cursor-pointer"
-          aria-label="Close"
-        >
-          <X className="w-4 h-4" />
-        </button>
 
         {/* Top accent bar */}
         <div className="h-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-green-400" />
@@ -209,9 +185,9 @@ const LoginSuccessPopup: React.FC<{
             Redirecting to your dashboard...
           </p>
 
-          {/* Auto-progress bar — fills in 3s */}
+          {/* Auto-progress bar */}
           <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-4">
-            <div className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full" style={{ animation: 'progressBar 3s linear forwards' }} />
+            <div className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full animate-progress-bar" />
           </div>
 
           {/* Loading dots */}
