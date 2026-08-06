@@ -282,16 +282,16 @@ export const JobTrackerModal: React.FC<JobTrackerModalProps> = ({ isOpen, onClos
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-1">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2 border-t border-slate-200">
               <button
                 onClick={() => setIsAddingNew(false)}
-                className="px-3.5 py-1.5 bg-white text-slate-700 border border-slate-200 rounded-xl font-bold"
+                className="w-full sm:w-auto px-4 py-2.5 bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 rounded-xl font-bold text-xs min-h-[40px] flex items-center justify-center cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddJob}
-                className="px-4 py-1.5 bg-emerald-600 text-white rounded-xl font-extrabold shadow-xs"
+                className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-xs shadow-xs min-h-[40px] flex items-center justify-center cursor-pointer"
               >
                 Save Job Application
               </button>
