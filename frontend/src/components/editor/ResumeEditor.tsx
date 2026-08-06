@@ -14,8 +14,10 @@ import { StartupTemplate } from '../templates/StartupTemplate';
 import { ElegantTemplate } from '../templates/ElegantTemplate';
 import {
   Download, Sparkles, Palette as PaletteIcon, Type, Layout as LayoutIcon,
-  FileText, Plus, Trash2, ArrowLeft, Check, Camera, Printer
+  FileText, Plus, Trash2, ArrowLeft, Check, Camera, Printer, Cloud
 } from 'lucide-react';
+
+const DRAFT_KEY = (templateId: string) => `nova_draft_${templateId}`;
 
 interface Props {
   template: TemplateDefinition;
@@ -32,6 +34,8 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery, initi
   const [mobileViewMode, setMobileViewMode] = useState<'edit' | 'preview'>('edit');
   const [isExporting, setIsExporting] = useState(false);
   const [aiNotice, setAiNotice] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-calculate exact zoom scale so canvas fits preview area with zero border clipping
   useEffect(() => {
@@ -51,24 +55,42 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery, initi
     };
   }, [mobileViewMode]);
 
-  // Default theme state based on template selection
+  // Default theme state based on template selection (restore draft theme if available)
   const defaultPalette = PALETTES.find(p => p.id === template.defaultPaletteId) || PALETTES[0];
   const defaultFont = FONTS.find(f => f.id === template.defaultFontId) || FONTS[0];
 
-  const [theme, setTheme] = useState<ThemeConfig>({
-    paletteId: defaultPalette.id,
-    palette: defaultPalette,
-    fontId: defaultFont.id,
-    font: defaultFont,
-    fontSize: 11,
-    lineHeight: 1.5,
-    sectionSpacing: 14,
-    sidebarWidth: 32,
-    layout: template.layout
-  });
+  const getRestoredTheme = (): ThemeConfig => {
+    if (!initialData) {
+      try {
+        const draft = JSON.parse(localStorage.getItem(DRAFT_KEY(template.id)) || '{}');
+        if (draft?.theme?.paletteId) return draft.theme;
+      } catch {}
+    }
+    return {
+      paletteId: defaultPalette.id,
+      palette: defaultPalette,
+      fontId: defaultFont.id,
+      font: defaultFont,
+      fontSize: 11,
+      lineHeight: 1.5,
+      sectionSpacing: 14,
+      sidebarWidth: 32,
+      layout: template.layout
+    };
+  };
 
-  // Resume Content State (Populates imported data if present)
-  const [data, setData] = useState<ResumeData>(() => ({
+  const [theme, setTheme] = useState<ThemeConfig>(getRestoredTheme);
+
+  // Resume Content State — restore from draft or use imported/default data
+  const [data, setData] = useState<ResumeData>(() => {
+    // Prefer imported data; otherwise restore from auto-saved draft
+    if (!initialData) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(DRAFT_KEY(template.id)) || '{}');
+        if (saved?.data?.fullName) return saved.data;
+      } catch {}
+    }
+    return ({
     fullName: initialData?.fullName || 'Alex Vance',
     title: initialData?.title || 'Senior AI & Systems Engineer',
     email: initialData?.email || 'alex.vance@example.com',
@@ -110,7 +132,8 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery, initi
     customSections: initialData?.customSections || [
       { title: 'Research & Publications', content: 'Co-authored paper: "Optimizing Context Retrieval Overhead in High-Concurrency Agentic Workflows" (2025)' }
     ]
-  }));
+  });
+  });
 
   // Sync state if initialData changes dynamically
   useEffect(() => {
@@ -136,6 +159,30 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery, initi
       }));
     }
   }, [initialData]);
+
+  // ── AUTO-SAVE DRAFT (debounced 2s) ───────────────────────────────────────
+  useEffect(() => {
+    setSaveStatus('saving');
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      try {
+        const draft = {
+          data,
+          theme,
+          savedAt: new Date().toISOString(),
+          templateId: template.id,
+          templateName: template.name
+        };
+        localStorage.setItem(DRAFT_KEY(template.id), JSON.stringify(draft));
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2500);
+      } catch (e) {
+        console.warn('Auto-save failed:', e);
+        setSaveStatus('idle');
+      }
+    }, 2000);
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
+  }, [data, theme]);
 
   // Export handlers
   const handleDownloadPdf = async (singlePage: boolean = true) => {
@@ -230,7 +277,22 @@ export const ResumeEditor: React.FC<Props> = ({ template, onBackToGallery, initi
             <h1 className="font-extrabold text-sm text-white">{template.name}</h1>
             <span className="text-[10px] text-emerald-400 font-semibold">{template.category} Layout</span>
           </div>
+          {/* Auto-save status chip */}
+          {saveStatus !== 'idle' && (
+            <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all duration-300 ${
+              saveStatus === 'saving'
+                ? 'bg-slate-800 border-slate-700 text-slate-400 animate-save-pulse'
+                : 'bg-emerald-900/50 border-emerald-700/60 text-emerald-400'
+            }`}>
+              {saveStatus === 'saving' ? (
+                <><Cloud className="w-3 h-3" /><span>Saving...</span></>
+              ) : (
+                <><Check className="w-3 h-3" /><span>Saved</span></>
+              )}
+            </div>
+          )}
         </div>
+
 
         {/* Export CTA Buttons */}
         <div className="flex items-center gap-2">

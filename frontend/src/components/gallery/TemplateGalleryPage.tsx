@@ -538,10 +538,10 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                       </div>
 
                       {/* Centered Live A4 Thumbnail Preview Container */}
-                      <div className="h-[210px] sm:h-[290px] w-full overflow-hidden bg-slate-100 relative flex items-center justify-center group-hover:bg-slate-200/60 transition-colors">
+                      <div className="h-[170px] sm:h-[260px] md:h-[290px] w-full overflow-hidden bg-slate-100 relative flex items-center justify-center group-hover:bg-slate-200/60 transition-colors">
                         <ResumeThumbnailPreview
                           template={t}
-                          height={290}
+                          height={260}
                           onClick={() => { setPreviewModalTemplate(t); setModalZoom(0.70); }}
                         />
 
@@ -598,17 +598,17 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                           <p className="text-[10px] sm:text-xs text-slate-500 line-clamp-1 font-medium">{t.description}</p>
                         </div>
 
-                        {/* Action Buttons Row */}
-                        <div className="flex items-center gap-2 pt-2 border-t border-slate-100/80">
+                        {/* Action Buttons Row — stacks on xs, side-by-side on sm+ */}
+                        <div className="flex flex-col xs:flex-row items-stretch gap-1.5 pt-2 border-t border-slate-100/80">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setPreviewModalTemplate(t);
                               setModalZoom(0.70);
                             }}
-                            className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-extrabold text-[11px] transition-colors flex items-center gap-1 min-h-[36px]"
+                            className="flex-1 px-2 py-2 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-extrabold text-[11px] transition-colors flex items-center justify-center gap-1 min-h-[38px]"
                           >
-                            <Eye className="w-3.5 h-3.5 text-emerald-600" />
+                            <Eye className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
                             <span>Preview</span>
                           </button>
 
@@ -617,10 +617,10 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                               e.stopPropagation();
                               onSelectTemplate(t);
                             }}
-                            className="flex-1 py-1.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-transform active:scale-95 min-h-[36px]"
+                            className="flex-1 py-2 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] flex items-center justify-center gap-1 shadow-sm transition-transform active:scale-95 min-h-[38px]"
                           >
-                            <span>Use Template</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
+                            <span>Use</span>
+                            <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" />
                           </button>
                         </div>
                       </div>

@@ -17,9 +17,6 @@ import { Plus, ShieldCheck, Briefcase, Globe, Menu, X, Sparkles, History, Upload
 import { firebaseAuthService } from './services/firebaseAuth';
 
 export const AppContent: React.FC = () => {
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateDefinition | null>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
   // Persistent User State with LocalStorage Fallback
   const [user, setUser] = useState<UserProfile | null>(() => {
     try {
@@ -29,6 +26,19 @@ export const AppContent: React.FC = () => {
       return null;
     }
   });
+
+  // Page State Persistence — restore which template the user was editing on refresh
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateDefinition | null>(() => {
+    try {
+      const cachedUser = localStorage.getItem('nova_user_profile');
+      if (!cachedUser) return null; // Only restore if user was logged in
+      const saved = localStorage.getItem('nova_active_template');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Intro Video Splash State (Only shows on FIRST session visit if user is not logged in)
   const [showIntroVideo, setShowIntroVideo] = useState(() => {
@@ -61,9 +71,21 @@ export const AppContent: React.FC = () => {
     } else {
       try {
         localStorage.removeItem('nova_user_profile');
+        localStorage.removeItem('nova_active_template'); // Clear page state on logout
       } catch {}
     }
   }, [user]);
+
+  // Sync selected template to localStorage for page refresh persistence
+  useEffect(() => {
+    try {
+      if (selectedTemplate && user) {
+        localStorage.setItem('nova_active_template', JSON.stringify(selectedTemplate));
+      } else {
+        localStorage.removeItem('nova_active_template');
+      }
+    } catch {}
+  }, [selectedTemplate, user]);
 
   // Force guaranteed native HTML5 video autoplay
   useEffect(() => {
@@ -119,6 +141,7 @@ export const AppContent: React.FC = () => {
     setSelectedTemplate(null);
     try {
       localStorage.removeItem('nova_user_profile');
+      localStorage.removeItem('nova_active_template');
     } catch {}
     await firebaseAuthService.logout();
   };

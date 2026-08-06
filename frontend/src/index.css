@@ -1,6 +1,12 @@
 @import 'katex/dist/katex.min.css';
 @import "tailwindcss";
 
+/* Custom breakpoints */
+@custom-media --xs (width >= 480px);
+@theme {
+  --breakpoint-xs: 480px;
+}
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
@@ -188,6 +194,26 @@ body {
 
 .animate-spin-slow {
   animation: spinSlow 3s linear infinite;
+}
+
+/* Slide-up for bottom sheets */
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Auto-save indicator pulse */
+@keyframes savePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-save-pulse {
+  animation: savePulse 1.2s ease-in-out infinite;
 }
 
 /* Fade-in utility for success popups */
