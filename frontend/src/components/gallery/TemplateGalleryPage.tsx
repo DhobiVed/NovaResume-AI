@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, memo } from 'react';
+import React, { useState, useRef, useEffect, memo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { ALL_TEMPLATES, TEMPLATE_CATEGORIES } from '../../lib/templateData';
 import type { TemplateDefinition } from '../../lib/resumeTypes';
@@ -14,8 +14,9 @@ import { StartupTemplate } from '../templates/StartupTemplate';
 import { ElegantTemplate } from '../templates/ElegantTemplate';
 import { PALETTES, FONTS, type ResumeData, type ThemeConfig } from '../../lib/resumeTypes';
 import {
-  Search, Sparkles, ShieldCheck, Eye, ArrowRight, X, ZoomIn, ZoomOut,
-  Heart, Filter, SlidersHorizontal, RefreshCw, Grid, Check, Film
+  Search, ShieldCheck, Eye, ArrowRight, X, ZoomIn, ZoomOut,
+  Heart, Filter, SlidersHorizontal, RefreshCw, Grid, Check, Film,
+  ChevronLeft, ChevronRight, Star
 } from 'lucide-react';
 
 const PREVIEW_SAMPLE_DATA: ResumeData = {
@@ -63,6 +64,52 @@ const QUICK_CATEGORY_CHIPS = [
   { id: 'Marketing', label: '🚀 Marketing' }
 ] as const;
 
+// Helper: Smart Badges Generator
+const getSmartBadges = (t: TemplateDefinition) => {
+  const badges: { label: string; bg: string; text: string; border: string }[] = [];
+  if (t.isPopular) {
+    badges.push({ label: '⭐ Most Popular', bg: 'bg-amber-500/10', text: 'text-amber-700', border: 'border-amber-400/40' });
+  }
+  if (t.isNew) {
+    badges.push({ label: '🆕 New Design', bg: 'bg-indigo-500/10', text: 'text-indigo-700', border: 'border-indigo-400/40' });
+  }
+  if (t.atsScore >= 99) {
+    badges.push({ label: '🤖 ATS Optimized', bg: 'bg-emerald-500/10', text: 'text-emerald-800', border: 'border-emerald-400/40' });
+  }
+  if (t.category === 'Executive' || t.category === 'Corporate') {
+    badges.push({ label: '💼 HR Recommended', bg: 'bg-blue-500/10', text: 'text-blue-700', border: 'border-blue-400/40' });
+  }
+  if (t.category === 'Creative' || t.category === 'UI/UX Designer') {
+    badges.push({ label: '🏆 Premium Design', bg: 'bg-purple-500/10', text: 'text-purple-700', border: 'border-purple-400/40' });
+  }
+  if (t.category === 'Software Engineer' || t.category === 'AI Engineer') {
+    badges.push({ label: "✨ Editor's Choice", bg: 'bg-teal-500/10', text: 'text-teal-800', border: 'border-teal-400/40' });
+  }
+  if (badges.length === 0) {
+    badges.push({ label: '🔥 Trending', bg: 'bg-rose-500/10', text: 'text-rose-700', border: 'border-rose-400/40' });
+  }
+  return badges;
+};
+
+// Helper: Downloads Count Generator
+const getDownloadsCount = (id: string) => {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) % 9000;
+  }
+  const count = (12400 + hash).toLocaleString();
+  return `${count}+ downloads`;
+};
+
+// Helper: Suitable For Tag Generator
+const getSuitableFor = (t: TemplateDefinition) => {
+  if (t.tags && t.tags.length > 0) {
+    const mainTags = t.tags.slice(0, 3).map(tag => tag.charAt(0).toUpperCase() + tag.slice(1)).join(', ');
+    return `Recommended for ${mainTags}`;
+  }
+  return `Recommended for ${t.category} professionals`;
+};
+
 const TemplateRenderer: React.FC<{ template: TemplateDefinition }> = memo(({ template }) => {
   const palette = PALETTES.find(p => p.id === template.defaultPaletteId) || PALETTES[0];
   const font = FONTS.find(f => f.id === template.defaultFontId) || FONTS[0];
@@ -95,9 +142,9 @@ const TemplateRenderer: React.FC<{ template: TemplateDefinition }> = memo(({ tem
 });
 
 /** 60FPS Pure CSS GPU-Accelerated Dynamic Centered Thumbnail Component */
-const ResumeThumbnailPreview: React.FC<{ template: TemplateDefinition; height?: number; onClick?: () => void }> = memo(({ template, onClick }) => {
+const ResumeThumbnailPreview: React.FC<{ template: TemplateDefinition; onClick?: () => void }> = memo(({ template, onClick }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.20);
+  const [scale, setScale] = useState(0.25);
 
   useEffect(() => {
     const updateScale = () => {
@@ -122,7 +169,7 @@ const ResumeThumbnailPreview: React.FC<{ template: TemplateDefinition; height?: 
     <div
       ref={containerRef}
       onClick={onClick}
-      className="w-full h-full min-h-[210px] sm:min-h-[280px] bg-slate-100/90 flex items-center justify-center overflow-hidden relative p-1 cursor-pointer select-none"
+      className="w-full h-full min-h-[210px] bg-slate-100/90 flex items-center justify-center overflow-hidden relative p-1 cursor-pointer select-none"
     >
       <div
         className="bg-white shadow-md rounded-sm overflow-hidden flex-shrink-0 pointer-events-none"
@@ -162,6 +209,9 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
+  // Active Cover Flow Index State
+  const [activeIndex, setActiveIndex] = useState(0);
+
   // Favorites Local State
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
@@ -185,10 +235,6 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
       setModalZoom(Math.max(0.32, fit));
     }
   }, [previewModalTemplate]);
-
-  // Virtualized Incremental Pagination State
-  const [visibleCount, setVisibleCount] = useState(16);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const [favToast, setFavToast] = useState<string | null>(null);
 
@@ -239,18 +285,9 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
     return matchesCategory && matchesSearch && matchesLayout && matchesAts && matchesColor && matchesFav;
   });
 
-  // Infinite Scroll Handler inside Right Grid Container
-  const handleGridScroll = () => {
-    if (!scrollContainerRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-    if (scrollTop + clientHeight >= scrollHeight - 300) {
-      setVisibleCount(prev => Math.min(prev + 12, filteredTemplates.length));
-    }
-  };
-
-  // Reset pagination count on filter change
+  // Reset CoverFlow activeIndex on filter change
   useEffect(() => {
-    setVisibleCount(16);
+    setActiveIndex(0);
   }, [selectedCategory, searchQuery, layoutFilter, atsFilter, selectedColor, showFavoritesOnly]);
 
   const resetAllFilters = () => {
@@ -260,26 +297,92 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
     setAtsFilter('all');
     setSelectedColor(null);
     setShowFavoritesOnly(false);
+    setActiveIndex(0);
   };
 
+  // CoverFlow Navigation Helpers
+  const handlePrev = useCallback(() => {
+    setActiveIndex(prev => Math.max(0, prev - 1));
+  }, []);
+
+  const handleNext = useCallback(() => {
+    setActiveIndex(prev => Math.min(filteredTemplates.length - 1, prev + 1));
+  }, [filteredTemplates.length]);
+
+  // Keyboard Arrow Navigation Listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (document.activeElement?.tagName === 'INPUT' || previewModalTemplate) return;
+      if (e.key === 'ArrowLeft') handlePrev();
+      if (e.key === 'ArrowRight') handleNext();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handlePrev, handleNext, previewModalTemplate]);
+
+  // Touch Swipe & Drag Handlers for Mobile & Desktop CoverFlow
+  const touchStartXRef = useRef<number | null>(null);
+  const isDraggingRef = useRef(false);
+
+  const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    touchStartXRef.current = clientX;
+    isDraggingRef.current = true;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isDraggingRef.current || touchStartXRef.current === null) return;
+    const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : e.clientX;
+    const diffX = clientX - touchStartXRef.current;
+    
+    if (Math.abs(diffX) > 40) {
+      if (diffX < 0) {
+        handleNext();
+      } else {
+        handlePrev();
+      }
+    }
+    touchStartXRef.current = null;
+    isDraggingRef.current = false;
+  };
+
+  // Mouse Wheel Handler for CoverFlow Stage
+  const lastWheelTimeRef = useRef(0);
+  const handleWheel = (e: React.WheelEvent) => {
+    const now = Date.now();
+    if (now - lastWheelTimeRef.current < 250) return;
+    
+    const delta = e.deltaX !== 0 ? e.deltaX : e.deltaY;
+    if (Math.abs(delta) > 20) {
+      if (delta > 0) {
+        handleNext();
+      } else {
+        handlePrev();
+      }
+      lastWheelTimeRef.current = now;
+    }
+  };
+
+  const activeTemplate = filteredTemplates[activeIndex] || filteredTemplates[0];
+
   return (
-    <div className="h-[calc(100vh-64px)] w-full bg-slate-50 text-slate-900 flex flex-col font-sans overflow-hidden animate-fade-in">
+    <div className="h-[calc(100vh-64px)] w-full bg-slate-900 text-slate-100 flex flex-col font-sans overflow-hidden animate-fade-in">
       
-      {/* ── MAIN TWO-PANEL MARKETPLACE LAYOUT ── */}
+      {/* ── MAIN TWO-PANEL COVER FLOW LAYOUT ── */}
       <div className="flex-1 flex overflow-hidden relative">
 
         {/* ── LEFT FIXED FILTER SIDEBAR (DESKTOP) ── */}
-        <aside className="hidden lg:flex w-72 flex-shrink-0 bg-white border-r border-slate-200 flex-col h-full overflow-y-auto p-5 space-y-6 z-10 shadow-sm">
+        <aside className="hidden lg:flex w-72 flex-shrink-0 bg-slate-950 border-r border-slate-800 flex-col h-full overflow-y-auto p-5 space-y-5 z-20 shadow-2xl">
           
           {/* Marketplace Title & Favorite Counter */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-green-700 flex items-center justify-center text-white font-extrabold shadow-sm">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-green-500 flex items-center justify-center text-white font-extrabold shadow-lg shadow-emerald-950">
                 <Grid className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="font-black text-sm text-slate-900 tracking-wide">Template Hub</h2>
-                <p className="text-[10px] text-emerald-700 font-bold tracking-wider uppercase">{ALL_TEMPLATES.length} Designs Live</p>
+                <h2 className="font-black text-sm text-white tracking-wide">Template Hub</h2>
+                <p className="text-[10px] text-emerald-400 font-bold tracking-wider uppercase">{ALL_TEMPLATES.length} Designs Live</p>
               </div>
             </div>
 
@@ -287,7 +390,7 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
             {(selectedCategory !== 'All' || searchQuery || layoutFilter !== 'all' || atsFilter !== 'all' || selectedColor || showFavoritesOnly) && (
               <button
                 onClick={resetAllFilters}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-slate-100 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition-colors cursor-pointer"
                 title="Reset All Filters"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
@@ -303,10 +406,10 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search templates, tags..."
-              className="w-full pl-9 pr-8 py-2 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
+              className="w-full pl-9 pr-8 py-2 text-xs font-semibold rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:bg-slate-900/90 transition-colors"
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+              <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-2.5 text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
@@ -318,22 +421,22 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
             
             <button
               onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
-                showFavoritesOnly ? 'bg-rose-50 text-rose-700 border border-rose-200 shadow-xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80'
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                showFavoritesOnly ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-xs' : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
               }`}
             >
               <div className="flex items-center gap-2">
                 <Heart className={`w-3.5 h-3.5 ${showFavoritesOnly ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`} />
                 <span>My Saved Favorites</span>
               </div>
-              <span className="px-1.5 py-0.5 rounded-full bg-white text-[10px] border border-slate-200 font-extrabold">{favorites.length}</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-slate-800 text-[10px] border border-slate-700 font-extrabold text-slate-300">{favorites.length}</span>
             </button>
           </div>
 
           {/* Categories List with Item Counts */}
           <div className="space-y-2">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">Categories</span>
-            <div className="space-y-1 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
+            <div className="space-y-1 max-h-44 overflow-y-auto pr-1 scrollbar-thin">
               {TEMPLATE_CATEGORIES.map(cat => {
                 const count = cat === 'All' 
                   ? ALL_TEMPLATES.length 
@@ -343,14 +446,14 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                    className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                       selectedCategory === cat
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950'
+                        : 'text-slate-300 hover:bg-slate-900 hover:text-white'
                     }`}
                   >
                     <span className="truncate">{cat}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${selectedCategory === cat ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${selectedCategory === cat ? 'bg-emerald-700 text-white' : 'bg-slate-800 text-slate-400'}`}>
                       {count}
                     </span>
                   </button>
@@ -360,11 +463,11 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
           </div>
 
           {/* Color Swatch Filters */}
-          <div className="space-y-2 pt-2 border-t border-slate-100">
+          <div className="space-y-2 pt-2 border-t border-slate-800">
             <div className="flex justify-between items-center px-1">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Color Theme</span>
               {selectedColor && (
-                <button onClick={() => setSelectedColor(null)} className="text-[10px] text-emerald-600 font-bold">Clear</button>
+                <button onClick={() => setSelectedColor(null)} className="text-[10px] text-emerald-400 font-bold cursor-pointer">Clear</button>
               )}
             </div>
             <div className="grid grid-cols-5 gap-2 pt-1">
@@ -372,8 +475,8 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                 <button
                   key={p.id}
                   onClick={() => setSelectedColor(selectedColor === p.id ? null : p.id)}
-                  className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-transform active:scale-95 ${
-                    selectedColor === p.id ? 'border-emerald-600 ring-2 ring-emerald-300 scale-110 shadow-sm' : 'border-white shadow-xs hover:scale-105'
+                  className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-transform active:scale-95 cursor-pointer ${
+                    selectedColor === p.id ? 'border-emerald-400 ring-2 ring-emerald-500/50 scale-110 shadow-sm' : 'border-slate-800 shadow-xs hover:scale-105'
                   }`}
                   style={{ backgroundColor: p.primary }}
                   title={p.name}
@@ -385,7 +488,7 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
           </div>
 
           {/* ATS Compliance Filter */}
-          <div className="space-y-2 pt-2 border-t border-slate-100">
+          <div className="space-y-2 pt-2 border-t border-slate-800">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">ATS Parser Score</span>
             <div className="grid grid-cols-3 gap-1.5">
               {[
@@ -396,10 +499,10 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                 <button
                   key={ats.id}
                   onClick={() => setAtsFilter(ats.id as any)}
-                  className={`py-1.5 rounded-xl text-[10px] font-bold border transition-all text-center ${
+                  className={`py-1.5 rounded-xl text-[10px] font-bold border transition-all text-center cursor-pointer ${
                     atsFilter === ats.id
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-xs'
+                      : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
                   }`}
                 >
                   {ats.label}
@@ -408,34 +511,10 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
             </div>
           </div>
 
-          {/* Page Layout Structure Filter */}
-          <div className="space-y-2 pt-2 border-t border-slate-100">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">Column Structure</span>
-            <div className="grid grid-cols-3 gap-1.5">
-              {[
-                { id: 'all', label: 'All' },
-                { id: 'one_col', label: '1-Column' },
-                { id: 'two_col', label: '2-Column' }
-              ].map(l => (
-                <button
-                  key={l.id}
-                  onClick={() => setLayoutFilter(l.id as any)}
-                  className={`py-1.5 rounded-xl text-[10px] font-bold border transition-all text-center ${
-                    layoutFilter === l.id
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  {l.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Cinematic Platform Video Showcase Card */}
+          {/* Cinematic Video Showcase Card */}
           <div
             onClick={() => setShowVideoModal(true)}
-            className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-950 group cursor-pointer"
+            className="relative rounded-2xl overflow-hidden border border-slate-800 shadow-md bg-slate-950 group cursor-pointer"
           >
             <video
               src="/promo.mp4"
@@ -443,40 +522,29 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
               loop
               muted
               playsInline
-              className="w-full h-24 object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+              className="w-full h-20 object-cover opacity-70 group-hover:opacity-100 transition-opacity"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent flex items-end justify-between p-2.5">
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent flex items-end justify-between p-2.5">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center shadow-md">
                   <Film className="w-3 h-3 text-white" />
                 </div>
                 <div>
-                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-wider block font-mono">Platform Showcase</span>
-                  <h4 className="text-[11px] font-extrabold text-white">NovaResume AI Video</h4>
+                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-wider block font-mono">Platform Demo</span>
+                  <h4 className="text-[11px] font-extrabold text-white">Watch Trailer</h4>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Pro Tip Box */}
-          <div className="p-3 bg-gradient-to-tr from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-2xl space-y-1">
-            <div className="flex items-center gap-1.5 text-xs font-black text-emerald-900">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-              <span>100% Vector A4 PDF</span>
-            </div>
-            <p className="text-[10px] text-slate-600 leading-relaxed font-medium">
-              Every template exports in single-page crisp vector resolution with zero text distortion.
-            </p>
-          </div>
         </aside>
 
-        {/* ── RIGHT MAIN MARKETPLACE GRID CONTAINER (ONLY THIS AREA SCROLLS) ── */}
-        <main className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
+        {/* ── RIGHT COVER FLOW MAIN DISPLAY ── */}
+        <main className="flex-1 flex flex-col h-full overflow-hidden bg-slate-950 relative">
 
           {/* TOP FIXED MARKETPLACE BAR */}
-          <div className="bg-white border-b border-slate-200 p-3 sm:p-4 flex flex-col gap-3 flex-shrink-0 shadow-xs z-10">
+          <div className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 p-3 sm:p-4 flex flex-col gap-3 flex-shrink-0 z-20 shadow-lg">
             
-            {/* Upper Bar: Title & Mobile Filter Toggle Button */}
+            {/* Category Chips Carousel & Mobile Filter Trigger */}
             <div className="flex items-center justify-between gap-2">
               
               {/* Quick Category Chips Carousel */}
@@ -485,10 +553,10 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                   <button
                     key={chip.id}
                     onClick={() => setSelectedCategory(chip.id)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 ${
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 cursor-pointer ${
                       selectedCategory === chip.id
-                        ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-200'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/60'
+                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-950 ring-2 ring-emerald-400/40'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700/60'
                     }`}
                   >
                     {chip.label}
@@ -499,56 +567,43 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
               {/* Mobile Filter Sheet Trigger */}
               <button
                 onClick={() => setIsMobileFilterOpen(true)}
-                className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 flex-shrink-0 min-h-[40px]"
+                className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 flex-shrink-0 min-h-[40px] cursor-pointer"
               >
-                <SlidersHorizontal className="w-4 h-4 text-emerald-600" />
+                <SlidersHorizontal className="w-4 h-4 text-emerald-400" />
                 <span>Filters</span>
                 {(selectedCategory !== 'All' || searchQuery || selectedColor || showFavoritesOnly) && (
-                  <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
                 )}
               </button>
             </div>
 
-            {/* Results Count & Search Bar on Mobile */}
-            <div className="flex items-center justify-between text-xs font-bold text-slate-500 px-1">
+            {/* Results Count & Shortcuts Info */}
+            <div className="flex items-center justify-between text-xs font-bold text-slate-400 px-1">
               <div className="flex items-center gap-2">
-                <span>Showing <strong className="text-slate-900">{filteredTemplates.length}</strong> templates</span>
-                {showFavoritesOnly && <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px]">Favorites Only</span>}
-                {selectedColor && <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px]">Filtered by Color</span>}
+                <span>Showing <strong className="text-emerald-400">{filteredTemplates.length}</strong> Templates</span>
+                {showFavoritesOnly && <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[10px] border border-rose-500/30">Favorites Only</span>}
+                {selectedColor && <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] border border-emerald-500/30">Color Filtered</span>}
               </div>
 
               <div className="hidden sm:flex items-center gap-3 text-[11px]">
-                <button
-                  onClick={() => setShowVideoModal(true)}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-[11px] rounded-xl shadow-xs transition-transform active:scale-95 border border-slate-700"
-                >
-                  <Film className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Watch Demo Video</span>
-                </button>
-                <div className="flex items-center gap-1 text-emerald-700 font-extrabold">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Instant A4 Canvas</span>
-                </div>
+                <span className="text-slate-500 font-mono">Use ← → keys or swipe to navigate</span>
               </div>
             </div>
           </div>
 
-          {/* ── SCROLLABLE TEMPLATE CARDS GRID ── */}
-          <div
-            ref={scrollContainerRef}
-            onScroll={handleGridScroll}
-            className="flex-1 overflow-y-auto p-3 sm:p-6 smooth-scroll-container"
-          >
+          {/* ── COVER FLOW STAGE & CAROUSEL VIEW ── */}
+          <div className="flex-1 flex flex-col justify-between overflow-hidden relative p-3 sm:p-6">
+            
             {filteredTemplates.length === 0 ? (
-              <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 text-center space-y-4 max-w-md mx-auto my-12 shadow-sm">
-                <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center mx-auto text-2xl shadow-inner">
+              <div className="bg-slate-900 rounded-3xl p-8 sm:p-12 border border-slate-800 text-center space-y-4 max-w-md mx-auto my-auto shadow-2xl">
+                <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/30 flex items-center justify-center mx-auto text-2xl">
                   {selectedCategory === 'Favorites' ? '❤️' : <Search className="w-6 h-6 text-slate-400" />}
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-base text-slate-900">
+                  <h3 className="font-extrabold text-base text-white">
                     {selectedCategory === 'Favorites' ? 'No Saved Favorites Yet' : 'No matching templates found'}
                   </h3>
-                  <p className="text-slate-500 font-medium text-xs mt-1 leading-relaxed">
+                  <p className="text-slate-400 font-medium text-xs mt-1 leading-relaxed">
                     {selectedCategory === 'Favorites'
                       ? 'Tap the heart icon ❤️ on any template card to save it to your favorites.'
                       : 'Try clearing your filters or searching for different keywords.'}
@@ -556,127 +611,233 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                 </div>
                 <button
                   onClick={resetAllFilters}
-                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-transform active:scale-95 cursor-pointer"
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-950 transition-transform active:scale-95 cursor-pointer"
                 >
-                  {selectedCategory === 'Favorites' ? 'Browse All 80+ Templates' : 'Reset All Filters'}
+                  {selectedCategory === 'Favorites' ? 'Browse All Templates' : 'Reset All Filters'}
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 pb-20">
-                {filteredTemplates.slice(0, visibleCount).map((t) => {
-                  const palette = PALETTES.find(p => p.id === t.defaultPaletteId) || PALETTES[0];
-                  const isFav = favorites.includes(t.id);
+              <>
+                {/* 3D COVER FLOW STAGE */}
+                <div
+                  onWheel={handleWheel}
+                  onTouchStart={handleTouchStart}
+                  onTouchEnd={handleTouchEnd}
+                  onMouseDown={handleTouchStart}
+                  onMouseUp={handleTouchEnd}
+                  className="relative w-full flex-1 flex items-center justify-center perspective-1000 select-none py-2 overflow-hidden"
+                >
+                  {/* Floating Prev Button */}
+                  <button
+                    onClick={handlePrev}
+                    disabled={activeIndex === 0}
+                    className="absolute left-2 sm:left-6 z-40 p-3 sm:p-4 rounded-full bg-slate-900/90 hover:bg-emerald-600 text-white border border-slate-700/80 shadow-2xl backdrop-blur-md transition-all duration-200 active:scale-90 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                    aria-label="Previous Template"
+                  >
+                    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </button>
 
-                  return (
-                    <div
-                      key={t.id}
-                      className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-200 overflow-hidden flex flex-col group relative gpu-accelerated"
-                    >
-                      {/* ATS & Favorite Badge Overlay */}
-                      <div className="absolute top-2 left-2 right-2 z-40 flex justify-between items-center pointer-events-none">
-                        <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold bg-white/95 text-emerald-800 shadow-md border border-emerald-200 flex items-center gap-1">
-                          <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600" />
-                          <span>{t.atsScore}% ATS</span>
-                        </span>
+                  {/* Floating Next Button */}
+                  <button
+                    onClick={handleNext}
+                    disabled={activeIndex === filteredTemplates.length - 1}
+                    className="absolute right-2 sm:right-6 z-40 p-3 sm:p-4 rounded-full bg-slate-900/90 hover:bg-emerald-600 text-white border border-slate-700/80 shadow-2xl backdrop-blur-md transition-all duration-200 active:scale-90 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                    aria-label="Next Template"
+                  >
+                    <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </button>
 
-                        {/* Favorite Button */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            toggleFavorite(t.id, e);
+                  {/* CAROUSEL CARDS STACK */}
+                  <div className="relative w-full max-w-4xl h-[280px] sm:h-[380px] flex items-center justify-center preserve-3d">
+                    {filteredTemplates.map((t, idx) => {
+                      const offset = idx - activeIndex;
+                      if (Math.abs(offset) > 3) return null; // Performance optimization
+
+                      const isCentered = offset === 0;
+                      const palette = PALETTES.find(p => p.id === t.defaultPaletteId) || PALETTES[0];
+                      const isFav = favorites.includes(t.id);
+
+                      // Calculate 3D transformation values based on offset distance
+                      let translateX = '0px';
+                      let scale = 1;
+                      let rotateY = '0deg';
+                      let opacity = 1;
+                      let zIndex = 30;
+
+                      if (offset === 0) {
+                        translateX = '0px';
+                        scale = 1.0;
+                        rotateY = '0deg';
+                        opacity = 1;
+                        zIndex = 30;
+                      } else if (offset === -1) {
+                        translateX = window.innerWidth <= 640 ? '-130px' : '-280px';
+                        scale = 0.82;
+                        rotateY = '20deg';
+                        opacity = 0.6;
+                        zIndex = 20;
+                      } else if (offset === 1) {
+                        translateX = window.innerWidth <= 640 ? '130px' : '280px';
+                        scale = 0.82;
+                        rotateY = '-20deg';
+                        opacity = 0.6;
+                        zIndex = 20;
+                      } else if (offset === -2) {
+                        translateX = window.innerWidth <= 640 ? '-220px' : '-480px';
+                        scale = 0.66;
+                        rotateY = '35deg';
+                        opacity = 0.3;
+                        zIndex = 10;
+                      } else if (offset === 2) {
+                        translateX = window.innerWidth <= 640 ? '220px' : '480px';
+                        scale = 0.66;
+                        rotateY = '-35deg';
+                        opacity = 0.3;
+                        zIndex = 10;
+                      }
+
+                      return (
+                        <div
+                          key={t.id}
+                          onClick={() => setActiveIndex(idx)}
+                          className={`absolute w-[200px] sm:w-[270px] h-[270px] sm:h-[370px] rounded-2xl bg-white text-slate-900 border border-slate-200 overflow-hidden flex flex-col shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] cursor-pointer group gpu-accelerated ${
+                            isCentered ? 'ring-4 ring-emerald-500/60 animate-active-card' : 'hover:opacity-90'
+                          }`}
+                          style={{
+                            transform: `translateX(${translateX}) scale(${scale}) rotateY(${rotateY})`,
+                            opacity,
+                            zIndex,
                           }}
-                          className="z-50 relative pointer-events-auto p-2 min-w-[38px] min-h-[38px] rounded-full bg-white/95 hover:bg-white text-slate-700 shadow-md border border-slate-200/90 flex items-center justify-center transition-transform active:scale-90 cursor-pointer hover:scale-110"
-                          title={isFav ? 'Remove from favorites' : 'Save to favorites'}
-                          aria-label="Toggle Favorite"
                         >
-                          <Heart className={`w-4 h-4 transition-colors ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
-                        </button>
-                      </div>
+                          {/* Top Badges */}
+                          <div className="absolute top-2 left-2 right-2 z-40 flex justify-between items-center pointer-events-none">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-900/90 text-emerald-400 shadow-md border border-slate-700 flex items-center gap-1">
+                              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                              <span>{t.atsScore}% ATS</span>
+                            </span>
 
-                      {/* Centered Live A4 Thumbnail Preview Container */}
-                      <div className="h-[210px] sm:h-[290px] w-full overflow-hidden bg-slate-100 relative flex items-center justify-center group-hover:bg-slate-200/60 transition-colors">
-                        <ResumeThumbnailPreview
-                          template={t}
-                          height={290}
-                          onClick={() => { setPreviewModalTemplate(t); setModalZoom(0.70); }}
-                        />
-
-                        {/* Hover Overlay Action Bar */}
-                        <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-2 z-20">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPreviewModalTemplate(t);
-                              setModalZoom(0.70);
-                            }}
-                            className="px-2.5 py-1.5 rounded-xl bg-white text-slate-900 font-extrabold text-[11px] shadow-lg hover:bg-slate-100 transition-transform active:scale-95 flex items-center gap-1 cursor-pointer min-h-[36px]"
-                          >
-                            <Eye className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Preview</span>
-                          </button>
-
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSelectTemplate(t);
-                            }}
-                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] shadow-lg transition-transform active:scale-95 flex items-center gap-1 cursor-pointer min-h-[36px]"
-                          >
-                            <span>Use</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Card Information Footer */}
-                      <div className="p-2.5 sm:p-4 space-y-1.5 flex-1 flex flex-col justify-between bg-white border-t border-slate-100">
-                        <div>
-                          <div className="flex justify-between items-center mb-0.5">
-                            <h3 className="font-black text-xs sm:text-sm text-slate-900 group-hover:text-emerald-600 truncate transition-colors">
-                              {t.name}
-                            </h3>
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <div
-                                className="w-3.5 h-3.5 rounded-full border border-slate-300 shadow-xs flex-shrink-0"
-                                style={{ backgroundColor: palette.primary }}
-                                title={`Color theme: ${palette.name}`}
-                              />
-                            </div>
+                            {isCentered && (
+                              <button
+                                type="button"
+                                onClick={(e) => toggleFavorite(t.id, e)}
+                                className="pointer-events-auto p-1.5 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow-lg flex items-center justify-center transition-transform active:scale-90 cursor-pointer"
+                                title={isFav ? 'Remove from favorites' : 'Save to favorites'}
+                              >
+                                <Heart className={`w-4 h-4 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
+                              </button>
+                            )}
                           </div>
-                          <p className="text-[10px] sm:text-xs text-slate-500 line-clamp-1 font-medium">{t.description}</p>
+
+                          {/* Thumbnail Live Render */}
+                          <div className="flex-1 bg-slate-100 relative flex items-center justify-center overflow-hidden">
+                            <ResumeThumbnailPreview
+                              template={t}
+                              onClick={() => {
+                                if (isCentered) {
+                                  setPreviewModalTemplate(t);
+                                  setModalZoom(0.70);
+                                } else {
+                                  setActiveIndex(idx);
+                                }
+                              }}
+                            />
+                          </div>
+
+                          {/* Minimal Header on Card */}
+                          <div className="p-3 bg-white border-t border-slate-100 flex items-center justify-between">
+                            <div className="truncate pr-2">
+                              <h4 className="font-black text-xs text-slate-900 truncate">{t.name}</h4>
+                              <p className="text-[10px] text-slate-500 font-bold truncate">{t.category}</p>
+                            </div>
+                            <div className="w-3.5 h-3.5 rounded-full border border-slate-300 flex-shrink-0" style={{ backgroundColor: palette.primary }} />
+                          </div>
                         </div>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                        {/* Action Buttons Row */}
-                        <div className="flex items-center gap-1.5 pt-1.5 border-t border-slate-100">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPreviewModalTemplate(t);
-                              setModalZoom(0.70);
-                            }}
-                            className="p-2 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-extrabold text-[11px] transition-colors flex items-center justify-center cursor-pointer min-h-[36px] min-w-[36px] flex-shrink-0"
-                            title="Preview Template"
-                          >
-                            <Eye className="w-4 h-4 text-emerald-600" />
-                          </button>
-
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSelectTemplate(t);
-                            }}
-                            className="flex-1 py-2 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center justify-center gap-1 shadow-xs transition-transform active:scale-95 cursor-pointer min-h-[36px] truncate"
-                          >
-                            <span className="truncate">Use Template</span>
-                          </button>
+                {/* ── ACTIVE TEMPLATE INFORMATION & ACTION PANEL (BOTTOM) ── */}
+                {activeTemplate && (
+                  <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-5 backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4 z-20 transition-all duration-300">
+                    
+                    {/* Template Meta Details */}
+                    <div className="space-y-2 text-center md:text-left flex-1">
+                      
+                      {/* Name & Rating */}
+                      <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
+                        <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
+                          {activeTemplate.name}
+                        </h3>
+                        <div className="flex items-center gap-1 text-amber-400">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
+                          ))}
+                          <span className="text-xs font-bold text-slate-300 ml-1">5.0</span>
                         </div>
                       </div>
+
+                      {/* Smart Badges */}
+                      <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                        {getSmartBadges(activeTemplate).map((b, i) => (
+                          <span key={i} className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${b.bg} ${b.text} ${b.border}`}>
+                            {b.label}
+                          </span>
+                        ))}
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                          🛡️ ATS Score: {activeTemplate.atsScore}%
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                          📥 {getDownloadsCount(activeTemplate.id)}
+                        </span>
+                      </div>
+
+                      {/* Suitable For Description */}
+                      <p className="text-xs text-slate-400 font-medium line-clamp-1">
+                        🎯 {getSuitableFor(activeTemplate)} — {activeTemplate.description}
+                      </p>
                     </div>
-                  );
-                })}
-              </div>
+
+                    {/* Action Buttons Bar */}
+                    <div className="flex items-center gap-2.5 w-full md:w-auto flex-shrink-0">
+                      
+                      {/* Favorite Button */}
+                      <button
+                        onClick={() => toggleFavorite(activeTemplate.id)}
+                        className={`p-3 rounded-2xl border transition-all active:scale-95 cursor-pointer min-h-[46px] min-w-[46px] flex items-center justify-center ${
+                          favorites.includes(activeTemplate.id)
+                            ? 'bg-rose-500/20 border-rose-500/40 text-rose-400'
+                            : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
+                        }`}
+                        title="Save to Favorites"
+                      >
+                        <Heart className={`w-5 h-5 ${favorites.includes(activeTemplate.id) ? 'fill-rose-500 text-rose-500' : ''}`} />
+                      </button>
+
+                      {/* Fullscreen Preview Button */}
+                      <button
+                        onClick={() => {
+                          setPreviewModalTemplate(activeTemplate);
+                          setModalZoom(0.70);
+                        }}
+                        className="flex-1 md:flex-initial px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs border border-slate-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
+                      >
+                        <Eye className="w-4 h-4 text-emerald-400" />
+                        <span>Quick Preview</span>
+                      </button>
+
+                      {/* Use Template CTA Button */}
+                      <button
+                        onClick={() => onSelectTemplate(activeTemplate)}
+                        className="flex-1 md:flex-initial px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-950 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
+                      >
+                        <span>Use This Template</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </main>
@@ -686,20 +847,20 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
       {isMobileFilterOpen && (
         <div
           onClick={() => setIsMobileFilterOpen(false)}
-          className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 lg:hidden flex justify-end flex-col animate-fadeIn"
+          className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 lg:hidden flex justify-end flex-col animate-fadeIn"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto space-y-5 shadow-2xl border-t border-slate-200 animate-slideUp"
+            className="bg-slate-900 rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto space-y-5 shadow-2xl border-t border-slate-800 animate-slideUp text-slate-100"
           >
-            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-emerald-600" />
-                <h3 className="font-black text-base text-slate-900">Filter Templates</h3>
+                <Filter className="w-4 h-4 text-emerald-400" />
+                <h3 className="font-black text-base text-white">Filter Templates</h3>
               </div>
               <button
                 onClick={() => setIsMobileFilterOpen(false)}
-                className="p-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200"
+                className="p-1.5 rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -713,8 +874,8 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                   <button
                     key={`mob-${cat}`}
                     onClick={() => { setSelectedCategory(cat); setIsMobileFilterOpen(false); }}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold text-left truncate transition-colors ${
-                      selectedCategory === cat ? 'bg-emerald-600 text-white' : 'bg-slate-50 text-slate-700 border border-slate-200'
+                    className={`px-3 py-2 rounded-xl text-xs font-bold text-left truncate transition-colors cursor-pointer ${
+                      selectedCategory === cat ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-300 border border-slate-700'
                     }`}
                   >
                     {cat}
@@ -731,8 +892,8 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                   <button
                     key={`mob-pal-${p.id}`}
                     onClick={() => { setSelectedColor(selectedColor === p.id ? null : p.id); }}
-                    className={`w-9 h-9 rounded-full border-2 flex items-center justify-center ${
-                      selectedColor === p.id ? 'border-emerald-600 ring-2 ring-emerald-300' : 'border-slate-200'
+                    className={`w-9 h-9 rounded-full border-2 flex items-center justify-center cursor-pointer ${
+                      selectedColor === p.id ? 'border-emerald-400 ring-2 ring-emerald-500/50' : 'border-slate-800'
                     }`}
                     style={{ backgroundColor: p.primary }}
                   >
@@ -743,16 +904,16 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
             </div>
 
             {/* Apply & Reset Buttons */}
-            <div className="flex gap-2 pt-2 border-t border-slate-100">
+            <div className="flex gap-2 pt-2 border-t border-slate-800">
               <button
                 onClick={() => { resetAllFilters(); setIsMobileFilterOpen(false); }}
-                className="flex-1 py-3 rounded-xl bg-slate-100 font-bold text-xs text-slate-700"
+                className="flex-1 py-3 rounded-xl bg-slate-800 font-bold text-xs text-slate-300 cursor-pointer"
               >
                 Reset All
               </button>
               <button
                 onClick={() => setIsMobileFilterOpen(false)}
-                className="flex-1 py-3 rounded-xl bg-emerald-600 font-bold text-xs text-white shadow-md"
+                className="flex-1 py-3 rounded-xl bg-emerald-600 font-bold text-xs text-white shadow-md cursor-pointer"
               >
                 Apply Filters ({filteredTemplates.length})
               </button>
@@ -771,7 +932,7 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
             onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-3xl max-w-4xl w-full max-h-[94vh] flex flex-col overflow-hidden shadow-2xl relative border border-slate-200"
           >
-            {/* Modal Header */}
+            {/* Modal Header with Next/Prev Template Controls */}
             <div className="p-4 border-b border-slate-200 flex flex-wrap justify-between items-center bg-slate-50 gap-2 flex-shrink-0">
               <div>
                 <h3 className="font-black text-base text-slate-900">{previewModalTemplate.name}</h3>
@@ -779,10 +940,40 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
               </div>
 
               <div className="flex items-center gap-2">
+                {/* Prev & Next Template Navigation in Modal */}
+                <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-xs">
+                  <button
+                    onClick={() => {
+                      const curIdx = filteredTemplates.findIndex(x => x.id === previewModalTemplate.id);
+                      if (curIdx > 0) setPreviewModalTemplate(filteredTemplates[curIdx - 1]);
+                    }}
+                    disabled={filteredTemplates.findIndex(x => x.id === previewModalTemplate.id) === 0}
+                    className="p-1.5 hover:bg-slate-100 text-slate-700 rounded-lg disabled:opacity-30 cursor-pointer"
+                    title="Previous Template"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-[11px] font-bold text-slate-500 px-2 font-mono">
+                    {filteredTemplates.findIndex(x => x.id === previewModalTemplate.id) + 1} / {filteredTemplates.length}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const curIdx = filteredTemplates.findIndex(x => x.id === previewModalTemplate.id);
+                      if (curIdx < filteredTemplates.length - 1) setPreviewModalTemplate(filteredTemplates[curIdx + 1]);
+                    }}
+                    disabled={filteredTemplates.findIndex(x => x.id === previewModalTemplate.id) === filteredTemplates.length - 1}
+                    className="p-1.5 hover:bg-slate-100 text-slate-700 rounded-lg disabled:opacity-30 cursor-pointer"
+                    title="Next Template"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Zoom Controls */}
                 <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-xs">
                   <button
                     onClick={() => setModalZoom(z => Math.max(z - 0.1, 0.4))}
-                    className="p-1.5 hover:bg-slate-100 text-slate-700 rounded-lg"
+                    className="p-1.5 hover:bg-slate-100 text-slate-700 rounded-lg cursor-pointer"
                     title="Zoom Out"
                   >
                     <ZoomOut className="w-4 h-4" />
@@ -792,7 +983,7 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                   </span>
                   <button
                     onClick={() => setModalZoom(z => Math.min(z + 0.1, 1.3))}
-                    className="p-1.5 hover:bg-slate-100 text-slate-700 rounded-lg"
+                    className="p-1.5 hover:bg-slate-100 text-slate-700 rounded-lg cursor-pointer"
                     title="Zoom In"
                   >
                     <ZoomIn className="w-4 h-4" />
@@ -804,7 +995,7 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                     onSelectTemplate(previewModalTemplate);
                     setPreviewModalTemplate(null);
                   }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow flex items-center gap-1.5"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow flex items-center gap-1.5 cursor-pointer"
                 >
                   <span>Use Template</span>
                   <ArrowRight className="w-4 h-4" />
@@ -812,7 +1003,7 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
 
                 <button
                   onClick={() => setPreviewModalTemplate(null)}
-                  className="p-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700"
+                  className="p-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -867,7 +1058,7 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
               </div>
               <button
                 onClick={() => setShowVideoModal(false)}
-                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -898,10 +1089,10 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
       )}
 
       {/* Developer Branding Footer */}
-      <footer className="bg-slate-900 text-white border-t border-slate-800 py-3 px-6 text-center flex-shrink-0">
+      <footer className="bg-slate-950 text-white border-t border-slate-800/80 py-3 px-6 text-center flex-shrink-0 z-20">
         <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center text-xs text-slate-400 gap-2">
           <div className="flex items-center gap-2 font-bold text-slate-200">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>NovaResume AI Platform</span>
           </div>
           <div>
