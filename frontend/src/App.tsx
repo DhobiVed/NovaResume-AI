@@ -126,7 +126,6 @@ export const AppContent: React.FC = () => {
     const unsubscribe = firebaseAuthService.onAuthState((currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        setIsAuthOpen(false); // Auto-close modal when user is authenticated
         setShowIntroVideo(false); // Dismiss splash screen on auth confirmation
       }
     });
@@ -458,7 +457,7 @@ export const AppContent: React.FC = () => {
       )}
 
       {/* Main Workspace Area */}
-      <main className="flex-1 overflow-hidden relative">
+      <main className="flex-1 overflow-y-auto relative">
         {selectedTemplate ? (
           <ResumeEditor
             template={selectedTemplate}
