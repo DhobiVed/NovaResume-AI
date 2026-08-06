@@ -23,17 +23,78 @@ export const ResumeImportModal: React.FC<ResumeImportModalProps> = ({
   const [isParsing, setIsParsing] = useState(false);
   const [parsedPreview, setParsedPreview] = useState<any | null>(null);
 
-  // Sanitize Extracted Text to remove binary ZIP artifacts, XML tags, and non-printable noise
-  const sanitizeText = (text: string): string => {
-    if (!text) return '';
-    let cleaned = text.replace(/<[^>]*>/g, ' ');
-    cleaned = cleaned.replace(/PK[\s\S]*?\[Content_Types\]\.xml/gi, '');
-    cleaned = cleaned.replace(/_rels\/\.rels/gi, '');
-    cleaned = cleaned.replace(/word\/[a-zA-Z0-9_\-\./]+/gi, '');
-    cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, ' ');
-    cleaned = cleaned.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
-    return cleaned;
-  };
+// Extract pure human-readable text from PDF ArrayBuffer
+const extractTextFromPdfBuffer = (buffer: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buffer);
+  let rawStr = '';
+  for (let i = 0; i < bytes.length; i++) {
+    const ch = bytes[i];
+    if ((ch >= 32 && ch <= 126) || ch === 10 || ch === 13 || ch === 9) {
+      rawStr += String.fromCharCode(ch);
+    } else {
+      rawStr += ' ';
+    }
+  }
+
+  // 1. Extract text strings inside PDF parenthesis operators: (Text String)
+  const textLiteralMatches = rawStr.match(/\(([^()]{2,140})\)/g);
+  let extractedLiterals = '';
+  if (textLiteralMatches && textLiteralMatches.length > 3) {
+    extractedLiterals = textLiteralMatches
+      .map(m => m.slice(1, -1))
+      .filter(str => {
+        const clean = str.trim();
+        if (clean.startsWith('/') || clean.includes('Font') || clean.includes('Adobe') || clean.includes('Identity') || clean.includes('MediaBox')) return false;
+        return /[a-zA-Z]{2,}/.test(clean);
+      })
+      .join(' ');
+  }
+
+  let text = extractedLiterals.length > 50 ? extractedLiterals : rawStr;
+
+  // 2. Remove PDF structure & binary tags
+  text = text.replace(/%PDF-[\d\.]+/gi, ' ');
+  text = text.replace(/\d+\s+\d+\s+obj[\s\S]*?endobj/gi, ' ');
+  text = text.replace(/stream[\s\S]*?endstream/gi, ' ');
+  text = text.replace(/\/Filter\s*\/[A-Za-z0-9]+/gi, ' ');
+  text = text.replace(/\/Length\s+\d+/gi, ' ');
+  text = text.replace(/\/Type\s*\/[A-Za-z0-9]+/gi, ' ');
+  text = text.replace(/\/FontDescriptor[\s\S]*?>/gi, ' ');
+  text = text.replace(/\/MediaBox\s*\[[^\]]+\]/gi, ' ');
+  text = text.replace(/xref[\s\S]*?trailer/gi, ' ');
+  text = text.replace(/startxref[\s\S]*?%%EOF/gi, ' ');
+  text = text.replace(/<<[\s\S]*?>>/gi, ' ');
+  text = text.replace(/[0-9a-fA-F]{16,}/g, ' ');
+  text = text.replace(/[/\\{}()<>\[\]]/g, ' ');
+  text = text.replace(/\s+/g, ' ').trim();
+
+  return text;
+};
+
+// Sanitize Extracted Text to remove binary ZIP artifacts, PDF tags, XML tags, and non-printable noise
+const sanitizeText = (text: string): string => {
+  if (!text) return '';
+  let cleaned = text;
+  cleaned = cleaned.replace(/<[^>]*>/g, ' ');
+  cleaned = cleaned.replace(/PK[\s\S]*?\[Content_Types\]\.xml/gi, ' ');
+  cleaned = cleaned.replace(/_rels\/\.rels/gi, ' ');
+  cleaned = cleaned.replace(/word\/[a-zA-Z0-9_\-\./]+/gi, ' ');
+  cleaned = cleaned.replace(/%PDF-[\d\.]+/gi, ' ');
+  cleaned = cleaned.replace(/\d+\s+\d+\s+obj[\s\S]*?endobj/gi, ' ');
+  cleaned = cleaned.replace(/stream[\s\S]*?endstream/gi, ' ');
+  cleaned = cleaned.replace(/\/Filter\s*\/[A-Za-z0-9]+/gi, ' ');
+  cleaned = cleaned.replace(/\/Length\s+\d+/gi, ' ');
+  cleaned = cleaned.replace(/\/Type\s*\/[A-Za-z0-9]+/gi, ' ');
+  cleaned = cleaned.replace(/\/FontDescriptor[\s\S]*?>/gi, ' ');
+  cleaned = cleaned.replace(/\/MediaBox\s*\[[^\]]+\]/gi, ' ');
+  cleaned = cleaned.replace(/xref[\s\S]*?trailer/gi, ' ');
+  cleaned = cleaned.replace(/startxref[\s\S]*?%%EOF/gi, ' ');
+  cleaned = cleaned.replace(/<<[\s\S]*?>>/gi, ' ');
+  cleaned = cleaned.replace(/[0-9a-fA-F]{16,}/g, ' ');
+  cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, ' ');
+  cleaned = cleaned.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  return cleaned;
+};
 
   // Perform Deep Comprehensive Section Extraction for ALL Sections & Details
   const fallbackExtractText = (rawContent: string, filename: string) => {
@@ -253,7 +314,27 @@ export const ResumeImportModal: React.FC<ResumeImportModalProps> = ({
       console.warn('Backend parse-file offline, using deep client-side extraction:', err);
     }
 
-    // 3. Client-Side Deep Fallback with Text Sanitization
+    // 3. Client-Side Deep Fallback with Text Sanitization & PDF Stream Extraction
+    if (file.name.toLowerCase().endsWith('.pdf')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const buffer = event.target?.result as ArrayBuffer;
+        if (buffer) {
+          const pdfText = extractTextFromPdfBuffer(buffer);
+          const cleanText = sanitizeText(pdfText);
+          setRawText(cleanText);
+          const extracted = fallbackExtractText(cleanText, file.name);
+          setParsedPreview(extracted);
+        }
+        setIsParsing(false);
+      };
+      reader.onerror = () => {
+        setIsParsing(false);
+      };
+      reader.readAsArrayBuffer(file);
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = (event.target?.result as string) || '';
@@ -264,11 +345,7 @@ export const ResumeImportModal: React.FC<ResumeImportModalProps> = ({
       setIsParsing(false);
     };
 
-    if (file.name.endsWith('.json') || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
-      reader.readAsText(file);
-    } else {
-      reader.readAsText(file);
-    }
+    reader.readAsText(file);
   };
 
   const handleParseText = async () => {
