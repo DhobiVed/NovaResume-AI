@@ -337,12 +337,37 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
     .form-input { width: 100%; padding: 12px 16px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 12px; font-size: 13px; }
     .form-input:focus { outline: none; border-color: var(--primary); }
     
-    /* Footer */
-    footer { border-top: 1px solid var(--border); padding: 30px 24px; text-align: center; color: var(--text-muted); font-size: 13px; }
-    
     /* Scroll Reveal Animations */
     .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
     .reveal.active { opacity: 1; transform: translateY(0); }
+
+    /* Mobile Responsive Overrides for 320px - 640px Viewports */
+    @media (max-width: 640px) {
+      header { padding: 12px 16px; }
+      .nav-links { display: none; }
+      .container { padding: 32px 16px; }
+      .hero-grid { grid-template-columns: 1fr; text-align: center; padding: 20px 0 40px; gap: 24px; }
+      .hero-title { font-size: 26px; letter-spacing: -0.5px; }
+      .hero-tagline { font-size: 14px; min-height: auto; }
+      .hero-about { font-size: 13px; margin-bottom: 20px; text-align: center; margin-left: auto; margin-right: auto; }
+      .hero-actions { flex-direction: column; width: 100%; justify-content: center; }
+      .btn { width: 100%; justify-content: center; padding: 12px 18px; }
+      .profile-card { padding: 20px; border-radius: 22px; }
+      .profile-avatar { width: 110px; height: 110px; }
+      .projects-grid { grid-template-columns: 1fr; gap: 16px; }
+      .project-card { border-radius: 18px; }
+      .project-img { height: 160px; }
+      .project-body { padding: 16px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+      .stat-card { padding: 16px; border-radius: 16px; }
+      .stat-value { font-size: 26px; }
+      .stat-label { font-size: 11px; }
+      .timeline { padding-left: 20px; }
+      .timeline-card { padding: 14px; border-radius: 14px; }
+      .contact-card { padding: 20px; border-radius: 20px; }
+      .section-title { font-size: 22px; }
+      .skill-badge { font-size: 11px; padding: 6px 12px; }
+    }
   </style>
 </head>
 <body>
@@ -568,8 +593,8 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-6xl shadow-2xl p-4 sm:p-6 relative flex flex-col h-[94vh]">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-0 sm:p-4">
+      <div className="bg-white border-0 sm:border border-slate-200 rounded-none sm:rounded-3xl w-full max-w-6xl shadow-2xl p-3 sm:p-6 relative flex flex-col h-full sm:h-[94vh] overflow-hidden">
         
         {/* Modal Topbar Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0 gap-2">

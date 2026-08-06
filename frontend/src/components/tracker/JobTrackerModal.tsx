@@ -142,57 +142,57 @@ export const JobTrackerModal: React.FC<JobTrackerModalProps> = ({ isOpen, onClos
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-5">
-      <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-6xl shadow-2xl p-4 sm:p-6 relative flex flex-col h-[94vh]">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-0 sm:p-5">
+      <div className="bg-white border-0 sm:border border-slate-200 rounded-none sm:rounded-3xl w-full max-w-6xl shadow-2xl p-3 sm:p-6 relative flex flex-col h-full sm:h-[94vh] overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-emerald-100 text-emerald-700 shadow-xs">
-              <Briefcase className="w-5 h-5" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0 gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 sm:p-2.5 rounded-2xl bg-emerald-100 text-emerald-700 shadow-xs flex-shrink-0">
+              <Briefcase className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
-                <span>Job Application Tracker Dashboard</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase">
-                  {totalApps} Total Jobs
+              <h2 className="text-sm sm:text-lg font-black text-slate-900 flex items-center gap-1.5 flex-wrap leading-tight">
+                <span>Job Application Tracker</span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-extrabold uppercase">
+                  {totalApps} Total
                 </span>
               </h2>
-              <p className="text-xs text-slate-500">Track job applications, interview schedules, offers, and resume version usage</p>
+              <p className="text-[11px] sm:text-xs text-slate-500 line-clamp-1">Track interviews, offers, and resume version usage</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-1 sm:pt-0">
             <button
               onClick={() => setIsAddingNew(true)}
-              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-xs transition-transform active:scale-95 min-h-[40px]"
+              className="flex-1 sm:flex-none px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-transform active:scale-95 min-h-[40px] cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Add Application</span>
             </button>
-            <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-500">
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center">
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Dashboard Metric Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-3 flex-shrink-0">
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
-            <span className="text-[10px] font-bold uppercase text-slate-400 block">Total Applications</span>
-            <div className="text-2xl font-black text-slate-900">{totalApps}</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 my-2.5 flex-shrink-0">
+          <div className="p-2.5 sm:p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-400 block truncate">Applications</span>
+            <div className="text-xl sm:text-2xl font-black text-slate-900">{totalApps}</div>
           </div>
-          <div className="p-3 bg-purple-50/60 border border-purple-200/80 rounded-2xl">
-            <span className="text-[10px] font-bold uppercase text-purple-700 block">Interviews</span>
-            <div className="text-2xl font-black text-purple-900">{interviewsCount}</div>
+          <div className="p-2.5 sm:p-3 bg-purple-50/60 border border-purple-200/80 rounded-2xl">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase text-purple-700 block truncate">Interviews</span>
+            <div className="text-xl sm:text-2xl font-black text-purple-900">{interviewsCount}</div>
           </div>
-          <div className="p-3 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl">
-            <span className="text-[10px] font-bold uppercase text-emerald-700 block">Offers Received</span>
-            <div className="text-2xl font-black text-emerald-900">{offersCount}</div>
+          <div className="p-2.5 sm:p-3 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase text-emerald-700 block truncate">Offers</span>
+            <div className="text-xl sm:text-2xl font-black text-emerald-900">{offersCount}</div>
           </div>
-          <div className="p-3 bg-blue-50/60 border border-blue-200/80 rounded-2xl">
-            <span className="text-[10px] font-bold uppercase text-blue-700 block">Offer Rate</span>
-            <div className="text-2xl font-black text-blue-900">{conversionRate}%</div>
+          <div className="p-2.5 sm:p-3 bg-blue-50/60 border border-blue-200/80 rounded-2xl">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase text-blue-700 block truncate">Offer Rate</span>
+            <div className="text-xl sm:text-2xl font-black text-blue-900">{conversionRate}%</div>
           </div>
         </div>
 

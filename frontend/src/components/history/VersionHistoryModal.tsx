@@ -110,63 +110,63 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-5">
-      <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-5xl shadow-2xl p-4 sm:p-6 relative flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-0 sm:p-5">
+      <div className="bg-white border-0 sm:border border-slate-200 rounded-none sm:rounded-3xl w-full max-w-5xl shadow-2xl p-3 sm:p-6 relative flex flex-col h-full sm:h-[92vh] overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-emerald-100 text-emerald-700 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0 gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-2xl bg-emerald-100 text-emerald-700 shadow-xs flex-shrink-0">
               <History className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+              <h2 className="text-sm sm:text-lg font-black text-slate-900 flex items-center gap-1.5 flex-wrap">
                 <span>Resume Version History</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase">
-                  {versions.length} Versions Saved
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-extrabold uppercase">
+                  {versions.length} Saved
                 </span>
               </h2>
-              <p className="text-xs text-slate-500">Track iterations, compare changes side-by-side, restore, duplicate or rename snapshots</p>
+              <p className="text-[11px] sm:text-xs text-slate-500 line-clamp-1">Track iterations, compare changes side-by-side & restore</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
             <button
               onClick={() => setViewMode(viewMode === 'list' ? 'compare' : 'list')}
-              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+              className="flex-1 sm:flex-none px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer min-h-[38px]"
             >
               <ArrowLeftRight className="w-3.5 h-3.5" />
-              <span>{viewMode === 'list' ? 'Compare Versions' : 'Back to Version List'}</span>
+              <span>{viewMode === 'list' ? 'Compare' : 'List View'}</span>
             </button>
-            <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-500 cursor-pointer">
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center">
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Create Snapshot Bar */}
-        <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center gap-2 my-3 flex-shrink-0">
+        <div className="p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center gap-2 my-2.5 flex-shrink-0">
           <input
             type="text"
             value={newVersionLabel}
             onChange={(e) => setNewVersionLabel(e.target.value)}
-            placeholder="Name this version snapshot (e.g. Software Engineer Tech Lead v2)..."
-            className="w-full sm:flex-1 p-2 bg-white border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500 min-h-[40px]"
+            placeholder="Snapshot name (e.g. Tech Lead v2)..."
+            className="w-full sm:flex-1 p-2 bg-white border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500 min-h-[38px]"
           />
           <button
             onClick={handleSaveSnapshot}
-            className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer min-h-[40px]"
+            className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer min-h-[38px]"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Save Version Snapshot</span>
+            <span>Save Snapshot</span>
           </button>
         </div>
 
         {/* Main Content Body */}
-        <div className="flex-1 overflow-hidden flex gap-4 min-h-0 text-xs">
+        <div className="flex-1 overflow-y-auto sm:overflow-hidden flex flex-col sm:flex-row gap-3 min-h-0 text-xs">
           
           {/* Left Column: Version History Timeline */}
-          <div className="w-full sm:w-1/3 overflow-y-auto space-y-2 pr-1 border-r border-slate-200">
+          <div className="w-full sm:w-1/3 overflow-y-auto space-y-2 pr-1 border-b sm:border-b-0 sm:border-r border-slate-200 pb-3 sm:pb-0">
             <span className="text-[10px] font-black uppercase text-slate-400 block px-1">Saved Versions Timeline</span>
             {versions.map((ver, idx) => (
               <div

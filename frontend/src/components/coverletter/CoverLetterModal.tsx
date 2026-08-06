@@ -101,20 +101,20 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({ isOpen, onCl
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-4xl shadow-2xl p-6 relative flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-0 sm:p-4">
+      <div className="bg-white border-0 sm:border border-slate-200 rounded-none sm:rounded-3xl w-full max-w-4xl shadow-2xl p-3 sm:p-6 relative flex flex-col h-full sm:h-[92vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-emerald-100 text-emerald-700">
-              <Briefcase className="w-5 h-5" />
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 sm:p-2.5 rounded-2xl bg-emerald-100 text-emerald-700 flex-shrink-0">
+              <Briefcase className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-extrabold text-slate-900">AI Cover Letter Generator</h2>
-              <p className="text-xs text-slate-500">Generate matching tailored cover letters in seconds</p>
+              <h2 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">AI Cover Letter Generator</h2>
+              <p className="text-[11px] sm:text-xs text-slate-500 line-clamp-1">Generate matching tailored cover letters in seconds</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg text-slate-500">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -122,12 +122,12 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({ isOpen, onCl
         {/* AI Notice Banner */}
         {aiNotice && (
           <div className="mt-3 p-2.5 bg-emerald-50 text-emerald-800 text-xs font-semibold rounded-xl border border-emerald-200 flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-600" />
+            <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
             <span>{aiNotice}</span>
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 text-xs">
+        <div className="flex-1 overflow-y-auto py-3 sm:py-4 space-y-3.5 pr-1 text-xs">
           {/* Target Role Inputs */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
@@ -151,9 +151,9 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({ isOpen, onCl
           </div>
 
           {/* Template Style Switcher */}
-          <div className="flex justify-between items-center bg-slate-50 p-2.5 rounded-2xl border border-slate-200">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-50 p-3 rounded-2xl border border-slate-200 gap-2">
             <span className="font-bold text-slate-700">Cover Letter Template Tone</span>
-            <div className="flex gap-1.5">
+            <div className="flex flex-wrap gap-1.5 w-full sm:w-auto">
               {[
                 { id: 'technical', label: 'Technical / Engineering' },
                 { id: 'executive', label: 'Executive Leadership' },
@@ -162,8 +162,8 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({ isOpen, onCl
                 <button
                   key={t.id}
                   onClick={() => setTemplateStyle(t.id as any)}
-                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                    templateStyle === t.id ? 'bg-emerald-600 text-white shadow' : 'bg-white text-slate-600 border border-slate-200'
+                  className={`flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs font-bold transition-all text-center min-h-[36px] ${
+                    templateStyle === t.id ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                   }`}
                 >
                   {t.label}
