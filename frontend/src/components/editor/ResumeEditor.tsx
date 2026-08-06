@@ -19,7 +19,7 @@ import { ElegantTemplate } from '../templates/ElegantTemplate';
 import {
   Download, Sparkles, Palette as PaletteIcon, Type,
   FileText, Plus, Trash2, ArrowLeft, Check, Camera, Printer, RotateCcw, RotateCw,
-  ArrowUp, ArrowDown, Layout, X, Sliders
+  ArrowUp, ArrowDown, Layout, X, Sliders, ZoomIn, ZoomOut, Maximize2, RefreshCw
 } from 'lucide-react';
 
 interface Props {
@@ -43,6 +43,9 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
   );
 
   const [previewScale, setPreviewScale] = useState(0.85);
+  const [zoomLevel, setZoomLevel] = useState<number | null>(null);
+  const [isFullScreenViewerOpen, setIsFullScreenViewerOpen] = useState(false);
+
   const [editorTab, setEditorTab] = useState<'content' | 'design' | 'colors' | 'layout' | 'ai'>('content');
   const [contentSection, setContentSection] = useState<'personal' | 'experience' | 'education' | 'skills' | 'projects' | 'languages' | 'custom'>('personal');
   const [mobileViewMode, setMobileViewMode] = useState<'edit' | 'preview'>('edit');
@@ -50,23 +53,39 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
   const [aiNotice, setAiNotice] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'saving' | 'saved'>('saved');
 
-  // Auto-calculate exact scale to fit container
+  // Auto-calculate exact scale to fit 100% of the A4 page inside the viewport
+  const calculateAutoFitScale = useCallback(() => {
+    if (previewContainerRef.current) {
+      const padding = window.innerWidth <= 640 ? 12 : 32;
+      const availableW = previewContainerRef.current.clientWidth - padding;
+      const availableH = previewContainerRef.current.clientHeight - padding;
+
+      const scaleW = availableW / 794;
+      const scaleH = availableH > 250 ? availableH / 1123 : scaleW;
+
+      // On mobile, prioritize full width fit with zero horizontal scroll
+      const fit = window.innerWidth <= 640 ? scaleW : Math.min(scaleW, scaleH);
+      return Math.min(1, Math.max(0.24, fit));
+    }
+    return 0.5;
+  }, []);
+
   useEffect(() => {
     const updateScale = () => {
-      if (previewContainerRef.current) {
-        const containerWidth = previewContainerRef.current.clientWidth - 32;
-        const targetScale = Math.min(1, Math.max(0.35, containerWidth / 794));
-        setPreviewScale(targetScale);
+      if (zoomLevel === null) {
+        setPreviewScale(calculateAutoFitScale());
+      } else {
+        setPreviewScale(zoomLevel);
       }
     };
     updateScale();
-    const timer = setTimeout(updateScale, 100);
+    const timer = setTimeout(updateScale, 80);
     window.addEventListener('resize', updateScale);
     return () => {
       window.removeEventListener('resize', updateScale);
       clearTimeout(timer);
     };
-  }, [mobileViewMode]);
+  }, [mobileViewMode, zoomLevel, calculateAutoFitScale]);
 
   // Default Theme Configuration based on active template
   const defaultPalette = PALETTES.find(p => p.id === activeTemplate.defaultPaletteId) || PALETTES[0];
@@ -1222,12 +1241,59 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
         {/* ── RIGHT CANVAS LIVE PREVIEW AREA (SLATE-950 CANVAS BACKDROP) ── */}
         <div
           ref={previewContainerRef}
-          className={`flex-1 bg-slate-950 p-2 sm:p-4 md:p-6 overflow-auto flex justify-center items-start min-h-0 ${
+          className={`flex-1 bg-slate-950 p-2 sm:p-4 md:p-6 overflow-auto flex flex-col items-center justify-start min-h-0 relative ${
             mobileViewMode === 'preview' ? 'flex flex-1' : 'hidden md:flex'
           }`}
         >
+          {/* Floating Document Viewer Tool Bar */}
+          <div className="sticky top-2 z-30 bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-full px-3 py-1.5 flex items-center gap-2 shadow-xl text-slate-300 text-xs font-bold my-1">
+            <button
+              onClick={() => setZoomLevel(prev => Math.max(0.25, (prev || previewScale) - 0.1))}
+              className="p-1 hover:text-white hover:bg-slate-800 rounded-full cursor-pointer"
+              title="Zoom Out"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
+
+            <span className="font-mono text-[11px] text-emerald-400 min-w-[42px] text-center">
+              {Math.round(previewScale * 100)}%
+            </span>
+
+            <button
+              onClick={() => setZoomLevel(prev => Math.min(1.5, (prev || previewScale) + 0.1))}
+              className="p-1 hover:text-white hover:bg-slate-800 rounded-full cursor-pointer"
+              title="Zoom In"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+
+            <div className="w-[1px] h-4 bg-slate-800 mx-1" />
+
+            <button
+              onClick={() => {
+                setZoomLevel(null);
+                setPreviewScale(calculateAutoFitScale());
+              }}
+              className="p-1.5 hover:text-white hover:bg-slate-800 rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+              title="Reset to Fit Screen"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">Fit Page</span>
+            </button>
+
+            <button
+              onClick={() => setIsFullScreenViewerOpen(true)}
+              className="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer ml-1"
+              title="Full Screen Viewer"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Full Screen</span>
+            </button>
+          </div>
+
+          {/* Scaled A4 Document Canvas */}
           <div
-            className="shadow-2xl rounded-sm overflow-hidden flex-shrink-0 my-3 transition-all duration-150"
+            className="shadow-2xl rounded-sm overflow-hidden flex-shrink-0 my-3 transition-all duration-150 relative"
             style={{
               width: `${794 * previewScale}px`,
               height: `${1123 * previewScale}px`,
@@ -1251,6 +1317,63 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
         </div>
 
       </div>
+
+      {/* ── FULL SCREEN MOBILE / DESKTOP DOCUMENT VIEWER MODAL ── */}
+      {isFullScreenViewerOpen && (
+        <div className="fixed inset-0 z-[999999] bg-slate-950 flex flex-col animate-fadeIn">
+          {/* Viewer Header */}
+          <div className="p-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center z-30">
+            <div className="flex items-center gap-3">
+              <span className="font-extrabold text-sm text-white">{data.fullName || 'Resume'} — Live Preview</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">
+                100% Fit View
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => handleDownloadPdf(true)}
+                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download PDF</span>
+              </button>
+
+              <button
+                onClick={() => setIsFullScreenViewerOpen(false)}
+                className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Scrollable Center Canvas */}
+          <div className="flex-1 p-4 overflow-auto flex justify-center items-start bg-slate-950">
+            <div
+              className="shadow-2xl rounded-sm overflow-hidden flex-shrink-0 my-4"
+              style={{
+                width: `${794 * (window.innerWidth <= 640 ? (window.innerWidth - 24) / 794 : 0.85)}px`,
+                height: `${1123 * (window.innerWidth <= 640 ? (window.innerWidth - 24) / 794 : 0.85)}px`,
+              }}
+            >
+              <div
+                style={{
+                  width: 794,
+                  minHeight: 1123,
+                  margin: 0,
+                  padding: 0,
+                  backgroundColor: '#ffffff',
+                  transform: `scale(${window.innerWidth <= 640 ? (window.innerWidth - 24) / 794 : 0.85})`,
+                  transformOrigin: 'top left',
+                }}
+              >
+                {renderCanvasTemplate()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── TEMPLATE SWITCHER MODAL ── */}
       {isTemplateModalOpen && (

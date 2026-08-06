@@ -24,12 +24,28 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
 body {
   margin: 0;
   background-color: var(--background);
   color: var(--foreground);
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  overflow-x: hidden;
+}
+
+/* Safe Area Inset Support for Mobile Notches & Navigation Bars */
+.pb-safe {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.pt-safe {
+  padding-top: max(16px, env(safe-area-inset-top));
+}
+.mb-safe {
+  margin-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
 /* Mobile Touch & Accessibility Enhancements */
