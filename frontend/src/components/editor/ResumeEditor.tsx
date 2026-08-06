@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { TemplateDefinition, ResumeData, ThemeConfig, LayoutType } from '../../lib/resumeTypes';
 import { PALETTES, FONTS } from '../../lib/resumeTypes';
 import { ALL_TEMPLATES, TEMPLATE_CATEGORIES } from '../../lib/templateData';
-import { exportToPdf, exportSinglePagePdf, triggerPrintPdf } from '../../lib/pdfExport';
+import { triggerPrintPdf } from '../../lib/pdfExport';
 import { saveResumeItem, calculateCompletionPercentage, addActivityLog } from '../../lib/resumeStorage';
 
 import { ModernSidebarTemplate } from '../templates/ModernSidebarTemplate';
@@ -17,7 +17,7 @@ import { StartupTemplate } from '../templates/StartupTemplate';
 import { ElegantTemplate } from '../templates/ElegantTemplate';
 
 import {
-  Download, Sparkles, Palette as PaletteIcon, Type,
+  Sparkles, Palette as PaletteIcon, Type,
   FileText, Plus, Trash2, ArrowLeft, Check, Camera, Printer, RotateCcw, RotateCw,
   ArrowUp, ArrowDown, Layout, X, Sliders, ZoomIn, ZoomOut, Maximize2, RefreshCw
 } from 'lucide-react';
@@ -49,7 +49,6 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
   const [editorTab, setEditorTab] = useState<'content' | 'design' | 'colors' | 'layout' | 'ai'>('content');
   const [contentSection, setContentSection] = useState<'personal' | 'experience' | 'education' | 'skills' | 'projects' | 'languages' | 'custom'>('personal');
   const [mobileViewMode, setMobileViewMode] = useState<'edit' | 'preview'>('edit');
-  const [isExporting, setIsExporting] = useState(false);
   const [aiNotice, setAiNotice] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'saving' | 'saved'>('saved');
 
@@ -268,26 +267,6 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
   }, [initialData]);
 
   // Export handlers
-  const handleDownloadPdf = async (singlePage: boolean = true) => {
-    if (!canvasRef.current) return;
-    setIsExporting(true);
-    setAiNotice('Generating vector PDF...');
-    try {
-      if (singlePage) {
-        await exportSinglePagePdf(canvasRef.current, `${data.fullName || 'Resume'}_Resume`);
-      } else {
-        await exportToPdf(canvasRef.current, `${data.fullName || 'Resume'}_Resume`);
-      }
-      addActivityLog('pdf_download', `Downloaded PDF for "${data.fullName || 'Resume'}"`);
-      setAiNotice('PDF exported successfully!');
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsExporting(false);
-      setTimeout(() => setAiNotice(null), 4000);
-    }
-  };
-
   const handlePrintPdf = () => {
     if (canvasRef.current) {
       triggerPrintPdf(canvasRef.current, `${data.fullName || 'Resume'}_Resume`);
@@ -465,20 +444,11 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
 
           <button
             onClick={handlePrintPdf}
-            className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-colors cursor-pointer min-h-[44px]"
-            title="Open browser print dialog to save as A4 PDF"
+            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold rounded-xl shadow-md transition-transform active:scale-95 min-h-[44px] cursor-pointer"
+            title="Open browser print dialog to Save as PDF"
           >
-            <Printer className="w-4 h-4 text-emerald-600" />
-            <span className="hidden md:inline">Print PDF</span>
-          </button>
-
-          <button
-            onClick={() => handleDownloadPdf(true)}
-            disabled={isExporting}
-            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition-transform active:scale-95 disabled:opacity-50 min-h-[44px] cursor-pointer"
-          >
-            <Download className="w-4 h-4" />
-            <span>{isExporting ? 'Exporting...' : 'Download PDF'}</span>
+            <Printer className="w-4 h-4" />
+            <span>Print / Save PDF</span>
           </button>
         </div>
       </header>
@@ -1332,11 +1302,11 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
 
             <div className="flex items-center gap-3">
               <button
-                onClick={() => handleDownloadPdf(true)}
+                onClick={handlePrintPdf}
                 className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
               >
-                <Download className="w-4 h-4" />
-                <span>Download PDF</span>
+                <Printer className="w-4 h-4" />
+                <span>Print / Save PDF</span>
               </button>
 
               <button
