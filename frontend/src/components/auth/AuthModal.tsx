@@ -27,6 +27,11 @@ const SignupSuccessPopup: React.FC<{
   const [visible, setVisible] = useState(false);
   const [exiting, setExiting] = useState(false);
 
+  const handleContinue = () => {
+    setExiting(true);
+    setTimeout(onContinue, 350);
+  };
+
   useEffect(() => {
     // Entrance animation
     const t1 = setTimeout(() => setVisible(true), 20);
@@ -38,13 +43,14 @@ const SignupSuccessPopup: React.FC<{
         setTimeout(() => confetti({ particleCount: 40, spread: 60, origin: { x: 0.9, y: 0.6 }, colors: ['#f59e0b', '#6366f1'] }), 450);
       } catch {}
     }, 200);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
 
-  const handleContinue = () => {
-    setExiting(true);
-    setTimeout(onContinue, 350);
-  };
+    // Auto-advance after 2.5s if user does nothing
+    const t3 = setTimeout(() => {
+      handleContinue();
+    }, 2500);
+
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
 
   return (
     <div className={`fixed inset-0 z-[100000] flex items-center justify-center p-4 transition-all duration-400 ease-out ${
@@ -56,6 +62,16 @@ const SignupSuccessPopup: React.FC<{
 
         {/* Top green gradient bar */}
         <div className="h-2 bg-gradient-to-r from-teal-500 via-emerald-500 to-green-400" />
+
+        {/* Close Button ✕ */}
+        <button
+          onClick={handleContinue}
+          className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors z-30 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+          title="Close"
+          aria-label="Close"
+        >
+          <X className="w-4 h-4" />
+        </button>
 
         {/* Soft glow ring behind icon */}
         <div className="flex flex-col items-center pt-8 pb-6 px-8 text-center">
@@ -105,7 +121,7 @@ const SignupSuccessPopup: React.FC<{
           </button>
 
           <p className="text-[11px] text-slate-400 font-medium mt-3">
-            Auto-redirecting in a few seconds...
+            Auto-redirecting in 2.5 seconds...
           </p>
         </div>
       </div>
@@ -120,24 +136,26 @@ const LoginSuccessPopup: React.FC<{
   const [visible, setVisible] = useState(false);
   const [exiting, setExiting] = useState(false);
 
+  const handleDone = () => {
+    setExiting(true);
+    setTimeout(onDone, 350);
+  };
+
   useEffect(() => {
     const t1 = setTimeout(() => setVisible(true), 20);
     // Subtle confetti for login too
     const t2 = setTimeout(() => {
       try {
-        confetti({ particleCount: 40, spread: 60, origin: { y: 0.6 }, colors: ['#0d9488', '#10b981', '#34d399'] });
+        confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 }, colors: ['#0d9488', '#10b981', '#34d399'] });
       } catch {}
-    }, 300);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
+    }, 200);
 
-  useEffect(() => {
-    // Auto-dismiss after 2s
+    // Auto-dismiss after 2.5s
     const timer = setTimeout(() => {
-      setExiting(true);
-      setTimeout(onDone, 350);
-    }, 2000);
-    return () => clearTimeout(timer);
+      handleDone();
+    }, 2500);
+
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(timer); };
   }, [onDone]);
 
   return (
@@ -150,6 +168,16 @@ const LoginSuccessPopup: React.FC<{
 
         {/* Top accent bar */}
         <div className="h-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-green-400" />
+
+        {/* Close Button ✕ */}
+        <button
+          onClick={handleDone}
+          className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors z-30 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+          title="Close"
+          aria-label="Close"
+        >
+          <X className="w-4 h-4" />
+        </button>
 
         <div className="flex flex-col items-center pt-8 pb-6 px-8 text-center">
           {/* Animated success icon with pulse ring */}

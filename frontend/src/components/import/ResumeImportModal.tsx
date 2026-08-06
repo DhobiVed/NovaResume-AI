@@ -23,8 +23,6 @@ export const ResumeImportModal: React.FC<ResumeImportModalProps> = ({
   const [isParsing, setIsParsing] = useState(false);
   const [parsedPreview, setParsedPreview] = useState<any | null>(null);
 
-  if (!isOpen) return null;
-
   // Sanitize Extracted Text to remove binary ZIP artifacts, XML tags, and non-printable noise
   const sanitizeText = (text: string): string => {
     if (!text) return '';

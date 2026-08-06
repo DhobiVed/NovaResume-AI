@@ -289,8 +289,8 @@ export const AppContent: React.FC = () => {
           </button>
 
           <button
-            onClick={() => requireAuth(() => setIsImportOpen(true))}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors min-h-[40px]"
+            onClick={() => setIsImportOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors min-h-[40px] cursor-pointer"
           >
             <Upload className="w-4 h-4 text-emerald-600" />
             <span>Import Resume</span>
@@ -431,7 +431,7 @@ export const AppContent: React.FC = () => {
             </button>
 
             <button
-              onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setIsImportOpen(true)); }}
+              onClick={() => { setIsMobileMenuOpen(false); setIsImportOpen(true); }}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 text-slate-800 font-bold text-sm min-h-[44px]"
             >
               <Upload className="w-5 h-5 text-emerald-600" />
