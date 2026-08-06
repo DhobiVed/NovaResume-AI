@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X, Eye, EyeOff, CheckCircle2,
-  AlertCircle, ArrowLeft, Sparkles, ShieldCheck, Briefcase, Globe, FileText, Zap
+  AlertCircle, ArrowLeft, Sparkles, ShieldCheck, Briefcase, Globe, FileText, Zap, ArrowRight, UserCheck
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { firebaseAuthService } from '../../services/firebaseAuth';
 
 export interface UserProfile {
@@ -27,10 +28,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot' | 'reset'>('login');
 
-  // Animation States for Full-Screen Floating Experience
+  // Animation States for Full-Screen SaaS Slider
   const [isRendered, setIsRendered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [isSwitchingMode, setIsSwitchingMode] = useState(false);
+  
+  // Success Flow States
+  const [isSignupSuccess, setIsSignupSuccess] = useState(false);
+  const [isLoginSuccess, setIsLoginSuccess] = useState(false);
+  const [loggedInName, setLoggedInName] = useState('');
 
   // Form States
   const [fullName, setFullName] = useState('');
@@ -45,22 +50,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [shakingField, setShakingField] = useState<string | null>(null);
 
-  // Smooth Mount / Unmount Animation Controller
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  // Smooth Mount / Unmount Controller
   useEffect(() => {
     if (isOpen) {
       setIsRendered(true);
       setMode(initialMode);
       setErrors({});
-      setSuccessMsg(null);
+      setIsSignupSuccess(false);
+      setIsLoginSuccess(false);
       const timer = setTimeout(() => setIsVisible(true), 20);
       return () => clearTimeout(timer);
     } else {
       setIsVisible(false);
-      const timer = setTimeout(() => setIsRendered(false), 300);
+      const timer = setTimeout(() => setIsRendered(false), 380);
       return () => clearTimeout(timer);
     }
   }, [isOpen, initialMode]);
@@ -70,7 +77,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setIsVisible(false);
     setTimeout(() => {
       onClose();
-    }, 280);
+    }, 350);
   };
 
   // ESC key listener
@@ -82,15 +89,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
-  // Smooth Morph Transition between Auth Modes
+  // Smooth Full-Screen Slider Switch between Login & Signup
   const handleSwitchMode = (newMode: 'login' | 'signup' | 'forgot' | 'reset') => {
-    setIsSwitchingMode(true);
     setErrors({});
-    setSuccessMsg(null);
-    setTimeout(() => {
-      setMode(newMode);
-      setIsSwitchingMode(false);
-    }, 180);
+    setIsSignupSuccess(false);
+    setIsLoginSuccess(false);
+    setMode(newMode);
   };
 
   if (!isRendered) return null;
@@ -133,13 +137,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       await firebaseAuthService.register(fullName.trim(), email.toLowerCase().trim(), password);
 
       const registeredEmail = email.toLowerCase().trim();
-      setPassword('');
-      setConfirmPassword('');
-      setFullName('');
-      setSuccessMsg(`✅ Account created in Firebase! Sign in with ${registeredEmail} to continue.`);
-      setEmail(registeredEmail);
-      handleSwitchMode('login');
+      setIsLoading(false);
+      setIsSignupSuccess(true);
+
+      // Trigger Confetti Particle Celebration
+      try {
+        confetti({
+          particleCount: 70,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#0d9488', '#10b981', '#3b82f6', '#f59e0b']
+        });
+      } catch {}
+
+      // After 2.2s, slide to Login mode, prefill Email and focus Password
+      setTimeout(() => {
+        setIsSignupSuccess(false);
+        setPassword('');
+        setConfirmPassword('');
+        setEmail(registeredEmail);
+        setMode('login');
+        setTimeout(() => {
+          passwordInputRef.current?.focus();
+        }, 400);
+      }, 2200);
+
     } catch (err: any) {
+      setIsLoading(false);
       let msg = 'Registration failed. Please try again.';
       if (err?.code === 'auth/email-already-in-use') {
         msg = 'An account with this email address already exists. Please sign in.';
@@ -149,8 +173,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         msg = 'Password must be at least 6 characters.';
       }
       setFieldError('email', msg);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -162,9 +184,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setErrors({});
     try {
       const userProfile = await firebaseAuthService.login(email.toLowerCase().trim(), password);
-      onLoginSuccess(userProfile);
-      handleClose();
+      setIsLoading(false);
+      setLoggedInName(userProfile.name || userProfile.email.split('@')[0] || 'User');
+      setIsLoginSuccess(true);
+
+      // Transition smoothly into Dashboard after welcome card
+      setTimeout(() => {
+        onLoginSuccess(userProfile);
+        handleClose();
+      }, 1500);
+
     } catch (err: any) {
+      setIsLoading(false);
       let msg = 'Invalid email address or password.';
       if (err?.code === 'auth/user-not-found' || err?.code === 'auth/wrong-password' || err?.code === 'auth/invalid-credential') {
         msg = 'Invalid email or password. Please check your credentials.';
@@ -172,8 +203,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         msg = 'Too many failed login attempts. Please try again later or reset password.';
       }
       setFieldError('email', msg);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -184,15 +213,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setErrors({});
     try {
       await firebaseAuthService.sendPasswordReset(email.toLowerCase().trim());
-      setSuccessMsg(`✅ Password reset email sent to ${email.toLowerCase().trim()}! Check your inbox.`);
+      setIsLoading(false);
+      setErrors({ success: `✅ Password reset email sent to ${email.toLowerCase().trim()}! Check your inbox.` });
     } catch (err: any) {
+      setIsLoading(false);
       let msg = 'Failed to send password reset email.';
       if (err?.code === 'auth/user-not-found') {
         msg = 'No account found with this email address.';
       }
       setFieldError('email', msg);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -201,8 +230,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (!newPassword || newPassword.length < 6) return setFieldError('newPassword', 'Minimum 6 characters required');
     if (newPassword !== confirmNewPassword) return setFieldError('confirmNewPassword', 'Passwords do not match');
 
-    setSuccessMsg('A password reset link was sent to your email. Please check your inbox and click the link to reset your password.');
-    setTimeout(() => handleSwitchMode('login'), 3000);
+    setErrors({ success: 'A password reset link was sent to your email. Please check your inbox.' });
+    setTimeout(() => handleSwitchMode('login'), 2500);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -214,391 +243,541 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] overflow-y-auto flex items-center justify-center p-3 sm:p-6 md:p-8 transform-gpu">
+    <div className={`fixed inset-0 z-[99999] overflow-hidden bg-slate-950 flex flex-col justify-between w-screen h-screen transform-gpu transition-all duration-400 ease-out select-none ${
+      isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-98 pointer-events-none'
+    }`}>
       
-      {/* 1. Dark Backdrop Overlay */}
-      <div
-        className={`fixed inset-0 bg-slate-950/80 transition-opacity duration-300 ease-out ${
-          isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={handleClose}
-      />
+      {/* ── 1. TOP SAAS HEADER BAR ── */}
+      <header className="h-16 px-4 md:px-8 bg-slate-900/90 border-b border-slate-800/80 flex items-center justify-between z-30 flex-shrink-0 backdrop-blur-md">
+        {/* Brand Badge */}
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-teal-600 via-emerald-600 to-green-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-teal-900/40">
+            N
+          </div>
+          <div>
+            <h1 className="font-black text-base md:text-lg text-white tracking-wide flex items-center gap-2">
+              <span>NovaResume AI</span>
+              <span className="px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 font-extrabold text-[10px] uppercase border border-teal-500/30">
+                SaaS Auth Platform
+              </span>
+            </h1>
+          </div>
+        </div>
 
-      {/* 2. Split-Screen Auth Modal Card */}
-      <div
-        className={`bg-white rounded-[24px] sm:rounded-[32px] border border-slate-200/90 shadow-2xl w-full max-w-4xl relative flex flex-col md:flex-row overflow-hidden my-auto transform-gpu transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] z-10 max-h-[92vh] ${
-          isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-6 pointer-events-none'
-        }`}
-        onClick={(e) => e.stopPropagation()}
-      >
+        {/* Mode Slider Toggle Pill */}
+        <div className="hidden sm:flex items-center p-1 bg-slate-950/80 border border-slate-800 rounded-2xl relative shadow-inner">
+          <button
+            onClick={() => handleSwitchMode('login')}
+            className={`px-5 py-1.5 rounded-xl text-xs font-black transition-all duration-300 relative z-10 cursor-pointer ${
+              mode === 'login' ? 'text-white shadow-md' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => handleSwitchMode('signup')}
+            className={`px-5 py-1.5 rounded-xl text-xs font-black transition-all duration-300 relative z-10 cursor-pointer ${
+              mode === 'signup' ? 'text-white shadow-md' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Sign Up
+          </button>
+
+          {/* Active Sliding Background Pill */}
+          <div
+            className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-teal-600 rounded-xl transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu ${
+              mode === 'signup' ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'
+            }`}
+          />
+        </div>
+
         {/* Close Button */}
         <button
           onClick={handleClose}
-          className="absolute right-4 top-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 hover:text-slate-900 transition-all duration-200 active:scale-90 z-30 shadow-xs cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center"
-          aria-label="Close modal"
+          className="flex items-center gap-2 px-3.5 py-2 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer border border-slate-700/60"
         >
+          <span className="hidden sm:inline">Back to Platform</span>
           <X className="w-4 h-4" />
         </button>
+      </header>
 
-        {/* ── LEFT PANEL: RICH TEAL SHOWCASE WITH ANIMATED FLOATING BADGES ── */}
-        <div className="hidden md:flex w-1/2 bg-[#085a67] bg-gradient-to-br from-[#074c57] via-[#0a6675] to-[#053740] p-7 lg:p-9 flex-col justify-between text-white relative overflow-hidden select-none flex-shrink-0 min-h-[480px]">
-          
-          {/* Morphing Left Panel Header Text */}
-          <div className={`transition-all duration-300 transform-gpu z-10 ${isSwitchingMode ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-4 border border-white/20 shadow-md">
-              <Sparkles className="w-5 h-5 text-teal-200" />
+      {/* ── 2. FULL-SCREEN DUAL SLIDING PANELS (DESKTOP & MOBILE) ── */}
+      <main className="flex-1 relative overflow-hidden bg-slate-950 flex flex-col md:flex-row">
+        
+        {/* ── DESKTOP SLIDING SHOWCASE PANEL (GLIDES HORIZONTALLY ACROSS SCREEN) ── */}
+        <div
+          className={`hidden md:flex absolute top-0 bottom-0 w-1/2 bg-[#074b56] bg-gradient-to-br from-[#063d47] via-[#095b68] to-[#04282f] p-10 lg:p-14 flex-col justify-between text-white z-20 shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu border-r border-teal-500/20 ${
+            mode === 'signup' ? 'translate-x-full rounded-l-[36px]' : 'translate-x-0 rounded-r-[36px]'
+          }`}
+        >
+          {/* Ambient Glows */}
+          <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-teal-400/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
+
+          {/* Top Panel Brand Quote */}
+          <div className="relative z-10">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-5 border border-white/20 shadow-lg backdrop-blur-md">
+              <Sparkles className="w-6 h-6 text-teal-200" />
             </div>
-            
+
             {mode === 'signup' ? (
-              <>
-                <h2 className="text-2xl lg:text-3xl font-black text-white leading-snug tracking-tight mb-2">
+              <div className="space-y-3 animate-fadeIn">
+                <h2 className="text-3xl lg:text-4xl font-black text-white leading-tight tracking-tight">
                   Unlock The Full Power<br />of NovaResume AI
                 </h2>
-                <p className="text-xs lg:text-sm text-teal-100/80 leading-relaxed max-w-sm">
+                <p className="text-sm text-teal-100/80 leading-relaxed max-w-md font-medium">
                   Just a few simple steps and you'll be ready to automate, optimize, and craft ATS-proof resumes like never before.
                 </p>
-              </>
+              </div>
             ) : (
-              <>
-                <h2 className="text-2xl lg:text-3xl font-black text-white leading-snug tracking-tight mb-2">
+              <div className="space-y-3 animate-fadeIn">
+                <h2 className="text-3xl lg:text-4xl font-black text-white leading-tight tracking-tight">
                   Start Creating Impact<br />Right Away
                 </h2>
-                <p className="text-xs lg:text-sm text-teal-100/80 leading-relaxed max-w-sm">
+                <p className="text-sm text-teal-100/80 leading-relaxed max-w-md font-medium">
                   From AI resume tailoring to job application tracking, let's turn your career goals into measurable results.
                 </p>
-              </>
+              </div>
             )}
           </div>
 
-          {/* Center Showcase Card with Animated Floating NovaResume AI Badges */}
-          <div className="relative my-6 py-4 flex items-center justify-center z-10">
+          {/* Central Interactive Metrics Card with Animated Floating Badges */}
+          <div className="relative my-auto py-8 flex items-center justify-center z-10">
             
-            {/* Main Central Metrics Preview Card */}
-            <div className="w-full max-w-xs bg-white rounded-2xl p-4 shadow-xl border border-slate-100 text-slate-900 transform transition-all duration-300 hover:scale-[1.02]">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-teal-600 flex items-center justify-center text-white text-[10px] font-black">
+            {/* Main Central Card */}
+            <div className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl border border-white/80 text-slate-900 transform transition-transform duration-300 hover:scale-[1.02]">
+              <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-xl bg-teal-600 flex items-center justify-center text-white text-xs font-black shadow-md">
                     N
                   </div>
-                  <span className="text-xs font-black text-slate-900">NovaResume AI Engine</span>
+                  <span className="text-sm font-black text-slate-900">NovaResume AI Engine</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[9px]">
+                <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px]">
                   ATS 98%
                 </span>
               </div>
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <div className="p-2 bg-slate-50 rounded-xl border border-slate-100">
-                  <span className="text-[9px] text-slate-400 font-bold block">ATS Score</span>
-                  <span className="text-sm font-black text-slate-900">98%</span>
+              <div className="grid grid-cols-2 gap-2.5 mb-4">
+                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                  <span className="text-[10px] text-slate-400 font-bold block">ATS Score</span>
+                  <span className="text-base font-black text-slate-900">98%</span>
                 </div>
-                <div className="p-2 bg-slate-50 rounded-xl border border-slate-100">
-                  <span className="text-[9px] text-slate-400 font-bold block">JD Match Rate</span>
-                  <span className="text-sm font-black text-emerald-600">92%</span>
+                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                  <span className="text-[10px] text-slate-400 font-bold block">JD Match Rate</span>
+                  <span className="text-base font-black text-emerald-600">92%</span>
                 </div>
               </div>
 
-              {/* Progress Bars */}
-              <div className="space-y-1.5 pt-1">
-                <div className="flex justify-between text-[9px] font-bold text-slate-500">
-                  <span>Resume Score</span>
+              {/* Progress Bar */}
+              <div className="space-y-2 pt-1">
+                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                  <span>Optimization Meter</span>
                   <span className="text-teal-600">98 / 100</span>
                 </div>
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                  <div className="bg-gradient-to-r from-teal-600 to-emerald-500 h-full w-[98%] rounded-full" />
+                <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                  <div className="bg-gradient-to-r from-teal-600 to-emerald-500 h-full w-[98%] rounded-full shadow-xs" />
                 </div>
               </div>
             </div>
 
-            {/* Floating NovaResume Feature Badges */}
-            <div className="absolute -top-1 -left-2 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-1.5 animate-float-badge-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            {/* Animated Floating Pill Feature Badges */}
+            <div className="absolute -top-2 -left-3 bg-white text-slate-800 text-xs font-extrabold px-3.5 py-2 rounded-full shadow-xl border border-slate-100 flex items-center gap-2 animate-float-badge-1">
+              <Sparkles className="w-4 h-4 text-amber-500" />
               <span>AI Mentor</span>
             </div>
 
-            <div className="absolute -top-3 -right-2 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-1.5 animate-float-badge-2">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <div className="absolute -top-4 -right-3 bg-white text-slate-800 text-xs font-extrabold px-3.5 py-2 rounded-full shadow-xl border border-slate-100 flex items-center gap-2 animate-float-badge-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
               <span>ATS 100%</span>
             </div>
 
-            <div className="absolute top-1/2 -left-4 -translate-y-1/2 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-1.5 animate-float-badge-2">
-              <FileText className="w-3.5 h-3.5 text-teal-600" />
+            <div className="absolute top-1/2 -left-6 -translate-y-1/2 bg-white text-slate-800 text-xs font-extrabold px-3.5 py-2 rounded-full shadow-xl border border-slate-100 flex items-center gap-2 animate-float-badge-2">
+              <FileText className="w-4 h-4 text-teal-600" />
               <span>PDF Export</span>
             </div>
 
-            <div className="absolute top-1/2 -right-4 -translate-y-1/2 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-1.5 animate-float-badge-1">
-              <Briefcase className="w-3.5 h-3.5 text-blue-500" />
+            <div className="absolute top-1/2 -right-6 -translate-y-1/2 bg-white text-slate-800 text-xs font-extrabold px-3.5 py-2 rounded-full shadow-xl border border-slate-100 flex items-center gap-2 animate-float-badge-1">
+              <Briefcase className="w-4 h-4 text-blue-500" />
               <span>Job Tracker</span>
             </div>
 
-            <div className="absolute -bottom-2 -left-2 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-1.5 animate-float-badge-1">
-              <Globe className="w-3.5 h-3.5 text-purple-500" />
+            <div className="absolute -bottom-3 -left-3 bg-white text-slate-800 text-xs font-extrabold px-3.5 py-2 rounded-full shadow-xl border border-slate-100 flex items-center gap-2 animate-float-badge-1">
+              <Globe className="w-4 h-4 text-purple-500" />
               <span>Portfolios</span>
             </div>
 
-            <div className="absolute -bottom-2 -right-2 bg-teal-500 text-white text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 animate-float-badge-2">
-              <Zap className="w-3.5 h-3.5 text-yellow-300" />
+            <div className="absolute -bottom-3 -right-3 bg-teal-500 text-white text-xs font-extrabold px-3.5 py-2 rounded-full shadow-xl flex items-center gap-2 animate-float-badge-2">
+              <Zap className="w-4 h-4 text-yellow-300" />
               <span>Multi-Template</span>
             </div>
           </div>
 
-          {/* Left Panel Footer Copyright */}
-          <div className="text-[10px] text-teal-200/60 font-semibold tracking-wider uppercase z-10">
-            © NovaResume AI 2026. All Rights Reserved
+          {/* Footer Copyright */}
+          <div className="text-xs text-teal-200/60 font-bold tracking-wider uppercase z-10">
+            © NovaResume AI 2026. Enterprise SaaS Architecture
           </div>
         </div>
 
-        {/* ── RIGHT PANEL: CLEAN AUTH FORM (100% RESPONSIVE & TOUCHABLE) ── */}
-        <div className="w-full md:w-1/2 p-5 sm:p-8 lg:p-9 flex flex-col justify-between bg-white bg-dot-pattern relative overflow-y-auto">
+        {/* ── 3. FORM PANELS TRACK CONTAINER (DESKTOP & MOBILE RESPONSIVE) ── */}
+        <div className="w-full h-full flex flex-col md:flex-row relative">
           
-          {/* Morphing Form Container */}
-          <div className={`transition-all duration-300 transform-gpu ${isSwitchingMode ? 'opacity-0 scale-98' : 'opacity-100 scale-100'}`}>
-            
-            {/* Header Icon & Title */}
-            <div className="text-center space-y-1 mb-5">
-              <div className="w-12 h-12 rounded-2xl bg-teal-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-teal-600/30 mx-auto mb-2">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                {mode === 'signup' ? 'Create NovaResume Account' : mode === 'login' ? 'Welcome Back' : 'Reset Password'}
-              </h2>
-              <p className="text-xs font-semibold text-slate-500 max-w-xs mx-auto">
-                {mode === 'signup'
-                  ? 'Build ATS-proof resumes with AI — free forever'
-                  : mode === 'login'
-                  ? 'Sign in to access your resumes, portfolios & AI mentor'
-                  : 'Enter your registered email address to receive reset link'}
-              </p>
-            </div>
-
-            {/* Success Banner */}
-            {successMsg && (
-              <div className="p-3.5 mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold flex items-center gap-2.5 animate-fadeIn shadow-xs">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span>{successMsg}</span>
-              </div>
-            )}
-
-            {/* Pure Clean Form */}
-            <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
-
-              {/* Full Name — Signup Only */}
-              {mode === 'signup' && (
-                <div className={`space-y-1 ${shakingField === 'fullName' ? 'animate-shake' : ''}`}>
-                  <label className="text-xs font-bold text-slate-700 block">Full name</label>
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className={`w-full px-4 py-3 bg-white border rounded-xl text-base sm:text-sm font-semibold focus:outline-none transition-all duration-200 min-h-[48px] ${
-                      errors.fullName ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
-                    }`}
-                  />
-                  {errors.fullName && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.fullName}</span>}
+          {/* ── SIGN IN FORM PANEL ── */}
+          <div className={`w-full md:w-1/2 h-full p-6 sm:p-10 lg:p-14 flex flex-col justify-center bg-slate-900 overflow-y-auto transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu ${
+            mode === 'login' || mode === 'forgot' || mode === 'reset' ? 'opacity-100 z-10' : 'opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto'
+          }`}>
+            <div className="max-w-md mx-auto w-full space-y-6">
+              
+              {/* SUCCESS LOGIN CARD */}
+              {isLoginSuccess ? (
+                <div className="p-8 bg-emerald-950/80 border border-emerald-500/40 rounded-3xl text-center space-y-4 shadow-2xl animate-scaleUp">
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30 animate-bounce">
+                    <UserCheck className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-2xl font-black text-white">Welcome back, {loggedInName} 👋</h3>
+                  <p className="text-sm text-emerald-200/80 font-medium">We're happy to see you again. Transitioning to workspace...</p>
+                  <div className="w-full bg-emerald-900/50 h-2 rounded-full overflow-hidden">
+                    <div className="bg-emerald-400 h-full w-full animate-pulse" />
+                  </div>
                 </div>
-              )}
+              ) : (
+                <>
+                  {/* Form Title Header */}
+                  <div className="space-y-2">
+                    <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                      {mode === 'forgot' ? 'Reset Password' : mode === 'reset' ? 'Set New Password' : 'Sign in to NovaResume'}
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-400 font-medium">
+                      {mode === 'forgot'
+                        ? 'Enter your registered email address to receive reset link'
+                        : 'Access your AI resumes, job application tracker & web portfolio'}
+                    </p>
+                  </div>
 
-              {/* Email Address — Login, Signup, Forgot */}
-              {mode !== 'reset' && (
-                <div className={`space-y-1 ${shakingField === 'email' ? 'animate-shake' : ''}`}>
-                  <label className="text-xs font-bold text-slate-700 block">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    className={`w-full px-4 py-3 bg-white border rounded-xl text-base sm:text-sm font-semibold focus:outline-none transition-all duration-200 min-h-[48px] ${
-                      errors.email ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
-                    }`}
-                  />
-                  {errors.email && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.email}</span>}
-                </div>
-              )}
+                  {/* Reset Password Success Message */}
+                  {errors.success && (
+                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 rounded-2xl text-xs font-bold flex items-center gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <span>{errors.success}</span>
+                    </div>
+                  )}
 
-              {/* Reset Token — Reset Mode */}
-              {mode === 'reset' && (
-                <div className={`space-y-1 ${shakingField === 'resetToken' ? 'animate-shake' : ''}`}>
-                  <label className="text-xs font-bold text-slate-700 block">Reset Token</label>
-                  <input
-                    type="text"
-                    value={resetToken}
-                    onChange={(e) => setResetToken(e.target.value)}
-                    placeholder="Paste reset token from email"
-                    className={`w-full px-4 py-3 bg-white border rounded-xl text-base sm:text-sm font-mono focus:outline-none transition-all duration-200 min-h-[48px] ${
-                      errors.resetToken ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
-                    }`}
-                  />
-                  {errors.resetToken && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.resetToken}</span>}
-                </div>
-              )}
+                  {/* Form */}
+                  <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                    
+                    {/* Email Input */}
+                    {mode !== 'reset' && (
+                      <div className={`space-y-1.5 ${shakingField === 'email' ? 'animate-shake' : ''}`}>
+                        <label className="text-xs font-extrabold text-slate-300 block">Email Address</label>
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="name@company.com"
+                          className={`w-full px-4 py-3.5 bg-slate-950 border rounded-2xl text-sm font-semibold text-white placeholder-slate-500 focus:outline-none transition-all duration-200 min-h-[50px] ${
+                            errors.email ? 'border-rose-500 bg-rose-950/20' : 'border-slate-800 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20'
+                          }`}
+                        />
+                        {errors.email && <span className="text-[11px] font-bold text-rose-400 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.email}</span>}
+                      </div>
+                    )}
 
-              {/* Password — Login, Signup */}
-              {(mode === 'login' || mode === 'signup') && (
-                <div className={`space-y-1 ${shakingField === 'password' ? 'animate-shake' : ''}`}>
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-700">Password</label>
+                    {/* Reset Token Input */}
+                    {mode === 'reset' && (
+                      <div className={`space-y-1.5 ${shakingField === 'resetToken' ? 'animate-shake' : ''}`}>
+                        <label className="text-xs font-extrabold text-slate-300 block">Reset Token</label>
+                        <input
+                          type="text"
+                          value={resetToken}
+                          onChange={(e) => setResetToken(e.target.value)}
+                          placeholder="Paste reset token from email"
+                          className={`w-full px-4 py-3.5 bg-slate-950 border rounded-2xl text-sm font-mono text-white placeholder-slate-500 focus:outline-none transition-all duration-200 min-h-[50px] ${
+                            errors.resetToken ? 'border-rose-500 bg-rose-950/20' : 'border-slate-800 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20'
+                          }`}
+                        />
+                        {errors.resetToken && <span className="text-[11px] font-bold text-rose-400 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.resetToken}</span>}
+                      </div>
+                    )}
+
+                    {/* Password Input */}
                     {mode === 'login' && (
+                      <div className={`space-y-1.5 ${shakingField === 'password' ? 'animate-shake' : ''}`}>
+                        <div className="flex justify-between items-center">
+                          <label className="text-xs font-extrabold text-slate-300">Password</label>
+                          <button
+                            type="button"
+                            onClick={() => handleSwitchMode('forgot')}
+                            className="text-xs font-semibold text-teal-400 hover:text-teal-300 hover:underline transition-colors cursor-pointer"
+                          >
+                            Forgot Password?
+                          </button>
+                        </div>
+                        <div className="relative">
+                          <input
+                            ref={passwordInputRef}
+                            type={showPassword ? 'text' : 'password'}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            className={`w-full pl-4 pr-11 py-3.5 bg-slate-950 border rounded-2xl text-sm font-semibold text-white placeholder-slate-500 focus:outline-none transition-all duration-200 min-h-[50px] ${
+                              errors.password ? 'border-rose-500 bg-rose-950/20' : 'border-slate-800 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20'
+                            }`}
+                          />
+                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-4 text-slate-400 hover:text-white transition-colors cursor-pointer">
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                        {errors.password && <span className="text-[11px] font-bold text-rose-400 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.password}</span>}
+                      </div>
+                    )}
+
+                    {/* New Password Inputs — Reset Mode */}
+                    {mode === 'reset' && (
+                      <>
+                        <div className={`space-y-1.5 ${shakingField === 'newPassword' ? 'animate-shake' : ''}`}>
+                          <label className="text-xs font-extrabold text-slate-300 block">New Password</label>
+                          <div className="relative">
+                            <input
+                              type={showPassword ? 'text' : 'password'}
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                              placeholder="Minimum 6 characters"
+                              className={`w-full pl-4 pr-11 py-3.5 bg-slate-950 border rounded-2xl text-sm font-semibold text-white placeholder-slate-500 focus:outline-none transition-all duration-200 min-h-[50px] ${
+                                errors.newPassword ? 'border-rose-500 bg-rose-950/20' : 'border-slate-800 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20'
+                              }`}
+                            />
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-4 text-slate-400 hover:text-white transition-colors cursor-pointer">
+                              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                          {errors.newPassword && <span className="text-[11px] font-bold text-rose-400 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.newPassword}</span>}
+                        </div>
+
+                        <div className={`space-y-1.5 ${shakingField === 'confirmNewPassword' ? 'animate-shake' : ''}`}>
+                          <label className="text-xs font-extrabold text-slate-300 block">Confirm New Password</label>
+                          <div className="relative">
+                            <input
+                              type={showConfirmPassword ? 'text' : 'password'}
+                              value={confirmNewPassword}
+                              onChange={(e) => setConfirmNewPassword(e.target.value)}
+                              placeholder="••••••••"
+                              className={`w-full pl-4 pr-11 py-3.5 bg-slate-950 border rounded-2xl text-sm font-semibold text-white placeholder-slate-500 focus:outline-none transition-all duration-200 min-h-[50px] ${
+                                errors.confirmNewPassword ? 'border-rose-500 bg-rose-950/20' : 'border-slate-800 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20'
+                              }`}
+                            />
+                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-4 text-slate-400 hover:text-white transition-colors cursor-pointer">
+                              {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                          {errors.confirmNewPassword && <span className="text-[11px] font-bold text-rose-400 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.confirmNewPassword}</span>}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Submit CTA Button */}
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full py-4 px-6 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 active:scale-[0.98] text-white font-extrabold text-sm rounded-2xl shadow-xl shadow-teal-900/30 transition-all duration-200 flex items-center justify-center gap-2.5 min-h-[52px] disabled:opacity-50 mt-6 cursor-pointer"
+                    >
+                      {isLoading ? (
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <span>{mode === 'forgot' ? 'Send Password Reset Link' : mode === 'reset' ? 'Update Password' : 'Sign In'}</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  </form>
+
+                  {/* Mode Switch Link */}
+                  <div className="pt-4 border-t border-slate-800/80 text-center text-xs font-semibold text-slate-400">
+                    {mode === 'login' ? (
+                      <p>
+                        Don't have an account?{' '}
+                        <button
+                          onClick={() => handleSwitchMode('signup')}
+                          className="font-extrabold text-teal-400 hover:text-teal-300 hover:underline ml-1 cursor-pointer"
+                        >
+                          Sign Up for Free &gt;
+                        </button>
+                      </p>
+                    ) : (
                       <button
-                        type="button"
-                        onClick={() => handleSwitchMode('forgot')}
-                        className="text-xs font-semibold text-slate-500 hover:text-slate-900 hover:underline transition-colors py-1 px-1 cursor-pointer"
+                        onClick={() => handleSwitchMode('login')}
+                        className="flex items-center justify-center gap-1.5 mx-auto font-extrabold text-slate-300 hover:text-white transition-colors cursor-pointer"
                       >
-                        Forgot Password?
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        Back to Sign In
                       </button>
                     )}
                   </div>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Create your password"
-                      className={`w-full pl-4 pr-10 py-3 bg-white border rounded-xl text-base sm:text-sm font-semibold focus:outline-none transition-all duration-200 min-h-[48px] ${
-                        errors.password ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
-                      }`}
-                    />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 transition-colors p-1 cursor-pointer">
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  {errors.password && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.password}</span>}
-
-                  {/* Password Strength Meter */}
-                  {mode === 'signup' && password.length > 0 && (
-                    <div className="pt-1 space-y-1">
-                      <div className="flex justify-between items-center text-[10px] font-bold">
-                        <span className="text-slate-500">Strength</span>
-                        <span className="text-slate-700">{strengthLabels[Math.min(3, strength)]}</span>
-                      </div>
-                      <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden flex gap-1">
-                        {[0, 1, 2, 3].map((step) => (
-                          <div
-                            key={step}
-                            className={`h-full flex-1 rounded-full transition-all duration-300 ${step <= strength ? strengthColors[Math.min(3, strength)] : 'bg-slate-200'}`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Confirm Password — Signup */}
-              {mode === 'signup' && (
-                <div className={`space-y-1 ${shakingField === 'confirmPassword' ? 'animate-shake' : ''}`}>
-                  <label className="text-xs font-bold text-slate-700 block">Confirm Password</label>
-                  <div className="relative">
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirm your password"
-                      className={`w-full pl-4 pr-10 py-3 bg-white border rounded-xl text-base sm:text-sm font-semibold focus:outline-none transition-all duration-200 min-h-[48px] ${
-                        errors.confirmPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
-                      }`}
-                    />
-                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 transition-colors p-1 cursor-pointer">
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  {errors.confirmPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.confirmPassword}</span>}
-                </div>
-              )}
-
-              {/* New Password & Confirm — Reset Mode */}
-              {mode === 'reset' && (
-                <>
-                  <div className={`space-y-1 ${shakingField === 'newPassword' ? 'animate-shake' : ''}`}>
-                    <label className="text-xs font-bold text-slate-700 block">New Password</label>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="Minimum 6 characters"
-                        className={`w-full pl-4 pr-10 py-3 bg-white border rounded-xl text-base sm:text-sm font-semibold focus:outline-none transition-all duration-200 min-h-[48px] ${
-                          errors.newPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
-                        }`}
-                      />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 transition-colors p-1 cursor-pointer">
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                    {errors.newPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.newPassword}</span>}
-                  </div>
-
-                  <div className={`space-y-1 ${shakingField === 'confirmNewPassword' ? 'animate-shake' : ''}`}>
-                    <label className="text-xs font-bold text-slate-700 block">Confirm New Password</label>
-                    <div className="relative">
-                      <input
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        value={confirmNewPassword}
-                        onChange={(e) => setConfirmNewPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className={`w-full pl-4 pr-10 py-3 bg-white border rounded-xl text-base sm:text-sm font-semibold focus:outline-none transition-all duration-200 min-h-[48px] ${
-                          errors.confirmNewPassword ? 'border-rose-500 bg-rose-50/50' : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
-                        }`}
-                      />
-                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 transition-colors p-1 cursor-pointer">
-                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                    {errors.confirmNewPassword && <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.confirmNewPassword}</span>}
-                  </div>
                 </>
-              )}
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-3.5 px-4 bg-[#182230] hover:bg-[#0f1728] active:bg-black text-white font-extrabold text-sm rounded-xl shadow-lg transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 min-h-[50px] disabled:opacity-50 mt-4 transform-gpu cursor-pointer"
-              >
-                {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <span>{mode === 'signup' ? 'Sign Up' : mode === 'login' ? 'Sign In' : 'Send Link'}</span>
-                )}
-              </button>
-            </form>
-
-            {/* Footer Mode Morph Switch */}
-            <div className="pt-4 mt-4 border-t border-slate-100 text-center text-xs font-semibold text-slate-500">
-              {(mode === 'forgot' || mode === 'reset') ? (
-                <button
-                  onClick={() => handleSwitchMode('login')}
-                  className="flex items-center justify-center gap-1.5 mx-auto font-extrabold text-slate-900 hover:underline transition-colors py-1 cursor-pointer"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  Back to Sign In
-                </button>
-              ) : mode === 'login' ? (
-                <p>
-                  Don't have an account?{' '}
-                  <button
-                    onClick={() => handleSwitchMode('signup')}
-                    className="font-extrabold text-slate-900 hover:underline transition-colors ml-1 py-1 cursor-pointer"
-                  >
-                    Sign Up &gt;
-                  </button>
-                </p>
-              ) : (
-                <p>
-                  Already have an account?{' '}
-                  <button
-                    onClick={() => handleSwitchMode('login')}
-                    className="font-extrabold text-slate-900 hover:underline transition-colors ml-1 py-1 cursor-pointer"
-                  >
-                    Sign In &gt;
-                  </button>
-                </p>
               )}
             </div>
           </div>
+
+          {/* ── SIGN UP FORM PANEL ── */}
+          <div className={`w-full md:w-1/2 h-full p-6 sm:p-10 lg:p-14 flex flex-col justify-center bg-slate-900 overflow-y-auto transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu ${
+            mode === 'signup' ? 'opacity-100 z-10' : 'opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto'
+          }`}>
+            <div className="max-w-md mx-auto w-full space-y-6">
+              
+              {/* SUCCESS SIGNUP CARD & CONFETTI CELEBRATION */}
+              {isSignupSuccess ? (
+                <div className="p-8 bg-teal-950/80 border border-teal-500/40 rounded-3xl text-center space-y-4 shadow-2xl animate-scaleUp">
+                  <div className="w-16 h-16 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center mx-auto border border-teal-500/30 animate-bounce">
+                    <Sparkles className="w-8 h-8 text-amber-300" />
+                  </div>
+                  <h3 className="text-2xl font-black text-white">🎉 Welcome to Nova Resume AI!</h3>
+                  <p className="text-sm text-teal-200/90 font-semibold leading-relaxed">
+                    Your account has been created successfully.<br />Let's build something amazing.
+                  </p>
+                  <div className="p-3 bg-teal-900/50 rounded-2xl text-xs font-bold text-teal-200 border border-teal-700/50">
+                    Gliding to Sign In screen to verify your password...
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Title Header */}
+                  <div className="space-y-2">
+                    <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                      Create NovaResume Account
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-400 font-medium">
+                      Build ATS-proof resumes with AI & launch your portfolio — free forever
+                    </p>
+                  </div>
+
+                  {/* Form */}
+                  <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
+                    
+                    {/* Full Name Input */}
+                    <div className={`space-y-1.5 ${shakingField === 'fullName' ? 'animate-shake' : ''}`}>
+                      <label className="text-xs font-extrabold text-slate-300 block">Full Name</label>
+                      <input
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="John Doe"
+                        className={`w-full px-4 py-3.5 bg-slate-950 border rounded-2xl text-sm font-semibold text-white placeholder-slate-500 focus:outline-none transition-all duration-200 min-h-[50px] ${
+                          errors.fullName ? 'border-rose-500 bg-rose-950/20' : 'border-slate-800 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20'
+                        }`}
+                      />
+                      {errors.fullName && <span className="text-[11px] font-bold text-rose-400 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.fullName}</span>}
+                    </div>
+
+                    {/* Email Input */}
+                    <div className={`space-y-1.5 ${shakingField === 'email' ? 'animate-shake' : ''}`}>
+                      <label className="text-xs font-extrabold text-slate-300 block">Email Address</label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="name@company.com"
+                        className={`w-full px-4 py-3.5 bg-slate-950 border rounded-2xl text-sm font-semibold text-white placeholder-slate-500 focus:outline-none transition-all duration-200 min-h-[50px] ${
+                          errors.email ? 'border-rose-500 bg-rose-950/20' : 'border-slate-800 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20'
+                        }`}
+                      />
+                      {errors.email && <span className="text-[11px] font-bold text-rose-400 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.email}</span>}
+                    </div>
+
+                    {/* Password Input */}
+                    <div className={`space-y-1.5 ${shakingField === 'password' ? 'animate-shake' : ''}`}>
+                      <label className="text-xs font-extrabold text-slate-300 block">Password</label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="Create a strong password"
+                          className={`w-full pl-4 pr-11 py-3.5 bg-slate-950 border rounded-2xl text-sm font-semibold text-white placeholder-slate-500 focus:outline-none transition-all duration-200 min-h-[50px] ${
+                            errors.password ? 'border-rose-500 bg-rose-950/20' : 'border-slate-800 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20'
+                          }`}
+                        />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-4 text-slate-400 hover:text-white transition-colors cursor-pointer">
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {errors.password && <span className="text-[11px] font-bold text-rose-400 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.password}</span>}
+
+                      {/* Password Strength Indicator */}
+                      {password.length > 0 && (
+                        <div className="pt-1.5 space-y-1">
+                          <div className="flex justify-between items-center text-[10px] font-bold">
+                            <span className="text-slate-400">Strength</span>
+                            <span className="text-slate-300">{strengthLabels[Math.min(3, strength)]}</span>
+                          </div>
+                          <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden flex gap-1">
+                            {[0, 1, 2, 3].map((step) => (
+                              <div
+                                key={step}
+                                className={`h-full flex-1 rounded-full transition-all duration-300 ${step <= strength ? strengthColors[Math.min(3, strength)] : 'bg-slate-800'}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Confirm Password Input */}
+                    <div className={`space-y-1.5 ${shakingField === 'confirmPassword' ? 'animate-shake' : ''}`}>
+                      <label className="text-xs font-extrabold text-slate-300 block">Confirm Password</label>
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Re-enter your password"
+                          className={`w-full pl-4 pr-11 py-3.5 bg-slate-950 border rounded-2xl text-sm font-semibold text-white placeholder-slate-500 focus:outline-none transition-all duration-200 min-h-[50px] ${
+                            errors.confirmPassword ? 'border-rose-500 bg-rose-950/20' : 'border-slate-800 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20'
+                          }`}
+                        />
+                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-4 text-slate-400 hover:text-white transition-colors cursor-pointer">
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {errors.confirmPassword && <span className="text-[11px] font-bold text-rose-400 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.confirmPassword}</span>}
+                    </div>
+
+                    {/* Submit CTA Button */}
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full py-4 px-6 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 active:scale-[0.98] text-white font-extrabold text-sm rounded-2xl shadow-xl shadow-teal-900/30 transition-all duration-200 flex items-center justify-center gap-2.5 min-h-[52px] disabled:opacity-50 mt-6 cursor-pointer"
+                    >
+                      {isLoading ? (
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <span>Create Account & Get Started</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  </form>
+
+                  {/* Switch to Login Link */}
+                  <div className="pt-4 border-t border-slate-800/80 text-center text-xs font-semibold text-slate-400">
+                    <p>
+                      Already have an account?{' '}
+                      <button
+                        onClick={() => handleSwitchMode('login')}
+                        className="font-extrabold text-teal-400 hover:text-teal-300 hover:underline ml-1 cursor-pointer"
+                      >
+                        Sign In &gt;
+                      </button>
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
         </div>
-      </div>
+      </main>
     </div>
   );
 };
