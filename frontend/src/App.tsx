@@ -233,7 +233,7 @@ export const AppContent: React.FC = () => {
                 Dev: Ved Dhobi
               </span>
             </div>
-            <p className="text-[9px] text-emerald-700 font-bold tracking-tight uppercase leading-snug truncate max-w-[200px] sm:max-w-none">
+            <p className="text-[9px] text-emerald-700 font-extrabold tracking-tight uppercase leading-none truncate max-w-[160px] xs:max-w-[210px] sm:max-w-none">
               Developed by Ved Dhobi (veddhobi252@gmail.com)
             </p>
           </div>

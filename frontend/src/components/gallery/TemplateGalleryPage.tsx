@@ -94,25 +94,35 @@ const TemplateRenderer: React.FC<{ template: TemplateDefinition }> = memo(({ tem
 });
 
 /** 60FPS Pure CSS GPU-Accelerated Centered Thumbnail Component */
-const ResumeThumbnailPreview: React.FC<{ template: TemplateDefinition; height?: number; onClick?: () => void }> = memo(({ template, height = 300, onClick }) => {
-  const scale = height <= 220 ? 0.20 : 0.255;
+const ResumeThumbnailPreview: React.FC<{ template: TemplateDefinition; height?: number; onClick?: () => void }> = memo(({ template, height = 280, onClick }) => {
+  const scale = height <= 220 ? 0.19 : 0.245;
 
   return (
     <div
       onClick={onClick}
-      className="w-full bg-slate-100/80 flex items-center justify-center overflow-hidden relative p-1.5 cursor-pointer gpu-accelerated select-none"
+      className="w-full bg-slate-100/90 flex items-center justify-center overflow-hidden relative p-1 cursor-pointer gpu-accelerated select-none"
       style={{ height: `${height}px` }}
     >
       <div
-        className="bg-white shadow-md rounded-sm overflow-hidden flex-shrink-0 pointer-events-none gpu-accelerated"
+        className="bg-white shadow-md rounded-sm overflow-hidden flex-shrink-0 pointer-events-none"
         style={{
-          width: '794px',
-          height: '1123px',
-          transform: `scale(${scale})`,
-          transformOrigin: 'center center',
+          width: `${794 * scale}px`,
+          height: `${1123 * scale}px`,
         }}
       >
-        <TemplateRenderer template={template} />
+        <div
+          style={{
+            width: 794,
+            minHeight: 1123,
+            margin: 0,
+            padding: 0,
+            backgroundColor: '#ffffff',
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left',
+          }}
+        >
+          <TemplateRenderer template={template} />
+        </div>
       </div>
     </div>
   );
@@ -145,6 +155,15 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [modalZoom, setModalZoom] = useState(0.70);
   const previewModalRef = useRef<HTMLDivElement>(null);
+
+  // Auto-calculate modal zoom to fit mobile screens perfectly without clipping
+  useEffect(() => {
+    if (previewModalTemplate) {
+      const padding = window.innerWidth <= 640 ? 32 : 64;
+      const fit = Math.min(0.95, (window.innerWidth - padding) / 794);
+      setModalZoom(Math.max(0.32, fit));
+    }
+  }, [previewModalTemplate]);
 
   // Virtualized Incremental Pagination State
   const [visibleCount, setVisibleCount] = useState(16);
@@ -762,15 +781,26 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-auto bg-slate-950 p-6 flex justify-center items-start">
+            <div className="flex-1 overflow-auto bg-slate-950 p-3 sm:p-6 flex justify-center items-start">
               <div
-                className="transform origin-top shadow-2xl rounded-sm overflow-hidden flex-shrink-0 transition-transform duration-150"
+                className="shadow-2xl rounded-sm overflow-hidden flex-shrink-0 transition-transform duration-150 relative"
                 style={{
                   width: `${794 * modalZoom}px`,
-                  minHeight: `${1123 * modalZoom}px`,
+                  height: `${1123 * modalZoom}px`,
                 }}
               >
-                <div ref={previewModalRef} style={{ width: 794, minHeight: 1123, margin: 0, padding: 0, backgroundColor: '#ffffff' }}>
+                <div
+                  ref={previewModalRef}
+                  style={{
+                    width: 794,
+                    minHeight: 1123,
+                    margin: 0,
+                    padding: 0,
+                    backgroundColor: '#ffffff',
+                    transform: `scale(${modalZoom})`,
+                    transformOrigin: 'top left',
+                  }}
+                >
                   <TemplateRenderer template={previewModalTemplate} />
                 </div>
               </div>
