@@ -202,7 +202,10 @@ interface Props {
 
 export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
   // View Mode Switcher State: 'coverflow' | 'grid'
-  const [viewMode, setViewMode] = useState<'coverflow' | 'grid'>('coverflow');
+  const [viewMode, setViewMode] = useState<'coverflow' | 'grid'>(() => {
+    // Mobile always defaults to normal grid scroll view
+    return window.innerWidth < 640 ? 'grid' : 'coverflow';
+  });
 
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -306,6 +309,15 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
     setActiveIndex(0);
     setVisibleCount(16);
   }, [selectedCategory, searchQuery, layoutFilter, atsFilter, selectedColor, showFavoritesOnly]);
+
+  // Force grid view on mobile screens (< 640px) — mobile uses old normal scroll
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) setViewMode('grid');
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const resetAllFilters = () => {
     setSelectedCategory('All');
@@ -605,8 +617,8 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
             {/* Row 2: View Switcher (left) + Filter Button (right) */}
             <div className="flex items-center justify-between gap-2">
 
-              {/* View Mode Toggle Switcher */}
-              <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 flex-shrink-0">
+              {/* View Mode Toggle Switcher — hidden on mobile (mobile always uses grid) */}
+              <div className="hidden sm:flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => setViewMode('coverflow')}
