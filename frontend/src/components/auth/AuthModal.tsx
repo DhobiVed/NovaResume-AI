@@ -28,7 +28,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot' | 'reset'>('login');
 
-  // Animation States for Full-Screen SaaS Slider
+  // Animation States
   const [isRendered, setIsRendered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   
@@ -72,7 +72,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   }, [isOpen, initialMode]);
 
-  // Graceful Smooth Closing Animation Trigger
+  // Graceful Smooth Closing Controller
   const handleClose = () => {
     setIsVisible(false);
     setTimeout(() => {
@@ -89,7 +89,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
-  // Smooth Full-Screen Slider Switch between Login & Signup
+  // Mode Switching
   const handleSwitchMode = (newMode: 'login' | 'signup' | 'forgot' | 'reset') => {
     setErrors({});
     setIsSignupSuccess(false);
@@ -250,14 +250,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       {/* ── 1. TOP SAAS HEADER BAR ── */}
       <header className="h-16 px-4 md:px-8 bg-slate-900/90 border-b border-slate-800/80 flex items-center justify-between z-30 flex-shrink-0 backdrop-blur-md">
         {/* Brand Badge */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleSwitchMode('login')}>
           <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-teal-600 via-emerald-600 to-green-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-teal-900/40">
             N
           </div>
           <div>
             <h1 className="font-black text-base md:text-lg text-white tracking-wide flex items-center gap-2">
               <span>NovaResume AI</span>
-              <span className="px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 font-extrabold text-[10px] uppercase border border-teal-500/30">
+              <span className="px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 font-extrabold text-[10px] uppercase border border-teal-500/30 hidden sm:inline-block">
                 SaaS Auth Platform
               </span>
             </h1>
@@ -265,11 +265,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
 
         {/* Mode Slider Toggle Pill */}
-        <div className="hidden sm:flex items-center p-1 bg-slate-950/80 border border-slate-800 rounded-2xl relative shadow-inner">
+        <div className="flex items-center p-1 bg-slate-950/80 border border-slate-800 rounded-2xl relative shadow-inner">
           <button
             onClick={() => handleSwitchMode('login')}
             className={`px-5 py-1.5 rounded-xl text-xs font-black transition-all duration-300 relative z-10 cursor-pointer ${
-              mode === 'login' ? 'text-white shadow-md' : 'text-slate-400 hover:text-white'
+              mode === 'login' || mode === 'forgot' || mode === 'reset' ? 'text-white shadow-md' : 'text-slate-400 hover:text-white'
             }`}
           >
             Sign In
@@ -301,13 +301,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </button>
       </header>
 
-      {/* ── 2. FULL-SCREEN DUAL SLIDING PANELS (DESKTOP & MOBILE) ── */}
+      {/* ── 2. FULL-SCREEN DUAL SLIDING PANELS (DESKTOP & MOBILE RESPONSIVE) ── */}
       <main className="flex-1 relative overflow-hidden bg-slate-950 flex flex-col md:flex-row">
         
-        {/* ── DESKTOP SLIDING SHOWCASE PANEL (GLIDES HORIZONTALLY ACROSS SCREEN) ── */}
+        {/* ── DESKTOP SLIDING SHOWCASE OVERLAY PANEL ── */}
+        {/* When mode === 'login', Showcase sits on RIGHT (w-1/2, right-0), revealing SIGN IN form on LEFT */}
+        {/* When mode === 'signup', Showcase glides to LEFT (w-1/2, left-0), revealing SIGN UP form on RIGHT */}
         <div
-          className={`hidden md:flex absolute top-0 bottom-0 w-1/2 bg-[#074b56] bg-gradient-to-br from-[#063d47] via-[#095b68] to-[#04282f] p-10 lg:p-14 flex-col justify-between text-white z-20 shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu border-r border-teal-500/20 ${
-            mode === 'signup' ? 'translate-x-full rounded-l-[36px]' : 'translate-x-0 rounded-r-[36px]'
+          className={`hidden md:flex absolute top-0 bottom-0 w-1/2 bg-[#074b56] bg-gradient-to-br from-[#063d47] via-[#095b68] to-[#04282f] p-10 lg:p-14 flex-col justify-between text-white z-20 shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu border-teal-500/20 ${
+            mode === 'signup'
+              ? 'left-0 rounded-r-[36px] border-r'
+              : 'left-1/2 rounded-l-[36px] border-l'
           }`}
         >
           {/* Ambient Glows */}
@@ -341,7 +345,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             )}
           </div>
 
-          {/* Central Interactive Metrics Card with Animated Floating Badges */}
+          {/* Central Metrics Card with Animated Floating Badges */}
           <div className="relative my-auto py-8 flex items-center justify-center z-10">
             
             {/* Main Central Card */}
@@ -420,12 +424,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         </div>
 
-        {/* ── 3. FORM PANELS TRACK CONTAINER (DESKTOP & MOBILE RESPONSIVE) ── */}
+        {/* ── 3. FORM PANELS TRACK CONTAINER (LEFT: SIGN IN, RIGHT: SIGN UP) ── */}
         <div className="w-full h-full flex flex-col md:flex-row relative">
           
-          {/* ── SIGN IN FORM PANEL ── */}
-          <div className={`w-full md:w-1/2 h-full p-6 sm:p-10 lg:p-14 flex flex-col justify-center bg-slate-900 overflow-y-auto transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu ${
-            mode === 'login' || mode === 'forgot' || mode === 'reset' ? 'opacity-100 z-10' : 'opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto'
+          {/* ── SIGN IN FORM PANEL (LEFT HALF ON DESKTOP) ── */}
+          <div className={`w-full md:w-1/2 h-full p-6 sm:p-10 lg:p-14 flex flex-col justify-center bg-slate-900 overflow-y-auto transition-all duration-400 ease-out transform-gpu ${
+            mode === 'login' || mode === 'forgot' || mode === 'reset'
+              ? 'opacity-100 pointer-events-auto z-10'
+              : 'opacity-0 md:opacity-40 pointer-events-none md:pointer-events-none'
           }`}>
             <div className="max-w-md mx-auto w-full space-y-6">
               
@@ -500,7 +506,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       </div>
                     )}
 
-                    {/* Password Input */}
+                    {/* Password Input (ALWAYS VISIBLE IN SIGN IN MODE) */}
                     {mode === 'login' && (
                       <div className={`space-y-1.5 ${shakingField === 'password' ? 'animate-shake' : ''}`}>
                         <div className="flex justify-between items-center">
@@ -592,20 +598,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </button>
                   </form>
 
-                  {/* Mode Switch Link */}
+                  {/* Mode Switch Link at Bottom of Sign In */}
                   <div className="pt-4 border-t border-slate-800/80 text-center text-xs font-semibold text-slate-400">
                     {mode === 'login' ? (
                       <p>
                         Don't have an account?{' '}
                         <button
+                          type="button"
                           onClick={() => handleSwitchMode('signup')}
                           className="font-extrabold text-teal-400 hover:text-teal-300 hover:underline ml-1 cursor-pointer"
                         >
-                          Sign Up for Free &gt;
+                          Sign Up &gt;
                         </button>
                       </p>
                     ) : (
                       <button
+                        type="button"
                         onClick={() => handleSwitchMode('login')}
                         className="flex items-center justify-center gap-1.5 mx-auto font-extrabold text-slate-300 hover:text-white transition-colors cursor-pointer"
                       >
@@ -619,9 +627,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           </div>
 
-          {/* ── SIGN UP FORM PANEL ── */}
-          <div className={`w-full md:w-1/2 h-full p-6 sm:p-10 lg:p-14 flex flex-col justify-center bg-slate-900 overflow-y-auto transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu ${
-            mode === 'signup' ? 'opacity-100 z-10' : 'opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto'
+          {/* ── SIGN UP FORM PANEL (RIGHT HALF ON DESKTOP) ── */}
+          <div className={`w-full md:w-1/2 h-full p-6 sm:p-10 lg:p-14 flex flex-col justify-center bg-slate-900 overflow-y-auto transition-all duration-400 ease-out transform-gpu ${
+            mode === 'signup'
+              ? 'opacity-100 pointer-events-auto z-10'
+              : 'opacity-0 md:opacity-40 pointer-events-none md:pointer-events-none'
           }`}>
             <div className="max-w-md mx-auto w-full space-y-6">
               
@@ -759,11 +769,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </button>
                   </form>
 
-                  {/* Switch to Login Link */}
+                  {/* Mode Switch Link at Bottom of Sign Up */}
                   <div className="pt-4 border-t border-slate-800/80 text-center text-xs font-semibold text-slate-400">
                     <p>
                       Already have an account?{' '}
                       <button
+                        type="button"
                         onClick={() => handleSwitchMode('login')}
                         className="font-extrabold text-teal-400 hover:text-teal-300 hover:underline ml-1 cursor-pointer"
                       >
