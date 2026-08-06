@@ -169,3 +169,28 @@ body {
   background-image: radial-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 1px);
   background-size: 18px 18px;
 }
+
+/* Success popup progress bar — fills over 2s */
+@keyframes progressBar {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+.animate-progress-bar {
+  animation: progressBar 2s linear forwards;
+}
+
+/* Slow-spin orbit ring on login success icon */
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 3s linear infinite;
+}
+
+/* Fade-in utility for success popups */
+.animate-fadeIn {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
