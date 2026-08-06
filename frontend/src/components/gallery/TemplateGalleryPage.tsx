@@ -16,7 +16,7 @@ import { PALETTES, FONTS, type ResumeData, type ThemeConfig } from '../../lib/re
 import {
   Search, ShieldCheck, Eye, ArrowRight, X, ZoomIn, ZoomOut,
   Heart, Filter, SlidersHorizontal, RefreshCw, Grid, Check, Film,
-  ChevronLeft, ChevronRight, Star
+  ChevronLeft, ChevronRight, Star, LayoutGrid, Layers
 } from 'lucide-react';
 
 const PREVIEW_SAMPLE_DATA: ResumeData = {
@@ -201,6 +201,9 @@ interface Props {
 }
 
 export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
+  // View Mode Switcher State: 'coverflow' | 'grid'
+  const [viewMode, setViewMode] = useState<'coverflow' | 'grid'>('coverflow');
+
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [layoutFilter, setLayoutFilter] = useState<'all' | 'one_col' | 'two_col'>('all');
@@ -211,6 +214,10 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
 
   // Active Cover Flow Index State
   const [activeIndex, setActiveIndex] = useState(0);
+
+  // Infinite Scroll Pagination State for Normal Grid View
+  const [visibleCount, setVisibleCount] = useState(16);
+  const gridScrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Favorites Local State
   const [favorites, setFavorites] = useState<string[]>(() => {
@@ -285,9 +292,19 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
     return matchesCategory && matchesSearch && matchesLayout && matchesAts && matchesColor && matchesFav;
   });
 
-  // Reset CoverFlow activeIndex on filter change
+  // Ensure activeIndex stays within bounds whenever filteredTemplates changes (e.g. favorite toggle)
+  useEffect(() => {
+    if (filteredTemplates.length > 0) {
+      setActiveIndex(prev => Math.min(prev, filteredTemplates.length - 1));
+    } else {
+      setActiveIndex(0);
+    }
+  }, [filteredTemplates.length]);
+
+  // Reset CoverFlow activeIndex and Grid visibleCount on filter change
   useEffect(() => {
     setActiveIndex(0);
+    setVisibleCount(16);
   }, [selectedCategory, searchQuery, layoutFilter, atsFilter, selectedColor, showFavoritesOnly]);
 
   const resetAllFilters = () => {
@@ -298,6 +315,7 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
     setSelectedColor(null);
     setShowFavoritesOnly(false);
     setActiveIndex(0);
+    setVisibleCount(16);
   };
 
   // CoverFlow Navigation Helpers
@@ -309,16 +327,16 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
     setActiveIndex(prev => Math.min(filteredTemplates.length - 1, prev + 1));
   }, [filteredTemplates.length]);
 
-  // Keyboard Arrow Navigation Listener
+  // Keyboard Arrow Navigation Listener for CoverFlow
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (document.activeElement?.tagName === 'INPUT' || previewModalTemplate) return;
+      if (viewMode !== 'coverflow' || document.activeElement?.tagName === 'INPUT' || previewModalTemplate) return;
       if (e.key === 'ArrowLeft') handlePrev();
       if (e.key === 'ArrowRight') handleNext();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handlePrev, handleNext, previewModalTemplate]);
+  }, [viewMode, handlePrev, handleNext, previewModalTemplate]);
 
   // Touch Swipe & Drag Handlers for Mobile & Desktop CoverFlow
   const touchStartXRef = useRef<number | null>(null);
@@ -349,6 +367,7 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
   // Mouse Wheel Handler for CoverFlow Stage
   const lastWheelTimeRef = useRef(0);
   const handleWheel = (e: React.WheelEvent) => {
+    if (viewMode !== 'coverflow') return;
     const now = Date.now();
     if (now - lastWheelTimeRef.current < 250) return;
     
@@ -363,12 +382,21 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
     }
   };
 
+  // Infinite Scroll Handler for Normal Grid View
+  const handleGridScroll = () => {
+    if (viewMode !== 'grid' || !gridScrollContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = gridScrollContainerRef.current;
+    if (scrollTop + clientHeight >= scrollHeight - 300) {
+      setVisibleCount(prev => Math.min(prev + 12, filteredTemplates.length));
+    }
+  };
+
   const activeTemplate = filteredTemplates[activeIndex] || filteredTemplates[0];
 
   return (
     <div className="h-[calc(100vh-64px)] w-full bg-slate-900 text-slate-100 flex flex-col font-sans overflow-hidden animate-fade-in">
       
-      {/* ── MAIN TWO-PANEL COVER FLOW LAYOUT ── */}
+      {/* ── MAIN TWO-PANEL COVER FLOW / GRID LAYOUT ── */}
       <div className="flex-1 flex overflow-hidden relative">
 
         {/* ── LEFT FIXED FILTER SIDEBAR (DESKTOP) ── */}
@@ -420,13 +448,16 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-1">Quick Filters</span>
             
             <button
-              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              onClick={() => {
+                setShowFavoritesOnly(!showFavoritesOnly);
+                setSelectedCategory(showFavoritesOnly ? 'All' : 'Favorites');
+              }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                showFavoritesOnly ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-xs' : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
+                showFavoritesOnly || selectedCategory === 'Favorites' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-xs' : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
               }`}
             >
               <div className="flex items-center gap-2">
-                <Heart className={`w-3.5 h-3.5 ${showFavoritesOnly ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`} />
+                <Heart className={`w-3.5 h-3.5 ${showFavoritesOnly || selectedCategory === 'Favorites' ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`} />
                 <span>My Saved Favorites</span>
               </div>
               <span className="px-1.5 py-0.5 rounded-full bg-slate-800 text-[10px] border border-slate-700 font-extrabold text-slate-300">{favorites.length}</span>
@@ -440,12 +471,18 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
               {TEMPLATE_CATEGORIES.map(cat => {
                 const count = cat === 'All' 
                   ? ALL_TEMPLATES.length 
+                  : (cat as string) === 'Favorites'
+                  ? favorites.length
                   : ALL_TEMPLATES.filter(t => t.category === cat).length;
 
                 return (
                   <button
                     key={cat}
-                    onClick={() => setSelectedCategory(cat)}
+                    onClick={() => {
+                      setSelectedCategory(cat);
+                      if ((cat as string) === 'Favorites') setShowFavoritesOnly(true);
+                      else setShowFavoritesOnly(false);
+                    }}
                     className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                       selectedCategory === cat
                         ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950'
@@ -538,13 +575,13 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
           </div>
         </aside>
 
-        {/* ── RIGHT COVER FLOW MAIN DISPLAY ── */}
+        {/* ── RIGHT MAIN MARKETPLACE DISPLAY ── */}
         <main className="flex-1 flex flex-col h-full overflow-hidden bg-slate-950 relative">
 
-          {/* TOP FIXED MARKETPLACE BAR */}
+          {/* TOP FIXED MARKETPLACE BAR WITH VIEW MODE SWITCHER */}
           <div className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 p-3 sm:p-4 flex flex-col gap-3 flex-shrink-0 z-20 shadow-lg">
             
-            {/* Category Chips Carousel & Mobile Filter Trigger */}
+            {/* Upper Bar: Category Chips & View Switcher */}
             <div className="flex items-center justify-between gap-2">
               
               {/* Quick Category Chips Carousel */}
@@ -552,7 +589,11 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                 {QUICK_CATEGORY_CHIPS.map(chip => (
                   <button
                     key={chip.id}
-                    onClick={() => setSelectedCategory(chip.id)}
+                    onClick={() => {
+                      setSelectedCategory(chip.id);
+                      if (chip.id === 'Favorites') setShowFavoritesOnly(true);
+                      else setShowFavoritesOnly(false);
+                    }}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 cursor-pointer ${
                       selectedCategory === chip.id
                         ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-950 ring-2 ring-emerald-400/40'
@@ -562,6 +603,37 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                     {chip.label}
                   </button>
                 ))}
+              </div>
+
+              {/* View Mode Toggle Switcher Buttons (Cover Flow vs Normal Grid View) */}
+              <div className="flex items-center bg-slate-950 p-1 rounded-2xl border border-slate-800 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('coverflow')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    viewMode === 'coverflow'
+                      ? 'bg-emerald-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="3D Cover Flow Carousel View"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">3D Cover Flow</span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    viewMode === 'grid'
+                      ? 'bg-emerald-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="Normal Scrollable Grid View"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Normal View</span>
+                </button>
               </div>
 
               {/* Mobile Filter Sheet Trigger */}
@@ -586,260 +658,415 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
               </div>
 
               <div className="hidden sm:flex items-center gap-3 text-[11px]">
-                <span className="text-slate-500 font-mono">Use ← → keys or swipe to navigate</span>
+                {viewMode === 'coverflow' ? (
+                  <span className="text-slate-500 font-mono">Use ← → keys, wheel or swipe to slide</span>
+                ) : (
+                  <span className="text-slate-500 font-mono">Normal Scroll Grid View</span>
+                )}
               </div>
             </div>
           </div>
 
-          {/* ── COVER FLOW STAGE & CAROUSEL VIEW ── */}
-          <div className="flex-1 flex flex-col justify-between overflow-hidden relative p-3 sm:p-6">
+          {/* ── CONDITIONAL RENDERING: 3D COVER FLOW VS NORMAL GRID VIEW ── */}
+          {viewMode === 'coverflow' ? (
             
-            {filteredTemplates.length === 0 ? (
-              <div className="bg-slate-900 rounded-3xl p-8 sm:p-12 border border-slate-800 text-center space-y-4 max-w-md mx-auto my-auto shadow-2xl">
-                <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/30 flex items-center justify-center mx-auto text-2xl">
-                  {selectedCategory === 'Favorites' ? '❤️' : <Search className="w-6 h-6 text-slate-400" />}
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-base text-white">
-                    {selectedCategory === 'Favorites' ? 'No Saved Favorites Yet' : 'No matching templates found'}
-                  </h3>
-                  <p className="text-slate-400 font-medium text-xs mt-1 leading-relaxed">
-                    {selectedCategory === 'Favorites'
-                      ? 'Tap the heart icon ❤️ on any template card to save it to your favorites.'
-                      : 'Try clearing your filters or searching for different keywords.'}
-                  </p>
-                </div>
-                <button
-                  onClick={resetAllFilters}
-                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-950 transition-transform active:scale-95 cursor-pointer"
-                >
-                  {selectedCategory === 'Favorites' ? 'Browse All Templates' : 'Reset All Filters'}
-                </button>
-              </div>
-            ) : (
-              <>
-                {/* 3D COVER FLOW STAGE */}
-                <div
-                  onWheel={handleWheel}
-                  onTouchStart={handleTouchStart}
-                  onTouchEnd={handleTouchEnd}
-                  onMouseDown={handleTouchStart}
-                  onMouseUp={handleTouchEnd}
-                  className="relative w-full flex-1 flex items-center justify-center perspective-1000 select-none py-2 overflow-hidden"
-                >
-                  {/* Floating Prev Button */}
+            /* ── 3D COVER FLOW VIEW ── */
+            <div className="flex-1 flex flex-col justify-between overflow-hidden relative p-3 sm:p-6">
+              
+              {filteredTemplates.length === 0 ? (
+                <div className="bg-slate-900 rounded-3xl p-8 sm:p-12 border border-slate-800 text-center space-y-4 max-w-md mx-auto my-auto shadow-2xl">
+                  <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/30 flex items-center justify-center mx-auto text-2xl">
+                    {selectedCategory === 'Favorites' ? '❤️' : <Search className="w-6 h-6 text-slate-400" />}
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-base text-white">
+                      {selectedCategory === 'Favorites' ? 'No Saved Favorites Yet' : 'No matching templates found'}
+                    </h3>
+                    <p className="text-slate-400 font-medium text-xs mt-1 leading-relaxed">
+                      {selectedCategory === 'Favorites'
+                        ? 'Tap the heart icon ❤️ on any template card to save it to your favorites.'
+                        : 'Try clearing your filters or searching for different keywords.'}
+                    </p>
+                  </div>
                   <button
-                    onClick={handlePrev}
-                    disabled={activeIndex === 0}
-                    className="absolute left-2 sm:left-6 z-40 p-3 sm:p-4 rounded-full bg-slate-900/90 hover:bg-emerald-600 text-white border border-slate-700/80 shadow-2xl backdrop-blur-md transition-all duration-200 active:scale-90 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
-                    aria-label="Previous Template"
+                    onClick={resetAllFilters}
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-950 transition-transform active:scale-95 cursor-pointer"
                   >
-                    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                    {selectedCategory === 'Favorites' ? 'Browse All Templates' : 'Reset All Filters'}
                   </button>
-
-                  {/* Floating Next Button */}
-                  <button
-                    onClick={handleNext}
-                    disabled={activeIndex === filteredTemplates.length - 1}
-                    className="absolute right-2 sm:right-6 z-40 p-3 sm:p-4 rounded-full bg-slate-900/90 hover:bg-emerald-600 text-white border border-slate-700/80 shadow-2xl backdrop-blur-md transition-all duration-200 active:scale-90 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
-                    aria-label="Next Template"
+                </div>
+              ) : (
+                <>
+                  {/* 3D COVER FLOW STAGE */}
+                  <div
+                    onWheel={handleWheel}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                    onMouseDown={handleTouchStart}
+                    onMouseUp={handleTouchEnd}
+                    className="relative w-full flex-1 flex items-center justify-center perspective-1000 select-none py-2 overflow-hidden"
                   >
-                    <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </button>
+                    {/* Floating Prev Button */}
+                    <button
+                      onClick={handlePrev}
+                      disabled={activeIndex === 0}
+                      className="absolute left-2 sm:left-6 z-40 p-3 sm:p-4 rounded-full bg-slate-900/90 hover:bg-emerald-600 text-white border border-slate-700/80 shadow-2xl backdrop-blur-md transition-all duration-200 active:scale-90 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                      aria-label="Previous Template"
+                    >
+                      <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </button>
 
-                  {/* CAROUSEL CARDS STACK */}
-                  <div className="relative w-full max-w-4xl h-[280px] sm:h-[380px] flex items-center justify-center preserve-3d">
-                    {filteredTemplates.map((t, idx) => {
-                      const offset = idx - activeIndex;
-                      if (Math.abs(offset) > 3) return null; // Performance optimization
+                    {/* Floating Next Button */}
+                    <button
+                      onClick={handleNext}
+                      disabled={activeIndex === filteredTemplates.length - 1}
+                      className="absolute right-2 sm:right-6 z-40 p-3 sm:p-4 rounded-full bg-slate-900/90 hover:bg-emerald-600 text-white border border-slate-700/80 shadow-2xl backdrop-blur-md transition-all duration-200 active:scale-90 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                      aria-label="Next Template"
+                    >
+                      <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </button>
 
-                      const isCentered = offset === 0;
-                      const palette = PALETTES.find(p => p.id === t.defaultPaletteId) || PALETTES[0];
-                      const isFav = favorites.includes(t.id);
+                    {/* CAROUSEL CARDS STACK */}
+                    <div className="relative w-full max-w-4xl h-[280px] sm:h-[380px] flex items-center justify-center preserve-3d">
+                      {filteredTemplates.map((t, idx) => {
+                        const offset = idx - activeIndex;
+                        if (Math.abs(offset) > 3) return null; // Performance optimization
 
-                      // Calculate 3D transformation values based on offset distance
-                      let translateX = '0px';
-                      let scale = 1;
-                      let rotateY = '0deg';
-                      let opacity = 1;
-                      let zIndex = 30;
+                        const isCentered = offset === 0;
+                        const palette = PALETTES.find(p => p.id === t.defaultPaletteId) || PALETTES[0];
+                        const isFav = favorites.includes(t.id);
 
-                      if (offset === 0) {
-                        translateX = '0px';
-                        scale = 1.0;
-                        rotateY = '0deg';
-                        opacity = 1;
-                        zIndex = 30;
-                      } else if (offset === -1) {
-                        translateX = window.innerWidth <= 640 ? '-130px' : '-280px';
-                        scale = 0.82;
-                        rotateY = '20deg';
-                        opacity = 0.6;
-                        zIndex = 20;
-                      } else if (offset === 1) {
-                        translateX = window.innerWidth <= 640 ? '130px' : '280px';
-                        scale = 0.82;
-                        rotateY = '-20deg';
-                        opacity = 0.6;
-                        zIndex = 20;
-                      } else if (offset === -2) {
-                        translateX = window.innerWidth <= 640 ? '-220px' : '-480px';
-                        scale = 0.66;
-                        rotateY = '35deg';
-                        opacity = 0.3;
-                        zIndex = 10;
-                      } else if (offset === 2) {
-                        translateX = window.innerWidth <= 640 ? '220px' : '480px';
-                        scale = 0.66;
-                        rotateY = '-35deg';
-                        opacity = 0.3;
-                        zIndex = 10;
-                      }
+                        // Calculate 3D transformation values based on offset distance
+                        let translateX = '0px';
+                        let scale = 1;
+                        let rotateY = '0deg';
+                        let opacity = 1;
+                        let zIndex = 30;
 
-                      return (
-                        <div
-                          key={t.id}
-                          onClick={() => setActiveIndex(idx)}
-                          className={`absolute w-[200px] sm:w-[270px] h-[270px] sm:h-[370px] rounded-2xl bg-white text-slate-900 border border-slate-200 overflow-hidden flex flex-col shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] cursor-pointer group gpu-accelerated ${
-                            isCentered ? 'ring-4 ring-emerald-500/60 animate-active-card' : 'hover:opacity-90'
-                          }`}
-                          style={{
-                            transform: `translateX(${translateX}) scale(${scale}) rotateY(${rotateY})`,
-                            opacity,
-                            zIndex,
-                          }}
-                        >
-                          {/* Top Badges */}
-                          <div className="absolute top-2 left-2 right-2 z-40 flex justify-between items-center pointer-events-none">
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-900/90 text-emerald-400 shadow-md border border-slate-700 flex items-center gap-1">
-                              <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                              <span>{t.atsScore}% ATS</span>
-                            </span>
+                        if (offset === 0) {
+                          translateX = '0px';
+                          scale = 1.0;
+                          rotateY = '0deg';
+                          opacity = 1;
+                          zIndex = 30;
+                        } else if (offset === -1) {
+                          translateX = window.innerWidth <= 640 ? '-130px' : '-280px';
+                          scale = 0.82;
+                          rotateY = '20deg';
+                          opacity = 0.6;
+                          zIndex = 20;
+                        } else if (offset === 1) {
+                          translateX = window.innerWidth <= 640 ? '130px' : '280px';
+                          scale = 0.82;
+                          rotateY = '-20deg';
+                          opacity = 0.6;
+                          zIndex = 20;
+                        } else if (offset === -2) {
+                          translateX = window.innerWidth <= 640 ? '-220px' : '-480px';
+                          scale = 0.66;
+                          rotateY = '35deg';
+                          opacity = 0.3;
+                          zIndex = 10;
+                        } else if (offset === 2) {
+                          translateX = window.innerWidth <= 640 ? '220px' : '480px';
+                          scale = 0.66;
+                          rotateY = '-35deg';
+                          opacity = 0.3;
+                          zIndex = 10;
+                        }
 
-                            {isCentered && (
-                              <button
-                                type="button"
-                                onClick={(e) => toggleFavorite(t.id, e)}
-                                className="pointer-events-auto p-1.5 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow-lg flex items-center justify-center transition-transform active:scale-90 cursor-pointer"
-                                title={isFav ? 'Remove from favorites' : 'Save to favorites'}
-                              >
-                                <Heart className={`w-4 h-4 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
-                              </button>
-                            )}
-                          </div>
+                        return (
+                          <div
+                            key={t.id}
+                            onClick={() => setActiveIndex(idx)}
+                            className={`absolute w-[200px] sm:w-[270px] h-[270px] sm:h-[370px] rounded-2xl bg-white text-slate-900 border border-slate-200 overflow-hidden flex flex-col shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] cursor-pointer group gpu-accelerated ${
+                              isCentered ? 'ring-4 ring-emerald-500/60 animate-active-card' : 'hover:opacity-90'
+                            }`}
+                            style={{
+                              transform: `translateX(${translateX}) scale(${scale}) rotateY(${rotateY})`,
+                              opacity,
+                              zIndex,
+                            }}
+                          >
+                            {/* Top Badges */}
+                            <div className="absolute top-2 left-2 right-2 z-40 flex justify-between items-center pointer-events-none">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-900/90 text-emerald-400 shadow-md border border-slate-700 flex items-center gap-1">
+                                <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                                <span>{t.atsScore}% ATS</span>
+                              </span>
 
-                          {/* Thumbnail Live Render */}
-                          <div className="flex-1 bg-slate-100 relative flex items-center justify-center overflow-hidden">
-                            <ResumeThumbnailPreview
-                              template={t}
-                              onClick={() => {
-                                if (isCentered) {
-                                  setPreviewModalTemplate(t);
-                                  setModalZoom(0.70);
-                                } else {
-                                  setActiveIndex(idx);
-                                }
-                              }}
-                            />
-                          </div>
-
-                          {/* Minimal Header on Card */}
-                          <div className="p-3 bg-white border-t border-slate-100 flex items-center justify-between">
-                            <div className="truncate pr-2">
-                              <h4 className="font-black text-xs text-slate-900 truncate">{t.name}</h4>
-                              <p className="text-[10px] text-slate-500 font-bold truncate">{t.category}</p>
+                              {isCentered && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => toggleFavorite(t.id, e)}
+                                  className="pointer-events-auto p-1.5 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow-lg flex items-center justify-center transition-transform active:scale-90 cursor-pointer"
+                                  title={isFav ? 'Remove from favorites' : 'Save to favorites'}
+                                >
+                                  <Heart className={`w-4 h-4 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
+                                </button>
+                              )}
                             </div>
-                            <div className="w-3.5 h-3.5 rounded-full border border-slate-300 flex-shrink-0" style={{ backgroundColor: palette.primary }} />
+
+                            {/* Thumbnail Live Render */}
+                            <div className="flex-1 bg-slate-100 relative flex items-center justify-center overflow-hidden">
+                              <ResumeThumbnailPreview
+                                template={t}
+                                onClick={() => {
+                                  if (isCentered) {
+                                    setPreviewModalTemplate(t);
+                                    setModalZoom(0.70);
+                                  } else {
+                                    setActiveIndex(idx);
+                                  }
+                                }}
+                              />
+                            </div>
+
+                            {/* Minimal Header on Card */}
+                            <div className="p-3 bg-white border-t border-slate-100 flex items-center justify-between">
+                              <div className="truncate pr-2">
+                                <h4 className="font-black text-xs text-slate-900 truncate">{t.name}</h4>
+                                <p className="text-[10px] text-slate-500 font-bold truncate">{t.category}</p>
+                              </div>
+                              <div className="w-3.5 h-3.5 rounded-full border border-slate-300 flex-shrink-0" style={{ backgroundColor: palette.primary }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* ── ACTIVE TEMPLATE INFORMATION & ACTION PANEL (BOTTOM) ── */}
+                  {activeTemplate && (
+                    <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-5 backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4 z-20 transition-all duration-300">
+                      
+                      {/* Template Meta Details */}
+                      <div className="space-y-2 text-center md:text-left flex-1">
+                        
+                        {/* Name & Rating */}
+                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
+                          <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
+                            {activeTemplate.name}
+                          </h3>
+                          <div className="flex items-center gap-1 text-amber-400">
+                            {[...Array(5)].map((_, i) => (
+                              <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
+                            ))}
+                            <span className="text-xs font-bold text-slate-300 ml-1">5.0</span>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
 
-                {/* ── ACTIVE TEMPLATE INFORMATION & ACTION PANEL (BOTTOM) ── */}
-                {activeTemplate && (
-                  <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-5 backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4 z-20 transition-all duration-300">
-                    
-                    {/* Template Meta Details */}
-                    <div className="space-y-2 text-center md:text-left flex-1">
-                      
-                      {/* Name & Rating */}
-                      <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
-                        <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
-                          {activeTemplate.name}
-                        </h3>
-                        <div className="flex items-center gap-1 text-amber-400">
-                          {[...Array(5)].map((_, i) => (
-                            <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
+                        {/* Smart Badges */}
+                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                          {getSmartBadges(activeTemplate).map((b, i) => (
+                            <span key={i} className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${b.bg} ${b.text} ${b.border}`}>
+                              {b.label}
+                            </span>
                           ))}
-                          <span className="text-xs font-bold text-slate-300 ml-1">5.0</span>
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                            🛡️ ATS Score: {activeTemplate.atsScore}%
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                            📥 {getDownloadsCount(activeTemplate.id)}
+                          </span>
+                        </div>
+
+                        {/* Suitable For Description */}
+                        <p className="text-xs text-slate-400 font-medium line-clamp-1">
+                          🎯 {getSuitableFor(activeTemplate)} — {activeTemplate.description}
+                        </p>
+                      </div>
+
+                      {/* Action Buttons Bar */}
+                      <div className="flex items-center gap-2.5 w-full md:w-auto flex-shrink-0">
+                        
+                        {/* Favorite Button */}
+                        <button
+                          onClick={() => toggleFavorite(activeTemplate.id)}
+                          className={`p-3 rounded-2xl border transition-all active:scale-95 cursor-pointer min-h-[46px] min-w-[46px] flex items-center justify-center ${
+                            favorites.includes(activeTemplate.id)
+                              ? 'bg-rose-500/20 border-rose-500/40 text-rose-400'
+                              : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
+                          }`}
+                          title="Save to Favorites"
+                        >
+                          <Heart className={`w-5 h-5 ${favorites.includes(activeTemplate.id) ? 'fill-rose-500 text-rose-500' : ''}`} />
+                        </button>
+
+                        {/* Fullscreen Preview Button */}
+                        <button
+                          onClick={() => {
+                            setPreviewModalTemplate(activeTemplate);
+                            setModalZoom(0.70);
+                          }}
+                          className="flex-1 md:flex-initial px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs border border-slate-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
+                        >
+                          <Eye className="w-4 h-4 text-emerald-400" />
+                          <span>Quick Preview</span>
+                        </button>
+
+                        {/* Use Template CTA Button */}
+                        <button
+                          onClick={() => onSelectTemplate(activeTemplate)}
+                          className="flex-1 md:flex-initial px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-950 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
+                        >
+                          <span>Use This Template</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            
+            /* ── NORMAL GRID SCROLL VIEW (CLASSIC MULTI-COLUMN VIEW) ── */
+            <div
+              ref={gridScrollContainerRef}
+              onScroll={handleGridScroll}
+              className="flex-1 overflow-y-auto p-3 sm:p-6 smooth-scroll-container bg-slate-950"
+            >
+              {filteredTemplates.length === 0 ? (
+                <div className="bg-slate-900 rounded-3xl p-8 sm:p-12 border border-slate-800 text-center space-y-4 max-w-md mx-auto my-12 shadow-2xl">
+                  <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/30 flex items-center justify-center mx-auto text-2xl">
+                    {selectedCategory === 'Favorites' ? '❤️' : <Search className="w-6 h-6 text-slate-400" />}
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-base text-white">
+                      {selectedCategory === 'Favorites' ? 'No Saved Favorites Yet' : 'No matching templates found'}
+                    </h3>
+                    <p className="text-slate-400 font-medium text-xs mt-1 leading-relaxed">
+                      {selectedCategory === 'Favorites'
+                        ? 'Tap the heart icon ❤️ on any template card to save it to your favorites.'
+                        : 'Try clearing your filters or searching for different keywords.'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={resetAllFilters}
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg transition-transform active:scale-95 cursor-pointer"
+                  >
+                    {selectedCategory === 'Favorites' ? 'Browse All Templates' : 'Reset All Filters'}
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 pb-20">
+                  {filteredTemplates.slice(0, visibleCount).map((t) => {
+                    const palette = PALETTES.find(p => p.id === t.defaultPaletteId) || PALETTES[0];
+                    const isFav = favorites.includes(t.id);
+
+                    return (
+                      <div
+                        key={t.id}
+                        className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-200 overflow-hidden flex flex-col group relative gpu-accelerated text-slate-900"
+                      >
+                        {/* ATS & Favorite Badge Overlay */}
+                        <div className="absolute top-2 left-2 right-2 z-40 flex justify-between items-center pointer-events-none">
+                          <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold bg-slate-900/90 text-emerald-400 shadow-md border border-slate-700 flex items-center gap-1">
+                            <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-400" />
+                            <span>{t.atsScore}% ATS</span>
+                          </span>
+
+                          {/* Favorite Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              toggleFavorite(t.id, e);
+                            }}
+                            className="z-50 relative pointer-events-auto p-2 min-w-[38px] min-h-[38px] rounded-full bg-white/95 hover:bg-white text-slate-700 shadow-md border border-slate-200/90 flex items-center justify-center transition-transform active:scale-90 cursor-pointer hover:scale-110"
+                            title={isFav ? 'Remove from favorites' : 'Save to favorites'}
+                            aria-label="Toggle Favorite"
+                          >
+                            <Heart className={`w-4 h-4 transition-colors ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
+                          </button>
+                        </div>
+
+                        {/* Centered Live A4 Thumbnail Preview Container */}
+                        <div className="h-[210px] sm:h-[290px] w-full overflow-hidden bg-slate-100 relative flex items-center justify-center group-hover:bg-slate-200/60 transition-colors">
+                          <ResumeThumbnailPreview
+                            template={t}
+                            onClick={() => { setPreviewModalTemplate(t); setModalZoom(0.70); }}
+                          />
+
+                          {/* Hover Overlay Action Bar */}
+                          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-2 z-20">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPreviewModalTemplate(t);
+                                setModalZoom(0.70);
+                              }}
+                              className="px-2.5 py-1.5 rounded-xl bg-white text-slate-900 font-extrabold text-[11px] shadow-lg hover:bg-slate-100 transition-transform active:scale-95 flex items-center gap-1 cursor-pointer min-h-[36px]"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Preview</span>
+                            </button>
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onSelectTemplate(t);
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] shadow-lg transition-transform active:scale-95 flex items-center gap-1 cursor-pointer min-h-[36px]"
+                            >
+                              <span>Use</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Card Information Footer */}
+                        <div className="p-2.5 sm:p-4 space-y-1.5 flex-1 flex flex-col justify-between bg-white border-t border-slate-100">
+                          <div>
+                            <div className="flex justify-between items-center mb-0.5">
+                              <h3 className="font-black text-xs sm:text-sm text-slate-900 group-hover:text-emerald-600 truncate transition-colors">
+                                {t.name}
+                              </h3>
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                <div
+                                  className="w-3.5 h-3.5 rounded-full border border-slate-300 shadow-xs flex-shrink-0"
+                                  style={{ backgroundColor: palette.primary }}
+                                  title={`Color theme: ${palette.name}`}
+                                />
+                              </div>
+                            </div>
+                            <p className="text-[10px] sm:text-xs text-slate-500 line-clamp-1 font-medium">{t.description}</p>
+                          </div>
+
+                          {/* Action Buttons Row */}
+                          <div className="flex items-center gap-1.5 pt-1.5 border-t border-slate-100">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPreviewModalTemplate(t);
+                                setModalZoom(0.70);
+                              }}
+                              className="p-2 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-extrabold text-[11px] transition-colors flex items-center justify-center cursor-pointer min-h-[36px] min-w-[36px] flex-shrink-0"
+                              title="Preview Template"
+                            >
+                              <Eye className="w-4 h-4 text-emerald-600" />
+                            </button>
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onSelectTemplate(t);
+                              }}
+                              className="flex-1 py-2 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center justify-center gap-1 shadow-xs transition-transform active:scale-95 cursor-pointer min-h-[36px] truncate"
+                            >
+                              <span className="truncate">Use Template</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
-
-                      {/* Smart Badges */}
-                      <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-                        {getSmartBadges(activeTemplate).map((b, i) => (
-                          <span key={i} className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${b.bg} ${b.text} ${b.border}`}>
-                            {b.label}
-                          </span>
-                        ))}
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                          🛡️ ATS Score: {activeTemplate.atsScore}%
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
-                          📥 {getDownloadsCount(activeTemplate.id)}
-                        </span>
-                      </div>
-
-                      {/* Suitable For Description */}
-                      <p className="text-xs text-slate-400 font-medium line-clamp-1">
-                        🎯 {getSuitableFor(activeTemplate)} — {activeTemplate.description}
-                      </p>
-                    </div>
-
-                    {/* Action Buttons Bar */}
-                    <div className="flex items-center gap-2.5 w-full md:w-auto flex-shrink-0">
-                      
-                      {/* Favorite Button */}
-                      <button
-                        onClick={() => toggleFavorite(activeTemplate.id)}
-                        className={`p-3 rounded-2xl border transition-all active:scale-95 cursor-pointer min-h-[46px] min-w-[46px] flex items-center justify-center ${
-                          favorites.includes(activeTemplate.id)
-                            ? 'bg-rose-500/20 border-rose-500/40 text-rose-400'
-                            : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
-                        }`}
-                        title="Save to Favorites"
-                      >
-                        <Heart className={`w-5 h-5 ${favorites.includes(activeTemplate.id) ? 'fill-rose-500 text-rose-500' : ''}`} />
-                      </button>
-
-                      {/* Fullscreen Preview Button */}
-                      <button
-                        onClick={() => {
-                          setPreviewModalTemplate(activeTemplate);
-                          setModalZoom(0.70);
-                        }}
-                        className="flex-1 md:flex-initial px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs border border-slate-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
-                      >
-                        <Eye className="w-4 h-4 text-emerald-400" />
-                        <span>Quick Preview</span>
-                      </button>
-
-                      {/* Use Template CTA Button */}
-                      <button
-                        onClick={() => onSelectTemplate(activeTemplate)}
-                        className="flex-1 md:flex-initial px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-950 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[46px]"
-                      >
-                        <span>Use This Template</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </main>
       </div>
 
@@ -873,7 +1100,12 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                 {TEMPLATE_CATEGORIES.map(cat => (
                   <button
                     key={`mob-${cat}`}
-                    onClick={() => { setSelectedCategory(cat); setIsMobileFilterOpen(false); }}
+                    onClick={() => {
+                      setSelectedCategory(cat);
+                      if ((cat as string) === 'Favorites') setShowFavoritesOnly(true);
+                      else setShowFavoritesOnly(false);
+                      setIsMobileFilterOpen(false);
+                    }}
                     className={`px-3 py-2 rounded-xl text-xs font-bold text-left truncate transition-colors cursor-pointer ${
                       selectedCategory === cat ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-300 border border-slate-700'
                     }`}
