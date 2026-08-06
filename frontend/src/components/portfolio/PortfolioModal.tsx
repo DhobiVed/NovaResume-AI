@@ -337,18 +337,53 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
     .form-input { width: 100%; padding: 12px 16px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 12px; font-size: 13px; }
     .form-input:focus { outline: none; border-color: var(--primary); }
     
-    /* Scroll Reveal Animations */
-    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
-    .reveal.active { opacity: 1; transform: translateY(0); }
+    /* Mobile Hamburger Menu */
+    .mobile-menu-btn {
+      display: none;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      font-size: 20px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .mobile-menu-btn:hover { border-color: var(--primary); }
+    .mobile-nav-drawer {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      padding: 16px 0 8px;
+      border-top: 1px solid var(--border);
+      margin-top: 12px;
+    }
+    .mobile-nav-drawer.open { display: flex !important; }
+    .mobile-nav-drawer a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 14px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      transition: border-color 0.2s;
+    }
+    .mobile-nav-drawer a:hover { border-color: var(--primary); color: var(--primary); }
 
-    /* Mobile Responsive Overrides for 320px - 640px Viewports */
-    @media (max-width: 640px) {
+    /* Mobile Responsive Overrides for 320px - 768px Viewports */
+    @media (max-width: 768px) {
       header { padding: 12px 16px; }
-      .nav-links { display: none; }
+      .nav-links { display: none !important; }
+      .mobile-menu-btn { display: flex !important; }
       .container { padding: 32px 16px; }
       .hero-grid { grid-template-columns: 1fr; text-align: center; padding: 20px 0 40px; gap: 24px; }
-      .hero-title { font-size: 26px; letter-spacing: -0.5px; }
-      .hero-tagline { font-size: 14px; min-height: auto; }
+      .hero-title { font-size: 28px; letter-spacing: -0.5px; }
+      .hero-tagline { font-size: 15px; min-height: auto; }
       .hero-about { font-size: 13px; margin-bottom: 20px; text-align: center; margin-left: auto; margin-right: auto; }
       .hero-actions { flex-direction: column; width: 100%; justify-content: center; }
       .btn { width: 100%; justify-content: center; padding: 12px 18px; }
@@ -365,6 +400,8 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
       .timeline { padding-left: 20px; }
       .timeline-card { padding: 14px; border-radius: 14px; }
       .contact-card { padding: 20px; border-radius: 20px; }
+      .contact-grid { grid-template-columns: 1fr !important; }
+      .contact-grid textarea, .contact-grid button { grid-column: span 1 !important; }
       .section-title { font-size: 22px; }
       .skill-badge { font-size: 11px; padding: 6px 12px; }
     }
@@ -389,6 +426,14 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
           <button onclick="toggleTheme()" class="theme-toggle-btn" id="theme-btn">🌙 Dark Mode</button>
         </li>
       </ul>
+      <button onclick="toggleMobileNav()" class="mobile-menu-btn" id="mobile-toggle" aria-label="Toggle Menu">☰</button>
+    </div>
+    <div class="mobile-nav-drawer" id="mobile-drawer">
+      <a href="#about" onclick="closeMobileNav()">About</a>
+      <a href="#projects" onclick="closeMobileNav()">Projects</a>
+      <a href="#experience" onclick="closeMobileNav()">Experience</a>
+      <a href="#contact" onclick="closeMobileNav()">Contact</a>
+      <button onclick="toggleTheme()" class="theme-toggle-btn" style="width: 100%; margin-top: 4px;">🌙 Dark Mode</button>
     </div>
   </header>
 
@@ -523,6 +568,27 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
   </footer>
 
   <script>
+    // Mobile Drawer Navigation Toggle
+    function toggleMobileNav() {
+      const drawer = document.getElementById('mobile-drawer');
+      const btn = document.getElementById('mobile-toggle');
+      if (drawer.classList.contains('open')) {
+        drawer.classList.remove('open');
+        if (btn) btn.innerText = '☰';
+      } else {
+        drawer.classList.add('open');
+        if (btn) btn.innerText = '✕';
+      }
+    }
+    function closeMobileNav() {
+      const drawer = document.getElementById('mobile-drawer');
+      const btn = document.getElementById('mobile-toggle');
+      if (drawer) {
+        drawer.classList.remove('open');
+        if (btn) btn.innerText = '☰';
+      }
+    }
+
     // Scroll Progress Indicator
     window.onscroll = function() {
       const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
