@@ -508,7 +508,7 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 pb-20">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 pb-20">
                 {filteredTemplates.slice(0, visibleCount).map((t) => {
                   const palette = PALETTES.find(p => p.id === t.defaultPaletteId) || PALETTES[0];
                   const isFav = favorites.includes(t.id);
@@ -520,42 +520,42 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                     >
                       {/* ATS & Favorite Badge Overlay */}
                       <div className="absolute top-2 left-2 right-2 z-10 flex justify-between items-center pointer-events-none">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/95 text-emerald-800 shadow-md border border-emerald-200 flex items-center gap-1">
-                          <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                        <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold bg-white/95 text-emerald-800 shadow-md border border-emerald-200 flex items-center gap-1">
+                          <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600" />
                           <span>{t.atsScore}% ATS</span>
                         </span>
 
-                        {/* Favorite Button (High Z-Index & 40px Touch Target) */}
+                        {/* Favorite Button */}
                         <button
                           onClick={(e) => toggleFavorite(t.id, e)}
                           onTouchEnd={(e) => toggleFavorite(t.id, e)}
-                          className="z-30 relative pointer-events-auto p-2 min-w-[40px] min-h-[40px] rounded-full bg-white/95 hover:bg-white text-slate-700 shadow-md border border-slate-200/90 flex items-center justify-center transition-transform active:scale-90 touch-manipulation cursor-pointer"
+                          className="z-30 relative pointer-events-auto p-1.5 min-w-[34px] min-h-[34px] rounded-full bg-white/95 hover:bg-white text-slate-700 shadow-md border border-slate-200/90 flex items-center justify-center transition-transform active:scale-90 touch-manipulation cursor-pointer"
                           title={isFav ? 'Remove from favorites' : 'Save to favorites'}
                           aria-label="Toggle Favorite"
                         >
-                          <Heart className={`w-4.5 h-4.5 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
+                          <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} />
                         </button>
                       </div>
 
                       {/* Centered Live A4 Thumbnail Preview Container */}
-                      <div className="h-[250px] sm:h-[290px] w-full overflow-hidden bg-slate-100 relative flex items-center justify-center group-hover:bg-slate-200/60 transition-colors">
+                      <div className="h-[210px] sm:h-[290px] w-full overflow-hidden bg-slate-100 relative flex items-center justify-center group-hover:bg-slate-200/60 transition-colors">
                         <ResumeThumbnailPreview
                           template={t}
                           height={290}
                           onClick={() => { setPreviewModalTemplate(t); setModalZoom(0.70); }}
                         />
 
-                        {/* Hover Overlay Action Bar (Desktop & Mobile Touch) */}
-                        <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-3 z-20">
+                        {/* Hover Overlay Action Bar */}
+                        <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-2 z-20">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setPreviewModalTemplate(t);
                               setModalZoom(0.70);
                             }}
-                            className="px-3.5 py-2 rounded-xl bg-white text-slate-900 font-extrabold text-xs shadow-lg hover:bg-slate-100 transition-transform active:scale-95 flex items-center gap-1.5 cursor-pointer min-h-[40px]"
+                            className="px-2.5 py-1.5 rounded-xl bg-white text-slate-900 font-extrabold text-[11px] shadow-lg hover:bg-slate-100 transition-transform active:scale-95 flex items-center gap-1 cursor-pointer min-h-[36px]"
                           >
-                            <Eye className="w-4 h-4 text-emerald-600" />
+                            <Eye className="w-3.5 h-3.5 text-emerald-600" />
                             <span>Preview</span>
                           </button>
 
@@ -564,44 +564,44 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                               e.stopPropagation();
                               onSelectTemplate(t);
                             }}
-                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-lg transition-transform active:scale-95 flex items-center gap-1.5 cursor-pointer min-h-[40px]"
+                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] shadow-lg transition-transform active:scale-95 flex items-center gap-1 cursor-pointer min-h-[36px]"
                           >
-                            <span>Use Template</span>
-                            <ArrowRight className="w-4 h-4" />
+                            <span>Use</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
 
                       {/* Card Information Footer */}
-                      <div className="p-4 space-y-3 flex-1 flex flex-col justify-between bg-white border-t border-slate-100">
+                      <div className="p-2.5 sm:p-4 space-y-1.5 flex-1 flex flex-col justify-between bg-white border-t border-slate-100">
                         <div>
-                          <div className="flex justify-between items-center mb-1">
-                            <h3 className="font-black text-sm text-slate-900 group-hover:text-emerald-600 truncate transition-colors">
+                          <div className="flex justify-between items-center mb-0.5">
+                            <h3 className="font-black text-xs sm:text-sm text-slate-900 group-hover:text-emerald-600 truncate transition-colors">
                               {t.name}
                             </h3>
-                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <div className="flex items-center gap-1 flex-shrink-0">
                               <div
-                                className="w-4 h-4 rounded-full border border-slate-300 shadow-xs flex-shrink-0"
+                                className="w-3.5 h-3.5 rounded-full border border-slate-300 shadow-xs flex-shrink-0"
                                 style={{ backgroundColor: palette.primary }}
                                 title={`Color theme: ${palette.name}`}
                               />
                             </div>
                           </div>
-                          <p className="text-xs text-slate-500 line-clamp-1 font-medium">{t.description}</p>
+                          <p className="text-[10px] sm:text-xs text-slate-500 line-clamp-1 font-medium">{t.description}</p>
                         </div>
 
                         {/* Action Buttons Row */}
-                        <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                        <div className="flex items-center gap-1.5 pt-1.5 border-t border-slate-100">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setPreviewModalTemplate(t);
                               setModalZoom(0.70);
                             }}
-                            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-extrabold text-xs transition-colors flex items-center gap-1.5 cursor-pointer min-h-[40px]"
+                            className="px-2 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-extrabold text-[11px] transition-colors flex items-center gap-1 cursor-pointer min-h-[36px]"
                           >
-                            <Eye className="w-4 h-4 text-emerald-600" />
-                            <span>Preview</span>
+                            <Eye className="w-3.5 h-3.5 text-emerald-600" />
+                            <span className="hidden xs:inline">Preview</span>
                           </button>
 
                           <button
@@ -609,10 +609,9 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                               e.stopPropagation();
                               onSelectTemplate(t);
                             }}
-                            className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-sm transition-transform active:scale-95 cursor-pointer min-h-[40px]"
+                            className="flex-1 py-1.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] sm:text-xs flex items-center justify-center gap-1 shadow-xs transition-transform active:scale-95 cursor-pointer min-h-[36px]"
                           >
-                            <span>Use Template</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
+                            <span className="truncate">Use Template</span>
                           </button>
                         </div>
                       </div>
