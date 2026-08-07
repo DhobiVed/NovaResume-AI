@@ -731,7 +731,8 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                     <div className="relative w-full max-w-4xl h-[180px] sm:h-[295px] flex items-center justify-center preserve-3d">
                       {filteredTemplates.map((t, idx) => {
                         const offset = idx - activeIndex;
-                        if (Math.abs(offset) > 3) return null; // Performance optimization
+                        // Performance & click accuracy: only render visible range (-2 to +2)
+                        if (Math.abs(offset) > 2) return null;
 
                         const isCentered = offset === 0;
                         const palette = PALETTES.find(p => p.id === t.defaultPaletteId) || PALETTES[0];
@@ -751,27 +752,27 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                           opacity = 1;
                           zIndex = 30;
                         } else if (offset === -1) {
-                          translateX = window.innerWidth <= 640 ? '-65px' : '-220px';
-                          scale = window.innerWidth <= 640 ? 0.75 : 0.84;
+                          translateX = window.innerWidth <= 640 ? '-60px' : '-200px';
+                          scale = window.innerWidth <= 640 ? 0.78 : 0.84;
                           rotateY = '20deg';
-                          opacity = window.innerWidth <= 640 ? 0.5 : 0.7;
+                          opacity = window.innerWidth <= 640 ? 0.6 : 0.75;
                           zIndex = 20;
                         } else if (offset === 1) {
-                          translateX = window.innerWidth <= 640 ? '65px' : '220px';
-                          scale = window.innerWidth <= 640 ? 0.75 : 0.84;
+                          translateX = window.innerWidth <= 640 ? '60px' : '200px';
+                          scale = window.innerWidth <= 640 ? 0.78 : 0.84;
                           rotateY = '-20deg';
-                          opacity = window.innerWidth <= 640 ? 0.5 : 0.7;
+                          opacity = window.innerWidth <= 640 ? 0.6 : 0.75;
                           zIndex = 20;
                         } else if (offset === -2) {
-                          translateX = window.innerWidth <= 640 ? '-120px' : '-390px';
+                          translateX = window.innerWidth <= 640 ? '-115px' : '-360px';
                           scale = 0.65;
-                          rotateY = '32deg';
+                          rotateY = '35deg';
                           opacity = window.innerWidth <= 640 ? 0 : 0.4;
                           zIndex = 10;
                         } else if (offset === 2) {
-                          translateX = window.innerWidth <= 640 ? '120px' : '390px';
+                          translateX = window.innerWidth <= 640 ? '115px' : '360px';
                           scale = 0.65;
-                          rotateY = '-32deg';
+                          rotateY = '-35deg';
                           opacity = window.innerWidth <= 640 ? 0 : 0.4;
                           zIndex = 10;
                         }
@@ -812,7 +813,6 @@ export const TemplateGalleryPage: React.FC<Props> = ({ onSelectTemplate }) => {
                             <div className="flex-1 bg-slate-100 relative flex items-center justify-center overflow-hidden">
                               <ResumeThumbnailPreview
                                 template={t}
-                                onClick={() => setActiveIndex(idx)}
                               />
                             </div>
 
