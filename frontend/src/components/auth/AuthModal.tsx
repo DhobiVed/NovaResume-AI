@@ -753,7 +753,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                 <div className="pt-4 border-t border-slate-800/80 text-center text-xs font-semibold text-slate-400">
                   <p>Already have an account?{' '}
-                    <button type="button" onClick={() => handleSwitchMode('signup')} className="font-extrabold text-teal-400 hover:text-teal-300 hover:underline ml-1 cursor-pointer">
+                    <button type="button" onClick={() => handleSwitchMode('login')} className="font-extrabold text-teal-400 hover:text-teal-300 hover:underline ml-1 cursor-pointer">
                       Sign In &gt;
                     </button>
                   </p>
