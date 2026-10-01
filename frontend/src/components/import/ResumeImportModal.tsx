@@ -390,40 +390,40 @@ const sanitizeText = (text: string): string => {
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-5 animate-fadeIn">
-      <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-3xl shadow-2xl p-5 sm:p-6 relative flex flex-col max-h-[92vh]">
+      <div className="glass-modal rounded-3xl w-full max-w-3xl shadow-2xl p-5 sm:p-6 relative flex flex-col max-h-[92vh] text-slate-900 dark:text-slate-100">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200/70 dark:border-slate-800/70 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-emerald-100 text-emerald-700 shadow-xs">
+            <div className="p-2.5 rounded-2xl glass-emerald text-emerald-700 dark:text-emerald-300 shadow-xs">
               <Upload className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
                 <span>AI Resume & Document Importer</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase">
+                <span className="px-2 py-0.5 rounded-full glass-emerald text-emerald-800 dark:text-emerald-300 text-[10px] font-extrabold uppercase">
                   PDF & DOCX Enabled
                 </span>
               </h2>
-              <p className="text-xs text-slate-500">Upload PDF, DOCX, TXT files or paste raw text to extract resume details</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Upload PDF, DOCX, TXT files or paste raw text to extract resume details</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-500">
+          <button onClick={onClose} className="p-1.5 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 rounded-xl text-slate-500 dark:text-slate-400 cursor-pointer transition">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 min-h-0 text-xs">
+        <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 min-h-0 text-xs custom-scrollbar">
           
           {/* File Upload Box */}
-          <div className="border-2 border-dashed border-emerald-300 bg-emerald-50/40 hover:bg-emerald-50 rounded-2xl p-5 text-center space-y-3 transition-colors">
+          <div className="border-2 border-dashed border-emerald-400/50 glass-card hover:bg-emerald-50/20 dark:hover:bg-emerald-950/20 rounded-2xl p-5 text-center space-y-3 transition-colors">
             <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center mx-auto shadow-md">
               <FileText className="w-6 h-6" />
             </div>
             <div>
-              <div className="text-sm font-black text-slate-900">Upload Resume Document</div>
-              <p className="text-slate-500 text-[11px]">Supports PDF (.pdf), Word (.docx, .doc), Text (.txt, .md, .json)</p>
+              <div className="text-sm font-black text-slate-900 dark:text-white">Upload Resume Document</div>
+              <p className="text-slate-500 dark:text-slate-400 text-[11px]">Supports PDF (.pdf), Word (.docx, .doc), Text (.txt, .md, .json)</p>
             </div>
 
             <label className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black cursor-pointer shadow-md transition-transform active:scale-95">
@@ -436,19 +436,19 @@ const sanitizeText = (text: string): string => {
           {/* Paste Raw Text Section */}
           {!parsedPreview && (
             <div className="space-y-2">
-              <label className="font-extrabold text-slate-800 block">Or Paste Resume Text / LinkedIn About Section</label>
+              <label className="font-extrabold text-slate-800 dark:text-slate-200 block">Or Paste Resume Text / LinkedIn About Section</label>
               <textarea
                 value={rawText}
                 onChange={(e) => setRawText(e.target.value)}
                 placeholder="Paste your resume text here..."
                 rows={6}
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-mono text-slate-800 leading-relaxed"
+                className="w-full p-3 glass-input rounded-xl font-mono text-slate-800 dark:text-slate-200 leading-relaxed focus:outline-none"
               />
               <div className="flex justify-end">
                 <button
                   onClick={handleParseText}
                   disabled={isParsing || !rawText.trim()}
-                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-extrabold text-xs flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+                  className="px-4 py-2 bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-700 text-white rounded-xl font-extrabold text-xs flex items-center gap-1.5 shadow-xs disabled:opacity-50 cursor-pointer transition"
                 >
                   <Sparkles className="w-4 h-4 text-emerald-400" />
                   <span>{isParsing ? 'Parsing Document...' : 'Extract Fields from Text'}</span>
@@ -459,15 +459,15 @@ const sanitizeText = (text: string): string => {
 
           {/* Extracted Parsed Data Preview & Review Panel */}
           {parsedPreview && (
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 animate-fadeIn">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <div className="flex items-center gap-2 font-extrabold text-slate-900 text-sm">
-                  <Check className="w-4 h-4 text-emerald-600" />
+            <div className="p-4 glass-card rounded-2xl space-y-3 animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-slate-200/70 dark:border-slate-800/70 pb-2">
+                <div className="flex items-center gap-2 font-extrabold text-slate-900 dark:text-white text-sm">
+                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>Review Extracted Resume Fields</span>
                 </div>
                 <button
                   onClick={() => { setParsedPreview(null); setSelectedFile(null); }}
-                  className="text-[11px] text-emerald-700 font-bold hover:underline cursor-pointer"
+                  className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
                 >
                   Upload Different File
                 </button>
@@ -475,60 +475,60 @@ const sanitizeText = (text: string): string => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Full Name</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Full Name</label>
                   <input
                     type="text"
                     value={parsedPreview.fullName || ''}
                     onChange={(e) => setParsedPreview({ ...parsedPreview, fullName: e.target.value })}
-                    className="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2 glass-input rounded-xl font-bold text-slate-900 dark:text-white focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Job Title</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Job Title</label>
                   <input
                     type="text"
                     value={parsedPreview.title || ''}
                     onChange={(e) => setParsedPreview({ ...parsedPreview, title: e.target.value })}
-                    className="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2 glass-input rounded-xl font-bold text-slate-900 dark:text-white focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Email</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Email</label>
                   <input
                     type="email"
                     value={parsedPreview.email || ''}
                     onChange={(e) => setParsedPreview({ ...parsedPreview, email: e.target.value })}
-                    className="w-full p-2 bg-white border border-slate-200 rounded-xl"
+                    className="w-full p-2 glass-input rounded-xl text-slate-900 dark:text-white focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Phone</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Phone</label>
                   <input
                     type="text"
                     value={parsedPreview.phone || ''}
                     onChange={(e) => setParsedPreview({ ...parsedPreview, phone: e.target.value })}
-                    className="w-full p-2 bg-white border border-slate-200 rounded-xl"
+                    className="w-full p-2 glass-input rounded-xl text-slate-900 dark:text-white focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Summary</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Summary</label>
                 <textarea
                   value={parsedPreview.summary || ''}
                   onChange={(e) => setParsedPreview({ ...parsedPreview, summary: e.target.value })}
                   rows={3}
-                  className="w-full p-2 bg-white border border-slate-200 rounded-xl text-slate-800"
+                  className="w-full p-2 glass-input rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Extracted Skills (comma-separated)</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Extracted Skills (comma-separated)</label>
                 <input
                   type="text"
                   value={parsedPreview.skills || ''}
                   onChange={(e) => setParsedPreview({ ...parsedPreview, skills: e.target.value })}
-                  className="w-full p-2 bg-white border border-slate-200 rounded-xl"
+                  className="w-full p-2 glass-input rounded-xl text-slate-900 dark:text-white focus:outline-none"
                 />
               </div>
             </div>
@@ -536,10 +536,10 @@ const sanitizeText = (text: string): string => {
         </div>
 
         {/* Footer */}
-        <div className="pt-3 border-t border-slate-200 flex justify-end gap-2 flex-shrink-0">
+        <div className="pt-3 border-t border-slate-200/70 dark:border-slate-800/70 flex justify-end gap-2 flex-shrink-0">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer"
+            className="px-4 py-2 text-xs font-bold rounded-xl glass-pill text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800/70 cursor-pointer transition"
           >
             Cancel
           </button>

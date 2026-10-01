@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Primary Landing Page -->
+  <url>
+    <loc>https://novaresumeai.web.app/</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Resume Template Gallery -->
+  <url>
+    <loc>https://novaresumeai.web.app/gallery</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- CareerConnect Role Selection Ecosystem -->
+  <url>
+    <loc>https://novaresumeai.web.app/auth/choose-role</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Student Career Portal & Certification Engine -->
+  <url>
+    <loc>https://novaresumeai.web.app/student/dashboard</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Returning User Authentication -->
+  <url>
+    <loc>https://novaresumeai.web.app/auth/login</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Industry Recruiter Hub -->
+  <url>
+    <loc>https://novaresumeai.web.app/industry/dashboard</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Faculty & Academician Portal -->
+  <url>
+    <loc>https://novaresumeai.web.app/faculty/dashboard</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Institution Analytics Portal -->
+  <url>
+    <loc>https://novaresumeai.web.app/institution/dashboard</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>

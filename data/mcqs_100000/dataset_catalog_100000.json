@@ -1,0 +1,513 @@
+{
+  "datasetName": "NovaResume 100,000 Verified Multi-Language Coding MCQs",
+  "version": "2026.3-CleanCode",
+  "generatedAt": "2026-09-22T06:32:11.376Z",
+  "totalLanguages": 50,
+  "totalQuestions": 100000,
+  "totalPracticalQuestions": 90000,
+  "totalTheoreticalQuestions": 10000,
+  "practicalRatio": "90.0%",
+  "theoreticalRatio": "10.0%",
+  "languages": [
+    {
+      "rank": 1,
+      "languageId": "java",
+      "languageName": "Java",
+      "fileName": "01_java_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 2,
+      "languageId": "python",
+      "languageName": "Python",
+      "fileName": "02_python_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 3,
+      "languageId": "javascript",
+      "languageName": "JavaScript",
+      "fileName": "03_javascript_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 4,
+      "languageId": "cpp",
+      "languageName": "C++",
+      "fileName": "04_cpp_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 5,
+      "languageId": "csharp",
+      "languageName": "C#",
+      "fileName": "05_csharp_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 6,
+      "languageId": "sql",
+      "languageName": "SQL",
+      "fileName": "06_sql_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 7,
+      "languageId": "typescript",
+      "languageName": "TypeScript",
+      "fileName": "07_typescript_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 8,
+      "languageId": "golang",
+      "languageName": "Go",
+      "fileName": "08_golang_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 9,
+      "languageId": "rust",
+      "languageName": "Rust",
+      "fileName": "09_rust_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 10,
+      "languageId": "c",
+      "languageName": "C",
+      "fileName": "10_c_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 11,
+      "languageId": "php",
+      "languageName": "PHP",
+      "fileName": "11_php_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 12,
+      "languageId": "html",
+      "languageName": "HTML",
+      "fileName": "12_html_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 13,
+      "languageId": "css",
+      "languageName": "CSS",
+      "fileName": "13_css_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 14,
+      "languageId": "kotlin",
+      "languageName": "Kotlin",
+      "fileName": "14_kotlin_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 15,
+      "languageId": "swift",
+      "languageName": "Swift",
+      "fileName": "15_swift_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 16,
+      "languageId": "dart",
+      "languageName": "Dart",
+      "fileName": "16_dart_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 17,
+      "languageId": "bash",
+      "languageName": "Bash",
+      "fileName": "17_bash_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 18,
+      "languageId": "powershell",
+      "languageName": "PowerShell",
+      "fileName": "18_powershell_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 19,
+      "languageId": "ruby",
+      "languageName": "Ruby",
+      "fileName": "19_ruby_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 20,
+      "languageId": "scala",
+      "languageName": "Scala",
+      "fileName": "20_scala_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 21,
+      "languageId": "r",
+      "languageName": "R",
+      "fileName": "21_r_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 22,
+      "languageId": "assembly",
+      "languageName": "Assembly",
+      "fileName": "22_assembly_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 23,
+      "languageId": "solidity",
+      "languageName": "Solidity",
+      "fileName": "23_solidity_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 24,
+      "languageId": "lua",
+      "languageName": "Lua",
+      "fileName": "24_lua_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 25,
+      "languageId": "perl",
+      "languageName": "Perl",
+      "fileName": "25_perl_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 26,
+      "languageId": "julia",
+      "languageName": "Julia",
+      "fileName": "26_julia_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 27,
+      "languageId": "objective-c",
+      "languageName": "Objective-C",
+      "fileName": "27_objective-c_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 28,
+      "languageId": "groovy",
+      "languageName": "Groovy",
+      "fileName": "28_groovy_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 29,
+      "languageId": "matlab",
+      "languageName": "MATLAB",
+      "fileName": "29_matlab_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 30,
+      "languageId": "visual-basic",
+      "languageName": "Visual Basic",
+      "fileName": "30_visual-basic_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 31,
+      "languageId": "zig",
+      "languageName": "Zig",
+      "fileName": "31_zig_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 32,
+      "languageId": "fortran",
+      "languageName": "Fortran",
+      "fileName": "32_fortran_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 33,
+      "languageId": "plsql",
+      "languageName": "PL/SQL",
+      "fileName": "33_plsql_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 34,
+      "languageId": "tsql",
+      "languageName": "T-SQL",
+      "fileName": "34_tsql_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 35,
+      "languageId": "cuda",
+      "languageName": "CUDA",
+      "fileName": "35_cuda_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 36,
+      "languageId": "haskell",
+      "languageName": "Haskell",
+      "fileName": "36_haskell_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 37,
+      "languageId": "erlang",
+      "languageName": "Erlang",
+      "fileName": "37_erlang_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 38,
+      "languageId": "elixir",
+      "languageName": "Elixir",
+      "fileName": "38_elixir_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 39,
+      "languageId": "fsharp",
+      "languageName": "F#",
+      "fileName": "39_fsharp_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 40,
+      "languageId": "clojure",
+      "languageName": "Clojure",
+      "fileName": "40_clojure_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 41,
+      "languageId": "lisp",
+      "languageName": "Lisp",
+      "fileName": "41_lisp_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 42,
+      "languageId": "prolog",
+      "languageName": "Prolog",
+      "fileName": "42_prolog_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 43,
+      "languageId": "ada",
+      "languageName": "Ada",
+      "fileName": "43_ada_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 44,
+      "languageId": "cobol",
+      "languageName": "COBOL",
+      "fileName": "44_cobol_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 45,
+      "languageId": "crystal",
+      "languageName": "Crystal",
+      "fileName": "45_crystal_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 46,
+      "languageId": "nim",
+      "languageName": "Nim",
+      "fileName": "46_nim_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 47,
+      "languageId": "v",
+      "languageName": "V",
+      "fileName": "47_v_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 48,
+      "languageId": "ocaml",
+      "languageName": "OCaml",
+      "fileName": "48_ocaml_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 49,
+      "languageId": "d",
+      "languageName": "D",
+      "fileName": "49_d_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    },
+    {
+      "rank": 50,
+      "languageId": "apex",
+      "languageName": "Apex",
+      "fileName": "50_apex_2000_mcqs.json",
+      "totalCount": 2000,
+      "practicalCount": 1800,
+      "theoreticalCount": 200,
+      "verified": true
+    }
+  ]
+}

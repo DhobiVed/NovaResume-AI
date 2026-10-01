@@ -30,16 +30,16 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLastAssista
     <div className={`flex gap-3 md:gap-4 p-4 md:p-6 transition-all ${
       isUser
         ? 'bg-transparent'
-        : 'bg-slate-100/60 dark:bg-slate-900/40 border-y border-slate-200/60 dark:border-slate-800/40 shadow-sm'
+        : 'glass-panel border-y border-slate-200/50 dark:border-slate-800/50 shadow-xs'
     }`}>
       {/* Avatar Icon */}
       <div className="flex-shrink-0 pt-0.5">
         {isUser ? (
-          <div className="w-8 h-8 md:w-9 md:h-9 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md">
+          <div className="w-8 h-8 rounded-xl bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center shadow-xs">
             <User className="w-4 h-4" />
           </div>
         ) : (
-          <div className="w-8 h-8 md:w-9 md:h-9 rounded-2xl bg-gradient-to-tr from-purple-600 to-blue-600 flex items-center justify-center text-white shadow-md">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-slate-900 to-indigo-900 dark:from-indigo-600 dark:to-violet-600 text-white flex items-center justify-center shadow-xs">
             <Bot className="w-4 h-4" />
           </div>
         )}

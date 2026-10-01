@@ -1,0 +1,142 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ── INDUSTRY POSTS & SOCIAL SUBCOLLECTIONS ──
+    match /industryPosts/{postId} {
+      allow read, write: if true;
+      
+      match /likes/{userId} {
+        allow read, write, delete: if true;
+      }
+      
+      match /comments/{commentId} {
+        allow read, write, delete: if true;
+      }
+      
+      match /views/{viewerId} {
+        allow read, write: if true;
+      }
+      
+      match /linkClicks/{clickId} {
+        allow read, write: if true;
+      }
+    }
+    
+    // ── USER SAVED POSTS & BOOKMARKS ──
+    match /users/{userId}/savedPosts/{postId} {
+      allow read, write, delete: if true;
+    }
+    
+    // ── STUDENT INTERNAL PROFILES ──
+    match /studentProfiles/{studentId} {
+      allow read, write: if true;
+    }
+
+    // ── DIRECT MESSAGING ──
+    match /conversations/{conversationId} {
+      allow read, write: if true;
+      match /messages/{messageId} {
+        allow read, write: if true;
+      }
+    }
+
+    // ── COMPANY PROFILES ──
+    match /companies/{companyId} {
+      allow read, write: if true;
+    }
+    
+    // ── NOTIFICATIONS PIPELINE ──
+    match /notifications/{notificationId} {
+      allow read, write, delete: if true;
+    }
+
+    match /opportunities/{oppId} {
+      allow read, write: if true;
+    }
+    match /applications/{appId} {
+      allow read, write: if true;
+    }
+    match /assessmentAttempts/{attemptId} {
+      allow read, write: if true;
+    }
+    match /studentSkills/{skillId} {
+      allow read, write: if true;
+    }
+    match /certificates/{certId} {
+      allow read, write: if true;
+    }
+    match /facultyOpportunities/{oppId} {
+      allow read, write: if true;
+    }
+    match /curriculumTopics/{topicId} {
+      allow read, write: if true;
+    }
+    match /questions/{questionId} {
+      allow read, write: if true;
+    }
+    // ── DEPARTMENT-SCOPED ANALYTICS ──
+    match /departmentAnalytics/{deptId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // ── ALL-INDIA INSTITUTIONS & DEPARTMENTS ──
+    match /institutions/{institutionId} {
+      allow read: if true;
+      allow write: if true;
+      match /departments/{deptId} {
+        allow read, write: if true;
+      }
+    }
+    match /departments/{deptId} {
+      allow read, write: if true;
+    }
+
+    // ── FACULTY PROFILES & GOVERNANCE ──
+    match /facultyProfiles/{facultyId} {
+      allow read, write: if true;
+    }
+
+    // ── NATIONAL MULTI-DISCIPLINARY SKILL TAXONOMY & DOMAINS ──
+    match /skillTaxonomy/{taxonomyId} {
+      allow read, write: if true;
+    }
+    match /skillDomains/{domainId} {
+      allow read, write: if true;
+    }
+
+    // ── ACADEMIC CURRICULUMS & BoS SYLLABUS MAPPING ──
+    match /curriculums/{currId} {
+      allow read, write: if true;
+    }
+
+    // ── INDUSTRY DEMAND BENCHMARKS ──
+    match /industryDemands/{demandId} {
+      allow read, write: if true;
+    }
+
+    // ── TAMPER-PROOF AUDIT LOGS (APPEND-ONLY) ──
+    match /auditLogs/{logId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // ── PLATFORM CONFIGURATION & SETTINGS ──
+    match /platformConfig/{configId} {
+      allow read, write: if true;
+    }
+
+    // ── ACCREDITATIONS & BENCHMARKS ──
+    match /accreditations/{instId} {
+      allow read, write: if true;
+    }
+    match /aggregates/{aggregateId} {
+      allow read, write: if true;
+    }
+
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   X, Globe, Download, Copy, Check, Eye, Edit3, Camera, Plus, Trash2,
-  Award, Briefcase, Monitor, Smartphone, Palette, Share2, Layers, CheckCircle2, FileText, Upload
+  Award, Briefcase, Monitor, Smartphone, Palette, Share2, Layers, CheckCircle2, FileText, Upload,
+  Code, Terminal, Cpu, GraduationCap
 } from 'lucide-react';
 
 interface PortfolioModalProps {
@@ -27,13 +28,13 @@ interface StatItem {
   value: string;
 }
 
-const PORTFOLIO_STYLES: { id: PortfolioStyle; name: string; desc: string; icon: string; bgGradient: string }[] = [
-  { id: 'developer', name: 'Developer Pro', desc: 'Glassmorphism dark mode with glowing accents & tech badges', icon: '💻', bgGradient: 'from-slate-900 via-indigo-950 to-slate-900' },
-  { id: 'software', name: 'Software Engineer', desc: 'Clean GitHub-style architecture with code metrics focus', icon: '⚡', bgGradient: 'from-slate-900 via-slate-800 to-slate-950' },
-  { id: 'ai_engineer', name: 'AI / ML Specialist', desc: 'Futuristic dark glow, model metrics & LLM showcase', icon: '🤖', bgGradient: 'from-slate-950 via-teal-950 to-slate-950' },
-  { id: 'student', name: 'Student & Fresher', desc: 'Vibrant modern layout highlighting education & hackathons', icon: '🎓', bgGradient: 'from-emerald-950 via-slate-900 to-teal-950' },
-  { id: 'executive', name: 'Executive Leader', desc: 'Refined corporate identity with serif titles & milestones', icon: '💼', bgGradient: 'from-slate-900 via-blue-950 to-slate-900' },
-  { id: 'creative', name: 'Creative Portfolio', desc: 'Visual project showcase grid with interactive card hover', icon: '🎨', bgGradient: 'from-purple-950 via-slate-900 to-indigo-950' },
+const PORTFOLIO_STYLES: { id: PortfolioStyle; name: string; desc: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: 'developer', name: 'Developer Pro', desc: 'Modern high-contrast dark architecture with structured tech badges', icon: Terminal },
+  { id: 'software', name: 'Software Engineer', desc: 'Clean engineering layout with code metrics and system focus', icon: Code },
+  { id: 'ai_engineer', name: 'AI / Systems Specialist', desc: 'Enterprise layout with model metrics and technical showcase', icon: Cpu },
+  { id: 'student', name: 'Early Career & Graduate', desc: 'Structured layout highlighting core coursework and technical projects', icon: GraduationCap },
+  { id: 'executive', name: 'Executive Leader', desc: 'Corporate identity with leadership milestones and verified track record', icon: Briefcase },
+  { id: 'creative', name: 'Product & Visual Showcase', desc: 'Case study showcase grid with structured project metadata', icon: Layers },
 ];
 
 const PALETTES = [
@@ -423,17 +424,17 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
         <li><a href="#experience">Experience</a></li>
         <li><a href="#contact">Contact</a></li>
         <li>
-          <button onclick="toggleTheme()" class="theme-toggle-btn" id="theme-btn">🌙 Dark Mode</button>
+          <button onclick="toggleTheme()" class="theme-toggle-btn" id="theme-btn">Dark Mode</button>
         </li>
       </ul>
-      <button onclick="toggleMobileNav()" class="mobile-menu-btn" id="mobile-toggle" aria-label="Toggle Menu">☰</button>
+      <button onclick="toggleMobileNav()" class="mobile-menu-btn" id="mobile-toggle" aria-label="Toggle Menu">Menu</button>
     </div>
     <div class="mobile-nav-drawer" id="mobile-drawer">
       <a href="#about" onclick="closeMobileNav()">About</a>
       <a href="#projects" onclick="closeMobileNav()">Projects</a>
       <a href="#experience" onclick="closeMobileNav()">Experience</a>
       <a href="#contact" onclick="closeMobileNav()">Contact</a>
-      <button onclick="toggleTheme()" class="theme-toggle-btn" style="width: 100%; margin-top: 4px;">🌙 Dark Mode</button>
+      <button onclick="toggleTheme()" class="theme-toggle-btn" style="width: 100%; margin-top: 4px;">Dark Mode</button>
     </div>
   </header>
 
@@ -442,17 +443,17 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
     <section id="about" class="hero-grid reveal active">
       <div>
         <div class="hero-badge">
-          <span>✨ Available for New Roles & Projects</span>
+          <span>Available for High-Impact Roles</span>
         </div>
         <h1 class="hero-title">${portfolio.fullName}</h1>
         <div class="hero-tagline" id="typing-text">${portfolio.title}</div>
         <p class="hero-about">${portfolio.about}</p>
 
         <div class="hero-actions">
-          <a href="#contact" class="btn btn-primary">Get In Touch ➔</a>
+          <a href="#contact" class="btn btn-primary">Contact Direct</a>
           ${portfolio.resumeUrl && portfolio.resumeUrl !== '#' 
-            ? `<a href="${portfolio.resumeUrl}" class="btn btn-secondary" target="_blank" download="${portfolio.fullName.toLowerCase().replace(/ /g, '_')}_resume">📄 Download Resume</a>` 
-            : `<a href="#contact" class="btn btn-secondary">📄 Request Resume</a>`}
+            ? `<a href="${portfolio.resumeUrl}" class="btn btn-secondary" target="_blank" download="${portfolio.fullName.toLowerCase().replace(/ /g, '_')}_resume">Download Resume</a>` 
+            : `<a href="#contact" class="btn btn-secondary">Request Resume</a>`}
         </div>
       </div>
 
@@ -462,9 +463,9 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
         <p style="font-size: 12px; color: var(--primary); font-weight: 700;">${portfolio.location}</p>
         
         <div class="social-row">
-          ${portfolio.github ? `<a href="https://${portfolio.github.replace(/^https?:\/\//, '')}" target="_blank" class="social-icon">💻</a>` : ''}
-          ${portfolio.linkedin ? `<a href="https://${portfolio.linkedin.replace(/^https?:\/\//, '')}" target="_blank" class="social-icon">🔗</a>` : ''}
-          ${portfolio.email ? `<a href="mailto:${portfolio.email}" class="social-icon">✉️</a>` : ''}
+          ${portfolio.github ? `<a href="https://${portfolio.github.replace(/^https?:\/\//, '')}" target="_blank" class="social-icon">GH</a>` : ''}
+          ${portfolio.linkedin ? `<a href="https://${portfolio.linkedin.replace(/^https?:\/\//, '')}" target="_blank" class="social-icon">IN</a>` : ''}
+          ${portfolio.email ? `<a href="mailto:${portfolio.email}" class="social-icon">@</a>` : ''}
         </div>
       </div>
     </section>
@@ -500,8 +501,8 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
               </div>
               
               <div class="project-links">
-                ${p.demoUrl ? `<a href="${p.demoUrl}" target="_blank" class="link-btn">🚀 Live Demo</a>` : ''}
-                ${p.githubUrl ? `<a href="${p.githubUrl}" target="_blank" class="link-btn">💻 Source Code</a>` : ''}
+                ${p.demoUrl ? `<a href="${p.demoUrl}" target="_blank" class="link-btn">Live Demo ↗</a>` : ''}
+                ${p.githubUrl ? `<a href="${p.githubUrl}" target="_blank" class="link-btn">Source Code ↗</a>` : ''}
               </div>
             </div>
           </div>
@@ -542,29 +543,28 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
       </div>
     </section>
 
-    <!-- Contact & Hire Box -->
-    <section id="contact" class="reveal">
+    <!-- Contact CTA -->
+    <section id="contact" style="margin-bottom: 60px;" class="reveal">
       <div class="contact-card">
-        <div class="section-subtitle">Get In Touch</div>
-        <h2 class="section-title" style="margin-bottom: 12px;">Let's Build Something Together</h2>
-        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 24px;">Have a project in mind or interested in hiring? Send a message directly.</p>
+        <h2 class="section-title" style="margin-bottom: 12px;">Get In Touch</h2>
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 24px;">Have a project inquiry or interested in hiring? Send a message directly.</p>
 
         <form onsubmit="handleContactSubmit(event)" class="contact-grid">
           <input type="text" placeholder="Your Name" required class="form-input">
           <input type="email" placeholder="Your Email" required class="form-input">
           <textarea placeholder="Your Message" rows="3" required class="form-input" style="grid-column: span 2;"></textarea>
-          <button type="submit" class="btn btn-primary" style="grid-column: span 2; justify-content: center;">Send Direct Message ➔</button>
+          <button type="submit" class="btn btn-primary" style="grid-column: span 2; justify-content: center;">Send Direct Message</button>
         </form>
 
         <div style="font-size: 13px; color: var(--text-muted); margin-top: 16px;">
-          📧 ${portfolio.email} | 📍 ${portfolio.location}
+          ${portfolio.email} • ${portfolio.location}
         </div>
       </div>
     </section>
   </div>
 
   <footer>
-    <p>© ${new Date().getFullYear()} ${portfolio.fullName}. Created with NovaResume AI Portfolio Generator.</p>
+    <p>© ${new Date().getFullYear()} ${portfolio.fullName}. Published via NovaResume AI.</p>
   </footer>
 
   <script>
@@ -574,10 +574,10 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
       const btn = document.getElementById('mobile-toggle');
       if (drawer.classList.contains('open')) {
         drawer.classList.remove('open');
-        if (btn) btn.innerText = '☰';
+        if (btn) btn.innerText = 'Menu';
       } else {
         drawer.classList.add('open');
-        if (btn) btn.innerText = '✕';
+        if (btn) btn.innerText = 'Close';
       }
     }
     function closeMobileNav() {
@@ -585,7 +585,7 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
       const btn = document.getElementById('mobile-toggle');
       if (drawer) {
         drawer.classList.remove('open');
-        if (btn) btn.innerText = '☰';
+        if (btn) btn.innerText = 'Menu';
       }
     }
 
@@ -604,11 +604,11 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
       if (html.classList.contains('dark')) {
         html.classList.remove('dark');
         html.classList.add('light');
-        btn.innerText = '🌙 Dark Mode';
+        btn.innerText = 'Dark Mode';
       } else {
         html.classList.remove('light');
         html.classList.add('dark');
-        btn.innerText = '☀️ Light Mode';
+        btn.innerText = 'Light Mode';
       }
     }
 
@@ -660,37 +660,37 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-0 sm:p-4">
-      <div className="bg-white border-0 sm:border border-slate-200 rounded-none sm:rounded-3xl w-full max-w-6xl shadow-2xl p-3 sm:p-6 relative flex flex-col h-full sm:h-[94vh] overflow-hidden">
+      <div className="glass-modal rounded-none sm:rounded-3xl w-full max-w-6xl shadow-2xl p-3 sm:p-6 relative flex flex-col h-full sm:h-[94vh] overflow-hidden text-slate-900 dark:text-slate-100">
         
         {/* Modal Topbar Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0 gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-200/70 dark:border-slate-800/70 flex-shrink-0 gap-2">
           <div className="flex items-center justify-between w-full sm:w-auto">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700 flex-shrink-0">
+              <div className="p-2 rounded-xl glass-emerald text-emerald-700 dark:text-emerald-300 flex-shrink-0">
                 <Globe className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-sm sm:text-base font-black text-slate-900 flex items-center gap-1.5 flex-wrap">
+                <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-1.5 flex-wrap">
                   <span>AI Web Portfolio Pro</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-extrabold uppercase">
+                  <span className="px-2 py-0.5 rounded-full glass-emerald text-emerald-800 dark:text-emerald-300 text-[9px] font-extrabold uppercase">
                     Self-Contained HTML
                   </span>
                 </h2>
               </div>
             </div>
 
-            <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-500 transition-colors sm:hidden">
+            <button onClick={onClose} className="p-1.5 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 rounded-xl text-slate-500 dark:text-slate-400 transition-colors sm:hidden">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
             {/* View Mode Switcher */}
-            <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-full sm:w-auto">
+            <div className="flex gap-1 glass-card p-1 rounded-xl w-full sm:w-auto">
               <button
                 onClick={() => setActiveTab('preview')}
-                className={`flex-1 sm:flex-none px-3 py-1.5 text-xs font-extrabold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
-                  activeTab === 'preview' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                className={`flex-1 sm:flex-none px-3 py-1.5 text-xs font-extrabold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  activeTab === 'preview' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <Eye className="w-3.5 h-3.5" />
@@ -698,8 +698,8 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
               </button>
               <button
                 onClick={() => setActiveTab('content')}
-                className={`flex-1 sm:flex-none px-3 py-1.5 text-xs font-extrabold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
-                  activeTab !== 'preview' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                className={`flex-1 sm:flex-none px-3 py-1.5 text-xs font-extrabold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  activeTab !== 'preview' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <Edit3 className="w-3.5 h-3.5" />
@@ -707,7 +707,7 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
               </button>
             </div>
 
-            <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-500 transition-colors hidden sm:block">
+            <button onClick={onClose} className="p-1.5 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 rounded-xl text-slate-500 dark:text-slate-400 transition-colors hidden sm:block cursor-pointer">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -718,7 +718,7 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
           
           {/* Sub-Navigation Tabs for Content Editing */}
           {activeTab !== 'preview' && (
-            <div className="flex overflow-x-auto gap-1 bg-slate-100 p-1 rounded-xl mb-3 flex-shrink-0 scrollbar-none">
+            <div className="flex overflow-x-auto gap-1 glass-card p-1 rounded-xl mb-3 flex-shrink-0 scrollbar-none">
               {[
                 { id: 'content', label: 'Personal & Social', icon: Edit3 },
                 { id: 'projects', label: 'Projects & Work', icon: Layers },
@@ -731,10 +731,10 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
                       activeTab === tab.id
                         ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
@@ -780,6 +780,7 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
                 <iframe
                   srcDoc={generatedHtml}
                   title="Portfolio Live Preview"
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
                   className={`w-full h-full border-0 transition-all duration-300 ${
                     previewDeviceMode === 'mobile' ? 'max-w-[375px] rounded-3xl border-4 border-slate-800 shadow-2xl' : ''
                   }`}
@@ -1201,26 +1202,32 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
 
               {/* Layout Presets */}
               <div className="space-y-2">
-                <label className="font-extrabold text-slate-900 block">Portfolio Style Presets</label>
+                <label className="font-bold text-slate-900 block text-xs">Portfolio Style Presets</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {PORTFOLIO_STYLES.map(st => (
-                    <div
-                      key={st.id}
-                      onClick={() => setPortfolio({ ...portfolio, style: st.id })}
-                      className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
-                        portfolio.style === st.id
-                          ? 'border-emerald-600 bg-emerald-50/50 shadow-md ring-2 ring-emerald-200'
-                          : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xl">{st.icon}</span>
-                        {portfolio.style === st.id && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                  {PORTFOLIO_STYLES.map(st => {
+                    const Icon = st.icon;
+                    const isSelected = portfolio.style === st.id;
+                    return (
+                      <div
+                        key={st.id}
+                        onClick={() => setPortfolio({ ...portfolio, style: st.id })}
+                        className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                          isSelected
+                            ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900 shadow-xs'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                            <Icon className="w-3.5 h-3.5" />
+                          </div>
+                          {isSelected && <CheckCircle2 className="w-4 h-4 text-slate-900" />}
+                        </div>
+                        <h4 className="font-bold text-slate-900 text-xs">{st.name}</h4>
+                        <p className="text-[10px] text-slate-500 leading-relaxed mt-0.5">{st.desc}</p>
                       </div>
-                      <h4 className="font-black text-slate-900 text-xs">{st.name}</h4>
-                      <p className="text-[10px] text-slate-500 leading-relaxed mt-0.5">{st.desc}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -1233,7 +1240,7 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
             {publishedUrl ? (
               <span className="text-emerald-700 font-bold">✓ Published to temporary URL (Opened in new tab)</span>
             ) : (
-              <span>✨ Exports 100% self-contained HTML file</span>
+              <span>Exports standalone self-contained HTML file</span>
             )}
           </div>
 

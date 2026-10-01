@@ -58,35 +58,35 @@ export const AtsAnalyzerModal: React.FC<AtsAnalyzerModalProps> = ({ isOpen, onCl
 
   return (
     <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-0 sm:p-4">
-      <div className="bg-white border-0 sm:border border-slate-200 rounded-none sm:rounded-3xl w-full max-w-4xl shadow-2xl p-3 sm:p-6 relative flex flex-col h-full sm:h-[92vh] overflow-hidden">
+      <div className="glass-modal rounded-none sm:rounded-3xl w-full max-w-4xl shadow-2xl p-3 sm:p-6 relative flex flex-col h-full sm:h-[92vh] overflow-hidden text-slate-900 dark:text-slate-100">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200/70 dark:border-slate-800/70 flex-shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 sm:p-2.5 rounded-2xl bg-emerald-100 text-emerald-700 flex-shrink-0">
+            <div className="p-2 sm:p-2.5 rounded-2xl glass-emerald text-emerald-700 dark:text-emerald-300 flex-shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm sm:text-lg font-extrabold text-slate-900 leading-tight">ATS Score Analyzer & JD Matcher</h2>
-              <p className="text-[11px] sm:text-xs text-slate-500 line-clamp-1">ATS compliance, formatting audit, and job description alignment</p>
+              <h2 className="text-sm sm:text-lg font-extrabold text-slate-900 dark:text-white leading-tight">ATS Score Analyzer & JD Matcher</h2>
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-1">ATS compliance, formatting audit, and job description alignment</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 rounded-xl text-slate-500 dark:text-slate-400 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer transition">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tailor Notice */}
         {tailorNotice && (
-          <div className="mt-3 p-2.5 bg-emerald-50 text-emerald-800 text-xs font-semibold rounded-xl border border-emerald-200 flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <div className="mt-3 p-2.5 glass-emerald text-emerald-800 dark:text-emerald-200 text-xs font-semibold rounded-xl flex items-center gap-2">
+            <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
             <span>{tailorNotice}</span>
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto py-3 sm:py-4 space-y-4 pr-1 text-xs">
+        <div className="flex-1 overflow-y-auto py-3 sm:py-4 space-y-4 pr-1 text-xs custom-scrollbar">
           {/* Target Job Description Input */}
-          <div className="p-3 sm:p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-            <label className="font-bold text-slate-800 block">
+          <div className="p-3 sm:p-4 glass-card rounded-2xl space-y-2">
+            <label className="font-bold text-slate-800 dark:text-slate-200 block">
               Paste Target Job Description (Job Description Matcher)
             </label>
             <textarea
@@ -94,20 +94,20 @@ export const AtsAnalyzerModal: React.FC<AtsAnalyzerModalProps> = ({ isOpen, onCl
               onChange={(e) => setJobDescription(e.target.value)}
               placeholder="Paste target job description requirements here..."
               rows={2}
-              className="w-full p-2.5 text-xs rounded-xl bg-white border border-slate-200 text-slate-900"
+              className="w-full p-2.5 text-xs rounded-xl glass-input text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
             />
             <div className="flex flex-col sm:flex-row gap-2 pt-1">
               <button
                 onClick={handleAnalyze}
                 disabled={isAnalyzing}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-xs cursor-pointer min-h-[40px]"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white rounded-xl font-bold text-xs shadow-xs cursor-pointer min-h-[40px] transition"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
                 <span>Run Full ATS & JD Match Audit</span>
               </button>
               <button
                 onClick={handleAutoTailor}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold text-xs shadow-xs cursor-pointer min-h-[40px]"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 active:scale-[0.98] text-white rounded-xl font-bold text-xs shadow-xs cursor-pointer min-h-[40px] transition"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                 <span>1-Click AI Auto-Tailor Resume</span>
@@ -117,34 +117,34 @@ export const AtsAnalyzerModal: React.FC<AtsAnalyzerModalProps> = ({ isOpen, onCl
 
           {/* Scores Overview Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-1">
-              <span className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider">Overall ATS Score</span>
-              <div className="text-3xl font-black text-emerald-600">{analysisResult.ats_score}%</div>
-              <div className="w-full bg-emerald-200 h-1.5 rounded-full overflow-hidden">
+            <div className="p-4 rounded-2xl glass-emerald text-center space-y-1">
+              <span className="text-[10px] font-extrabold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">Overall ATS Score</span>
+              <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{analysisResult.ats_score}%</div>
+              <div className="w-full bg-emerald-200/60 dark:bg-emerald-950/60 h-1.5 rounded-full overflow-hidden">
                 <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${analysisResult.ats_score}%` }} />
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-teal-50 border border-teal-200 text-center space-y-1">
-              <span className="text-[10px] font-extrabold text-teal-700 uppercase tracking-wider">JD Match Rate</span>
-              <div className="text-3xl font-black text-teal-600">{analysisResult.jd_match_percentage}%</div>
-              <div className="w-full bg-teal-200 h-1.5 rounded-full overflow-hidden">
+            <div className="p-4 rounded-2xl glass-card text-center space-y-1">
+              <span className="text-[10px] font-extrabold text-teal-700 dark:text-teal-300 uppercase tracking-wider">JD Match Rate</span>
+              <div className="text-3xl font-black text-teal-600 dark:text-teal-400">{analysisResult.jd_match_percentage}%</div>
+              <div className="w-full bg-teal-200/60 dark:bg-teal-950/60 h-1.5 rounded-full overflow-hidden">
                 <div className="bg-teal-600 h-full rounded-full" style={{ width: `${analysisResult.jd_match_percentage}%` }} />
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-center space-y-1">
-              <span className="text-[10px] font-extrabold text-blue-700 uppercase tracking-wider">Formatting Score</span>
-              <div className="text-3xl font-black text-blue-600">{analysisResult.formatting_score}%</div>
-              <div className="w-full bg-blue-200 h-1.5 rounded-full overflow-hidden">
+            <div className="p-4 rounded-2xl glass-blue text-center space-y-1">
+              <span className="text-[10px] font-extrabold text-blue-700 dark:text-blue-300 uppercase tracking-wider">Formatting Score</span>
+              <div className="text-3xl font-black text-blue-600 dark:text-blue-400">{analysisResult.formatting_score}%</div>
+              <div className="w-full bg-blue-200/60 dark:bg-blue-950/60 h-1.5 rounded-full overflow-hidden">
                 <div className="bg-blue-600 h-full rounded-full" style={{ width: `${analysisResult.formatting_score}%` }} />
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-purple-50 border border-purple-200 text-center space-y-1">
-              <span className="text-[10px] font-extrabold text-purple-700 uppercase tracking-wider">Readability Score</span>
-              <div className="text-3xl font-black text-purple-600">{analysisResult.readability_score}%</div>
-              <div className="w-full bg-purple-200 h-1.5 rounded-full overflow-hidden">
+            <div className="p-4 rounded-2xl glass-purple text-center space-y-1">
+              <span className="text-[10px] font-extrabold text-purple-700 dark:text-purple-300 uppercase tracking-wider">Readability Score</span>
+              <div className="text-3xl font-black text-purple-600 dark:text-purple-400">{analysisResult.readability_score}%</div>
+              <div className="w-full bg-purple-200/60 dark:bg-purple-950/60 h-1.5 rounded-full overflow-hidden">
                 <div className="bg-purple-600 h-full rounded-full" style={{ width: `${analysisResult.readability_score}%` }} />
               </div>
             </div>
@@ -152,28 +152,28 @@ export const AtsAnalyzerModal: React.FC<AtsAnalyzerModalProps> = ({ isOpen, onCl
 
           {/* Keywords Breakdown */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-2">
-              <h3 className="font-bold text-slate-900 flex items-center gap-1.5">
-                <CheckCircle className="w-4 h-4 text-emerald-600" />
+            <div className="p-4 glass-card rounded-2xl space-y-2">
+              <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>Matched Industry Keywords ({analysisResult.present_keywords.length})</span>
               </h3>
               <div className="flex flex-wrap gap-1.5">
                 {analysisResult.present_keywords.map((k: string, idx: number) => (
-                  <span key={idx} className="px-2.5 py-1 rounded-lg font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span key={idx} className="px-2.5 py-1 rounded-lg font-semibold glass-emerald text-emerald-800 dark:text-emerald-300 text-xs">
                     ✓ {k}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-2">
-              <h3 className="font-bold text-slate-900 flex items-center gap-1.5">
+            <div className="p-4 glass-card rounded-2xl space-y-2">
+              <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <AlertTriangle className="w-4 h-4 text-amber-500" />
                 <span>Missing High-Impact Keywords</span>
               </h3>
               <div className="flex flex-wrap gap-1.5">
                 {analysisResult.missing_keywords.map((k: string, idx: number) => (
-                  <span key={idx} className="px-2.5 py-1 rounded-lg font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                  <span key={idx} className="px-2.5 py-1 rounded-lg font-semibold glass-amber text-amber-800 dark:text-amber-300 text-xs">
                     + {k}
                   </span>
                 ))}
@@ -183,29 +183,29 @@ export const AtsAnalyzerModal: React.FC<AtsAnalyzerModalProps> = ({ isOpen, onCl
 
           {/* Audit Sections */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-              <span className="font-bold text-emerald-800 block">Strong Sections</span>
-              <ul className="space-y-1 font-medium text-slate-700">
+            <div className="p-4 glass-card rounded-2xl space-y-2">
+              <span className="font-bold text-emerald-700 dark:text-emerald-400 block">Strong Sections</span>
+              <ul className="space-y-1 font-medium text-slate-700 dark:text-slate-300">
                 {analysisResult.strong_sections.map((s: string, idx: number) => (
                   <li key={idx} className="flex items-center gap-1.5">
-                    <span className="text-emerald-600 font-bold">✓</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
                     <span>{s}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-              <span className="font-bold text-amber-800 block">Weak Sections & Audit Checks</span>
-              <ul className="space-y-1 font-medium text-slate-700">
+            <div className="p-4 glass-card rounded-2xl space-y-2">
+              <span className="font-bold text-amber-700 dark:text-amber-400 block">Weak Sections & Audit Checks</span>
+              <ul className="space-y-1 font-medium text-slate-700 dark:text-slate-300">
                 {analysisResult.weak_sections.map((w: string, idx: number) => (
                   <li key={idx} className="flex items-center gap-1.5">
                     <span className="text-amber-500 font-bold">•</span>
                     <span>{w}</span>
                   </li>
                 ))}
-                <li className="flex items-center gap-1.5 pt-1 text-slate-600">
-                  <Zap className="w-3.5 h-3.5 text-emerald-600" />
+                <li className="flex items-center gap-1.5 pt-1 text-slate-600 dark:text-slate-400">
+                  <Zap className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>Action Verbs: {analysisResult.action_verb_count} strong verbs detected</span>
                 </li>
               </ul>
@@ -214,10 +214,10 @@ export const AtsAnalyzerModal: React.FC<AtsAnalyzerModalProps> = ({ isOpen, onCl
         </div>
 
         {/* Footer */}
-        <div className="pt-3 border-t border-slate-200 flex justify-end">
+        <div className="pt-3 border-t border-slate-200/70 dark:border-slate-800/70 flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2 text-xs font-bold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700"
+            className="px-5 py-2 text-xs font-bold rounded-xl glass-pill hover:bg-slate-200/70 dark:hover:bg-slate-800/70 text-slate-700 dark:text-slate-300 transition cursor-pointer"
           >
             Close Audit
           </button>

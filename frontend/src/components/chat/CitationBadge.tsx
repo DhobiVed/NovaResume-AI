@@ -30,8 +30,8 @@ export const CitationBadge: React.FC<CitationBadgeProps> = ({ citations }) => {
               className="p-2.5 text-xs rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60"
             >
               <div className="flex justify-between font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                <span>📄 {c.doc_name}</span>
-                <span className="text-primary">Page {c.page_num}</span>
+                <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {c.doc_name}</span>
+                <span className="text-primary font-mono text-[11px]">Page {c.page_num}</span>
               </div>
               <p className="text-slate-600 dark:text-slate-400 italic font-mono text-[11px]">
                 "{c.snippet}"

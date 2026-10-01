@@ -15,7 +15,33 @@ import {
   browserLocalPersistence
 } from 'firebase/auth';
 import type { User as FirebaseUser } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  onSnapshot,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  serverTimestamp,
+  Timestamp,
+  increment,
+  writeBatch
+} from 'firebase/firestore';
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject
+} from 'firebase/storage';
 
 // Production Firebase Configuration for novaresumeai
 const firebaseConfig = {
@@ -29,7 +55,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase App & Auth
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 // Force local storage persistence across browser redirects & multi-tabs
@@ -37,7 +63,7 @@ setPersistence(auth, browserLocalPersistence).catch(() => {});
 
 export const googleProvider = new GoogleAuthProvider();
 
-// Safely initialize Firestore (optional - fallback if not enabled in console)
+// Initialize Firestore
 let db: any = null;
 try {
   db = getFirestore(app);
@@ -45,7 +71,15 @@ try {
   console.warn('Firestore database notice:', err);
 }
 
-export { db };
+// Initialize Firebase Storage
+let storage: any = null;
+try {
+  storage = getStorage(app);
+} catch (err) {
+  console.warn('Firebase Storage notice:', err);
+}
+
+export { db, storage };
 export type { FirebaseUser };
 export {
   createUserWithEmailAndPassword,
@@ -60,5 +94,23 @@ export {
   doc,
   setDoc,
   getDoc,
-  updateDoc
+  updateDoc,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  onSnapshot,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  serverTimestamp,
+  Timestamp,
+  increment,
+  writeBatch,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject
 };
+

@@ -40,31 +40,31 @@ export const ResumeMentorModal: React.FC<ResumeMentorModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-0 sm:p-5">
-      <div className="bg-white border-0 sm:border border-slate-200 rounded-none sm:rounded-3xl w-full max-w-5xl shadow-2xl p-3 sm:p-6 relative flex flex-col h-full sm:h-[92vh] overflow-hidden">
+      <div className="glass-modal rounded-none sm:rounded-xl w-full max-w-5xl shadow-2xl p-3 sm:p-6 relative flex flex-col h-full sm:h-[92vh] overflow-hidden text-slate-900 dark:text-slate-100">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200/70 dark:border-slate-800/70 flex-shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 sm:p-2.5 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md flex-shrink-0">
-              <Sparkles className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-lg bg-slate-900 dark:bg-indigo-600 text-white flex items-center justify-center shadow-xs flex-shrink-0">
+              <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm sm:text-lg font-black text-slate-900 flex items-center gap-1.5 flex-wrap">
-                <span>AI Resume Mentor</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-extrabold uppercase tracking-wider">
-                  Deep Review Engine
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
+                <span>AI Resume Audit</span>
+                <span className="px-2 py-0.5 rounded glass-pill text-slate-700 dark:text-slate-300 text-[10px] font-mono font-semibold">
+                  Analysis Engine
                 </span>
               </h2>
-              <p className="text-[11px] sm:text-xs text-slate-500 line-clamp-1">AI analysis, recruiter readability scores & 1-click fixes</p>
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-1">ATS compliance audit, readability metrics & targeted recommendations</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 rounded-lg text-slate-500 dark:text-slate-400 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer transition">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex overflow-x-auto gap-1 bg-slate-100 p-1 rounded-xl my-2.5 flex-shrink-0 no-scrollbar scrollbar-none">
+        <div className="flex overflow-x-auto gap-1 glass-card p-1 rounded-lg my-2.5 flex-shrink-0 no-scrollbar scrollbar-none">
           {[
             { id: 'overview', label: 'Overall Audit & Scores', icon: TrendingUp },
             { id: 'suggestions', label: 'Improvement Suggestions', icon: Lightbulb },
@@ -76,10 +76,10 @@ export const ResumeMentorModal: React.FC<ResumeMentorModalProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
                   activeTab === tab.id
-                    ? 'bg-white text-emerald-700 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -90,76 +90,76 @@ export const ResumeMentorModal: React.FC<ResumeMentorModalProps> = ({
         </div>
 
         {/* Main Content Body */}
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1 min-h-0 text-xs">
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1 min-h-0 text-xs custom-scrollbar">
           
           {/* TAB 1: OVERVIEW METRICS */}
           {activeTab === 'overview' && (
             <div className="space-y-4">
               {/* Score Cards Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-4 bg-gradient-to-tr from-emerald-50 to-teal-50 border border-emerald-200/90 rounded-2xl text-center space-y-1">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800">Resume Strength</span>
-                  <div className="text-3xl font-black text-emerald-900">{strengthScore} / 100</div>
-                  <div className="w-full bg-emerald-200 h-2 rounded-full overflow-hidden">
+                <div className="p-4 glass-card rounded-xl text-center space-y-1.5 shadow-xs">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Resume Strength</span>
+                  <div className="text-3xl font-black text-slate-900 dark:text-white">{strengthScore} / 100</div>
+                  <div className="w-full bg-slate-100/70 dark:bg-slate-800/70 h-1.5 rounded-full overflow-hidden">
                     <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${strengthScore}%` }} />
                   </div>
-                  <span className="text-[10px] text-emerald-700 font-bold block pt-1">Strong Candidate Profile</span>
+                  <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium block pt-1">Strong Candidate Profile</span>
                 </div>
 
-                <div className="p-4 bg-gradient-to-tr from-blue-50 to-indigo-50 border border-blue-200/90 rounded-2xl text-center space-y-1">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-800">ATS Compliance</span>
-                  <div className="text-3xl font-black text-blue-900">{atsScore}%</div>
-                  <div className="w-full bg-blue-200 h-2 rounded-full overflow-hidden">
-                    <div className="bg-blue-600 h-full rounded-full" style={{ width: `${atsScore}%` }} />
+                <div className="p-4 glass-card rounded-xl text-center space-y-1.5 shadow-xs">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">ATS Compliance</span>
+                  <div className="text-3xl font-black text-slate-900 dark:text-white">{atsScore}%</div>
+                  <div className="w-full bg-slate-100/70 dark:bg-slate-800/70 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-indigo-600 h-full rounded-full" style={{ width: `${atsScore}%` }} />
                   </div>
-                  <span className="text-[10px] text-blue-700 font-bold block pt-1">High Parser Compatibility</span>
+                  <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium block pt-1">High Parser Compatibility</span>
                 </div>
 
-                <div className="p-4 bg-gradient-to-tr from-purple-50 to-pink-50 border border-purple-200/90 rounded-2xl text-center space-y-1">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-800">Recruiter Readability</span>
-                  <div className="text-3xl font-black text-purple-900">{readabilityScore} / 100</div>
-                  <div className="w-full bg-purple-200 h-2 rounded-full overflow-hidden">
-                    <div className="bg-purple-600 h-full rounded-full" style={{ width: `${readabilityScore}%` }} />
+                <div className="p-4 glass-card rounded-xl text-center space-y-1.5 shadow-xs">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recruiter Readability</span>
+                  <div className="text-3xl font-black text-slate-900 dark:text-white">{readabilityScore} / 100</div>
+                  <div className="w-full bg-slate-100/70 dark:bg-slate-800/70 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-blue-600 h-full rounded-full" style={{ width: `${readabilityScore}%` }} />
                   </div>
-                  <span className="text-[10px] text-purple-700 font-bold block pt-1">6-Second Scan Ready</span>
+                  <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium block pt-1">6-Second Scan Ready</span>
                 </div>
               </div>
 
               {/* Strong vs Weak Sections */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                  <div className="flex items-center gap-2 text-emerald-700 font-extrabold">
+                <div className="p-4 glass-card rounded-xl space-y-2">
+                  <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-extrabold">
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Strong Profile Highlights</span>
                   </div>
-                  <ul className="space-y-1.5 text-slate-700">
+                  <ul className="space-y-1.5 text-slate-700 dark:text-slate-300">
                     <li className="flex items-start gap-2">
-                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
                       <span>Executive summary contains clear quantifiable impact metrics.</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
                       <span>Tech stack includes high-demand frameworks ({skillsCount} skills listed).</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
                       <span>Work history uses strong action verbs and bullet point structure.</span>
                     </li>
                   </ul>
                 </div>
 
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                  <div className="flex items-center gap-2 text-amber-700 font-extrabold">
+                <div className="p-4 glass-card rounded-xl space-y-2">
+                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-extrabold">
                     <AlertTriangle className="w-4 h-4" />
                     <span>Areas Needing Optimization</span>
                   </div>
-                  <ul className="space-y-1.5 text-slate-700">
+                  <ul className="space-y-1.5 text-slate-700 dark:text-slate-300">
                     <li className="flex items-start gap-2">
-                      <span className="text-amber-600 font-bold">!</span>
+                      <span className="text-amber-600 dark:text-amber-400 font-bold">!</span>
                       <span>Add missing cloud certification keywords (AWS/Azure/GCP).</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-amber-600 font-bold">!</span>
+                      <span className="text-amber-600 dark:text-amber-400 font-bold">!</span>
                       <span>Quantify project scale (e.g., mention numbers like 300% throughput increase).</span>
                     </li>
                   </ul>
@@ -189,25 +189,25 @@ export const ResumeMentorModal: React.FC<ResumeMentorModalProps> = ({
                   badge: 'ATS Boost'
                 }
               ].map(sug => (
-                <div key={sug.id} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                <div key={sug.id} className="p-4 glass-card rounded-2xl space-y-2">
                   <div className="flex justify-between items-center">
-                    <div className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
-                      <Lightbulb className="w-4 h-4 text-emerald-600" />
+                    <div className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                       <span>{sug.title}</span>
                     </div>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px]">
+                    <span className="px-2 py-0.5 rounded-full glass-emerald text-emerald-800 dark:text-emerald-300 font-extrabold text-[10px]">
                       {sug.badge}
                     </span>
                   </div>
-                  <p className="text-slate-600">{sug.desc}</p>
-                  <div className="p-2.5 bg-white border border-slate-200 rounded-xl font-mono text-[11px] text-slate-800">
+                  <p className="text-slate-600 dark:text-slate-400">{sug.desc}</p>
+                  <div className="p-2.5 glass-panel rounded-xl font-mono text-[11px] text-slate-800 dark:text-slate-200">
                     "{sug.improved}"
                   </div>
                   <div className="flex justify-end pt-1">
                     <button
                       onClick={() => handleApplyFix(sug.id, sug.field, sug.improved)}
                       disabled={appliedFixes.includes(sug.id)}
-                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl flex items-center gap-1 shadow-xs disabled:opacity-50"
+                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-extrabold text-xs rounded-xl flex items-center gap-1 shadow-xs disabled:opacity-50 cursor-pointer transition"
                     >
                       {appliedFixes.includes(sug.id) ? <Check className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
                       <span>{appliedFixes.includes(sug.id) ? 'Applied to Resume' : '1-Click Apply Improvement'}</span>
@@ -221,7 +221,7 @@ export const ResumeMentorModal: React.FC<ResumeMentorModalProps> = ({
           {/* TAB 3: POWER ACTION VERBS */}
           {activeTab === 'action_verbs' && (
             <div className="space-y-4">
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-slate-800">
+              <div className="p-3 glass-emerald rounded-2xl text-slate-800 dark:text-slate-200">
                 <span className="font-bold">Pro Tip:</span> Resumes with strong action verbs receive <strong>140% more interview callbacks</strong>!
               </div>
 
@@ -232,11 +232,11 @@ export const ResumeMentorModal: React.FC<ResumeMentorModalProps> = ({
                   { category: 'Engineering & Delivery', verbs: ['Deployed', 'Engineered', 'Built', 'Implemented', 'Automated'] },
                   { category: 'Impact & Business Results', verbs: ['Boosted', 'Generated', 'Expanded', 'Reduced', 'Transformed'] }
                 ].map((group, idx) => (
-                  <div key={idx} className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                    <h4 className="font-extrabold text-slate-900 text-xs text-emerald-700">{group.category}</h4>
+                  <div key={idx} className="p-3.5 glass-card rounded-2xl space-y-2">
+                    <h4 className="font-extrabold text-xs text-emerald-700 dark:text-emerald-400">{group.category}</h4>
                     <div className="flex flex-wrap gap-1.5">
                       {group.verbs.map(verb => (
-                        <span key={verb} className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 font-bold text-slate-800 text-[11px]">
+                        <span key={verb} className="px-2.5 py-1 rounded-lg glass-pill font-bold text-slate-800 dark:text-slate-200 text-[11px]">
                           {verb}
                         </span>
                       ))}
@@ -250,16 +250,16 @@ export const ResumeMentorModal: React.FC<ResumeMentorModalProps> = ({
           {/* TAB 4: ROADMAP */}
           {activeTab === 'roadmap' && (
             <div className="space-y-3">
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                <h4 className="font-extrabold text-slate-900 text-sm">Suggested Certifications for Career Growth</h4>
+              <div className="p-4 glass-card rounded-2xl space-y-2">
+                <h4 className="font-extrabold text-slate-900 dark:text-white text-sm">Suggested Certifications for Career Growth</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div className="p-2.5 bg-white border border-slate-200 rounded-xl flex items-center gap-2">
-                    <Award className="w-4 h-4 text-emerald-600" />
-                    <span className="font-bold text-slate-800">AWS Certified Machine Learning Specialist</span>
+                  <div className="p-2.5 glass-panel rounded-xl flex items-center gap-2">
+                    <Award className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="font-bold text-slate-800 dark:text-slate-200">AWS Certified Machine Learning Specialist</span>
                   </div>
-                  <div className="p-2.5 bg-white border border-slate-200 rounded-xl flex items-center gap-2">
-                    <Award className="w-4 h-4 text-emerald-600" />
-                    <span className="font-bold text-slate-800">CKAD: Certified Kubernetes Application Developer</span>
+                  <div className="p-2.5 glass-panel rounded-xl flex items-center gap-2">
+                    <Award className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="font-bold text-slate-800 dark:text-slate-200">CKAD: Certified Kubernetes Application Developer</span>
                   </div>
                 </div>
               </div>
@@ -268,8 +268,8 @@ export const ResumeMentorModal: React.FC<ResumeMentorModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="pt-3 border-t border-slate-200 flex justify-end gap-2 flex-shrink-0">
-          <button onClick={onClose} className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md">
+        <div className="pt-3 border-t border-slate-200/70 dark:border-slate-800/70 flex justify-end gap-2 flex-shrink-0">
+          <button onClick={onClose} className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer transition">
             Done Reviewing
           </button>
         </div>

@@ -59,14 +59,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenMemoryModal, onOpenDocGe
       {/* Brand Header */}
       <div className="p-4 border-b border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
+          <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-slate-100 dark:text-slate-900 flex items-center justify-center text-white font-bold text-sm shadow-sm">
             N
           </div>
           <div>
-            <h2 className="font-extrabold text-sm tracking-wide bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-              NovaChat AI
+            <h2 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white">
+              NovaChat
             </h2>
-            <p className="text-[10px] text-slate-400 font-mono">v1.0 Pro</p>
+            <p className="text-[10px] text-slate-500 font-mono">Enterprise AI</p>
           </div>
         </div>
 

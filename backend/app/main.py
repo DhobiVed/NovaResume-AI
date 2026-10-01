@@ -12,12 +12,13 @@ if hasattr(sys.stdout, "reconfigure"):
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
-from app.core.config import settings
+from app.core.config import settings, UPLOADS_DIR
 from app.database.session import engine, Base
 import app.models.schema  # Register all ORM models
-from app.api.v1.endpoints import docgen, resumes, models, auth
+from app.api.v1.endpoints import docgen, resumes, models, auth, career
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -53,6 +54,9 @@ app.include_router(auth.router,    prefix=f"{settings.API_V1_STR}/auth",    tags
 app.include_router(resumes.router, prefix=f"{settings.API_V1_STR}/resumes", tags=["Resumes"])
 app.include_router(docgen.router,  prefix=f"{settings.API_V1_STR}/docgen",  tags=["Document Generation"])
 app.include_router(models.router,  prefix=f"{settings.API_V1_STR}/models",  tags=["Models"])
+app.include_router(career.router,  prefix=f"{settings.API_V1_STR}/career",  tags=["CareerConnect SIH26044"])
+
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 @app.get("/")
 def root():

@@ -22,5 +22,13 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "src/tests",
+    "**/*.test.ts",
+    "src/data/question-bank/buildAllVerifiedBanks.ts",
+    "src/data/question-bank/buildDisciplinaryBanks.ts",
+    "src/data/question-bank/auditQuestionBanks.ts",
+    "src/data/question-bank/cleanse_banks_to_strict_semantic.ts"
+  ]
 }

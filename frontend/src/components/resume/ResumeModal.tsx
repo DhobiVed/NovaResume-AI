@@ -133,7 +133,7 @@ export const ResumeModal: React.FC<ResumeModalProps> = ({ isOpen, onClose }) => 
       } else if (actionType === 'achievements') {
         setAdditional((prev) => ({
           ...prev,
-          achievements: '🥇 1st Place Winner: Global AI Innovation Hackathon (out of 400+ international engineering teams)\n📜 Authored high-impact research paper on Context Window Compression in Large Language Models'
+          achievements: '• 1st Place Winner: Global AI Innovation Hackathon (out of 400+ international engineering teams)\n• Authored high-impact research paper on Context Window Compression in Large Language Models'
         }));
         setAiNotice('Achievements rewritten with strong metrics!');
       }
@@ -204,16 +204,16 @@ ${projects.map(p => `${p.name}: ${p.description}`).join('\n')}
 
   return (
     <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-3 md:p-6">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-6xl shadow-2xl p-4 md:p-6 relative flex flex-col max-h-[94vh]">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl w-full max-w-6xl shadow-2xl p-4 md:p-6 relative flex flex-col max-h-[94vh]">
         {/* Header Bar */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-md">
+            <div className="w-9 h-9 rounded-lg bg-slate-900 dark:bg-slate-100 dark:text-slate-900 text-white flex items-center justify-center shadow-xs">
               <Palette className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Canva Resume Studio & Live Customizer</h2>
-              <p className="text-xs text-slate-400">Full Design Control: Typography, Palette, Layout, Sections & AI Tools</p>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Resume Studio & Design Engine</h2>
+              <p className="text-xs text-slate-500">Fine-tune typography, margins, layouts, color accents and ATS formatting</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -700,31 +700,32 @@ ${projects.map(p => `${p.name}: ${p.description}`).join('\n')}
             {/* TAB CONTENT 5: AI Assistance */}
             {editorTab === 'ai' && (
               <div className="flex-1 overflow-y-auto pr-1 space-y-3 text-xs">
-                <div className="p-3 rounded-2xl bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/20 space-y-2">
-                  <span className="font-bold text-purple-600 dark:text-purple-400 block flex items-center gap-1">
-                    <Sparkles className="w-4 h-4" /> 1-Click AI Resume Optimizer
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                  <span className="font-bold text-slate-900 dark:text-slate-100 block flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+                    <span>AI Resume Optimization</span>
                   </span>
                   <div className="space-y-1.5">
                     <button
                       onClick={() => handleAiImprove('summary')}
                       disabled={isImproving}
-                      className="w-full py-1.5 px-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow text-left"
+                      className="w-full py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold shadow-xs text-left cursor-pointer"
                     >
-                      ✨ Rewrite Executive Summary for Executive Impact
+                      Rewrite Executive Summary for Impact
                     </button>
                     <button
                       onClick={() => handleAiImprove('ats')}
                       disabled={isImproving}
-                      className="w-full py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow text-left"
+                      className="w-full py-2 px-3 bg-slate-850 hover:bg-slate-750 text-white rounded-lg font-semibold shadow-xs text-left cursor-pointer"
                     >
-                      🎯 Add Top Recommended ATS Keywords
+                      Inject Top Recommended ATS Keywords
                     </button>
                     <button
                       onClick={() => handleAiImprove('achievements')}
                       disabled={isImproving}
-                      className="w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow text-left"
+                      className="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold shadow-xs text-left cursor-pointer"
                     >
-                      📝 Quantify & Enhance Achievements
+                      Quantify & Enhance Bullet Achievements
                     </button>
                   </div>
                 </div>
@@ -732,11 +733,11 @@ ${projects.map(p => `${p.name}: ${p.description}`).join('\n')}
             )}
           </div>
 
-          {/* RIGHT: Live Canva-Style Graphic Preview Canvas */}
-          <div className="w-full md:w-1/2 flex flex-col min-h-0 bg-slate-100 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
+          {/* RIGHT: Live Preview Canvas */}
+          <div className="w-full md:w-1/2 flex flex-col min-h-0 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
             <div className="p-2 bg-slate-200 dark:bg-slate-900 border-b border-slate-300 dark:border-slate-800 flex justify-between items-center text-[10px] font-bold text-slate-500">
-              <span>LIVE CANVA PREVIEW CANVAS</span>
-              <span>100% VECTOR ATS READY</span>
+              <span>LIVE DOCUMENT PREVIEW</span>
+              <span>ATS COMPATIBLE VECTOR</span>
             </div>
 
             <div
@@ -745,7 +746,7 @@ ${projects.map(p => `${p.name}: ${p.description}`).join('\n')}
             >
               {/* Graphic Banner */}
               <div
-                className="p-4 text-white rounded-2xl shadow-md mb-3 flex items-center justify-between"
+                className="p-4 text-white rounded-xl shadow-xs mb-3 flex items-center justify-between"
                 style={{ backgroundColor: headerBg }}
               >
                 <div>
@@ -754,8 +755,9 @@ ${projects.map(p => `${p.name}: ${p.description}`).join('\n')}
                     {personal.title}
                   </div>
                   <div className="text-[10px] opacity-80 pt-1 flex flex-wrap gap-2">
-                    <span>📧 {personal.email}</span>
-                    <span>📞 {personal.phone}</span>
+                    <span>{personal.email}</span>
+                    <span>•</span>
+                    <span>{personal.phone}</span>
                   </div>
                 </div>
                 {showPhoto && photoUrl && (
@@ -859,10 +861,10 @@ ${projects.map(p => `${p.name}: ${p.description}`).join('\n')}
             </button>
             <button
               onClick={handleExportPdf}
-              className="flex items-center gap-1.5 px-5 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-xl transition-transform active:scale-95"
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition-colors cursor-pointer"
             >
               <Download className="w-4 h-4" />
-              <span>Export Vector Graphic PDF</span>
+              <span>Export Vector PDF</span>
             </button>
           </div>
         </div>

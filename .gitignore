@@ -22,5 +22,6 @@ backend/*.db
 .vscode/
 .idea/
 
-# Local Netlify folder
+# Local Netlify & Firebase folders
 .netlify
+.firebase/

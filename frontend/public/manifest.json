@@ -1,0 +1,17 @@
+{
+  "name": "NovaResume AI - Career & Resume Platform",
+  "short_name": "NovaResume",
+  "description": "Enterprise AI-powered Resume Builder, ATS Score Checker, 50-MCQ Certification Engine & CareerConnect Platform.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070b14",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -26,15 +26,15 @@ export const ChatContainer: React.FC = () => {
     <div className="flex-1 overflow-y-auto relative flex flex-col">
       {messages.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-3xl mx-auto">
-          <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-2xl mb-6 animate-pulse-subtle">
-            <Bot className="w-9 h-9" />
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-900 to-indigo-900 dark:from-indigo-600 dark:to-violet-600 flex items-center justify-center text-white shadow-md mb-4">
+            <Bot className="w-6 h-6" />
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-blue-500 via-indigo-400 to-purple-500 bg-clip-text text-transparent mb-3">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
             NovaChat AI Platform
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base max-w-lg mb-8">
-            Experience next-generation AI powered by Groq LLM engines, RAG vector document search, document generation, and real-time streaming token reasoning.
+          <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm max-w-lg mb-6">
+            Enterprise AI powered by high-speed inference, vector search, structured document generation, and multi-disciplinary career intelligence.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
@@ -42,14 +42,14 @@ export const ChatContainer: React.FC = () => {
               <button
                 key={idx}
                 onClick={() => sendMessage(q.prompt)}
-                className="flex items-start gap-3 p-4 rounded-2xl glass-panel hover:border-primary/50 text-left transition-all hover:scale-[1.01] group"
+                className="flex items-start gap-3 p-3.5 rounded-2xl glass-card-interactive text-left shadow-xs group cursor-pointer"
               >
-                <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 group-hover:scale-110 transition-transform">
+                <div className="p-2 rounded-xl glass-pill shrink-0">
                   {q.icon}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-200">{q.title}</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">{q.prompt}</p>
+                  <h3 className="font-semibold text-xs text-slate-900 dark:text-slate-100">{q.title}</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">{q.prompt}</p>
                 </div>
               </button>
             ))}

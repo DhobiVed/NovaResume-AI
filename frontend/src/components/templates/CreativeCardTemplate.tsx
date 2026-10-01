@@ -77,7 +77,7 @@ export const CreativeCardTemplate: React.FC<Props> = ({ data, theme }) => {
             <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: 12 }}>
               <SectionHeader title="Languages" color={P.primary} fontSize={FS} />
               {data.languages.split(',').map((l, i) => (
-                <div key={i} style={{ fontSize: FS * 0.78, color: P.text, marginBottom: 2, lineHeight: LH }}>🌐 {l.trim()}</div>
+                <div key={i} style={{ fontSize: FS * 0.78, color: P.text, marginBottom: 2, lineHeight: LH }}>• {l.trim()}</div>
               ))}
             </div>
           )}

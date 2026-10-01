@@ -102,57 +102,57 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({ isOpen, onCl
 
   return (
     <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-0 sm:p-4">
-      <div className="bg-white border-0 sm:border border-slate-200 rounded-none sm:rounded-3xl w-full max-w-4xl shadow-2xl p-3 sm:p-6 relative flex flex-col h-full sm:h-[92vh] overflow-hidden">
+      <div className="glass-modal rounded-none sm:rounded-3xl w-full max-w-4xl shadow-2xl p-3 sm:p-6 relative flex flex-col h-full sm:h-[92vh] overflow-hidden text-slate-900 dark:text-slate-100">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200/70 dark:border-slate-800/70 flex-shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 sm:p-2.5 rounded-2xl bg-emerald-100 text-emerald-700 flex-shrink-0">
+            <div className="p-2 sm:p-2.5 rounded-2xl glass-emerald text-emerald-700 dark:text-emerald-300 flex-shrink-0">
               <Briefcase className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h2 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">AI Cover Letter Generator</h2>
-              <p className="text-[11px] sm:text-xs text-slate-500 line-clamp-1">Generate matching tailored cover letters in seconds</p>
+              <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white leading-tight">AI Cover Letter Generator</h2>
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-1">Generate matching tailored cover letters in seconds</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 rounded-xl text-slate-500 dark:text-slate-400 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center transition">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* AI Notice Banner */}
         {aiNotice && (
-          <div className="mt-3 p-2.5 bg-emerald-50 text-emerald-800 text-xs font-semibold rounded-xl border border-emerald-200 flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <div className="mt-3 p-2.5 glass-emerald text-emerald-800 dark:text-emerald-200 text-xs font-semibold rounded-xl flex items-center gap-2">
+            <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
             <span>{aiNotice}</span>
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto py-3 sm:py-4 space-y-3.5 pr-1 text-xs">
+        <div className="flex-1 overflow-y-auto py-3 sm:py-4 space-y-3.5 pr-1 text-xs custom-scrollbar">
           {/* Target Role Inputs */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Target Job Title</label>
+              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Target Job Title</label>
               <input
                 type="text"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900"
+                className="w-full p-2.5 glass-input rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
               />
             </div>
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Target Company Name</label>
+              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Target Company Name</label>
               <input
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900"
+                className="w-full p-2.5 glass-input rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
               />
             </div>
           </div>
 
           {/* Template Style Switcher */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-50 p-3 rounded-2xl border border-slate-200 gap-2">
-            <span className="font-bold text-slate-700">Cover Letter Template Tone</span>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center glass-card p-3 rounded-2xl gap-2">
+            <span className="font-bold text-slate-700 dark:text-slate-300">Cover Letter Template Tone</span>
             <div className="flex flex-wrap gap-1.5 w-full sm:w-auto">
               {[
                 { id: 'technical', label: 'Technical / Engineering' },
@@ -162,8 +162,10 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({ isOpen, onCl
                 <button
                   key={t.id}
                   onClick={() => setTemplateStyle(t.id as any)}
-                  className={`flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs font-bold transition-all text-center min-h-[36px] ${
-                    templateStyle === t.id ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                  className={`flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs font-bold transition-all text-center min-h-[36px] cursor-pointer ${
+                    templateStyle === t.id
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'glass-pill text-slate-700 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800/60'
                   }`}
                 >
                   {t.label}
@@ -173,13 +175,13 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({ isOpen, onCl
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Job Description Requirements (Optional)</label>
+            <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Job Description Requirements (Optional)</label>
             <textarea
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               placeholder="Paste key responsibilities to align narrative..."
               rows={2}
-              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs"
+              className="w-full p-2.5 glass-input rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
             />
           </div>
 
@@ -187,49 +189,49 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({ isOpen, onCl
             <button
               onClick={handleGenerate}
               disabled={isGenerating}
-              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow transition-transform active:scale-95"
+              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-xs transition-transform active:scale-95 cursor-pointer"
             >
               <Sparkles className="w-4 h-4" />
               <span>{isGenerating ? 'Tailoring Narrative...' : 'Generate Matching Cover Letter'}</span>
             </button>
             <button
               onClick={handleAiPolish}
-              className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-xs border border-slate-200"
+              className="flex items-center gap-1.5 px-4 py-2 glass-pill hover:bg-slate-200/70 dark:hover:bg-slate-800/70 text-slate-800 dark:text-slate-200 rounded-xl font-bold text-xs cursor-pointer transition"
             >
-              <Wand2 className="w-4 h-4 text-emerald-600" />
+              <Wand2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>AI Tone Polish</span>
             </button>
           </div>
 
           {/* Letter Editor Canvas */}
-          <div className="relative border border-slate-200 rounded-2xl p-6 bg-white shadow-inner">
+          <div className="relative glass-card rounded-2xl p-6 shadow-inner">
             <textarea
               value={coverLetterContent}
               onChange={(e) => setCoverLetterContent(e.target.value)}
               rows={12}
-              className="w-full text-xs font-sans leading-relaxed text-slate-800 bg-transparent border-0 focus:outline-none resize-none"
+              className="w-full text-xs font-sans leading-relaxed text-slate-800 dark:text-slate-200 bg-transparent border-0 focus:outline-none resize-none custom-scrollbar"
             />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
+        <div className="pt-3 border-t border-slate-200/70 dark:border-slate-800/70 flex justify-end gap-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200"
+            className="px-4 py-2 text-xs font-semibold rounded-xl glass-pill text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800/70 cursor-pointer transition"
           >
             Cancel
           </button>
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-slate-200 text-slate-800 hover:bg-slate-300"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl glass-pill text-slate-800 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-800/80 cursor-pointer transition"
           >
-            {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+            {copied ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-4 h-4" />}
             <span>{copied ? 'Copied Text' : 'Copy Text'}</span>
           </button>
           <button
             onClick={handleExportPdf}
-            className="flex items-center gap-1.5 px-5 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg transition-transform active:scale-95"
+            className="flex items-center gap-1.5 px-5 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-transform active:scale-95 cursor-pointer"
           >
             <Download className="w-4 h-4" />
             <span>Export Cover Letter PDF</span>

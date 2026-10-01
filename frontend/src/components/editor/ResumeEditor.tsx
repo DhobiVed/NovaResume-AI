@@ -19,7 +19,8 @@ import { ElegantTemplate } from '../templates/ElegantTemplate';
 import {
   Sparkles, Palette as PaletteIcon, Type,
   FileText, Plus, Trash2, ArrowLeft, Check, Camera, Printer, RotateCcw, RotateCw,
-  ArrowUp, ArrowDown, Layout, X, Sliders, ZoomIn, ZoomOut, Maximize2, RefreshCw
+  ArrowUp, ArrowDown, Layout, X, Sliders, ZoomIn, ZoomOut, Maximize2, RefreshCw,
+  Edit3, Eye, Target
 } from 'lucide-react';
 
 interface Props {
@@ -347,40 +348,40 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-100 z-50 flex flex-col font-sans overflow-hidden animate-fade-in">
+    <div className="fixed inset-0 glass-canvas z-50 flex flex-col font-sans overflow-hidden animate-fade-in text-slate-900 dark:text-slate-100">
       
-      {/* ── TOP NAV ACTION BAR (LIGHT / WHITE THEME) ── */}
-      <header className="h-16 px-4 md:px-6 bg-white border-b border-slate-200 flex items-center justify-between z-20 text-slate-900 flex-shrink-0 shadow-xs">
+      {/* ── TOP NAV ACTION BAR (GLASS HEADER) ── */}
+      <header className="h-16 px-4 md:px-6 glass-header border-b border-slate-200/70 dark:border-slate-800/70 flex items-center justify-between z-20 text-slate-900 dark:text-white flex-shrink-0">
         
         {/* Left Brand & Back Actions */}
         <div className="flex items-center gap-3">
           <button
             onClick={onBackToGallery}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors cursor-pointer min-h-[40px]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass-pill hover:bg-slate-200/70 dark:hover:bg-slate-800/70 text-xs font-bold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer min-h-[40px]"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Templates</span>
           </button>
 
-          <div className="h-5 w-[1px] bg-slate-200 hidden sm:block" />
+          <div className="h-5 w-[1px] bg-slate-200/70 dark:bg-slate-800/70 hidden sm:block" />
 
           {/* Active Template & Change Button */}
           <div className="flex items-center gap-2">
             <div>
-              <h1 className="font-black text-sm text-slate-900 flex items-center gap-1.5">
+              <h1 className="font-black text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
                 <span>{activeTemplate.name}</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px] uppercase border border-emerald-200 hidden md:inline-block">
+                <span className="px-2 py-0.5 rounded-full glass-emerald text-emerald-800 dark:text-emerald-300 font-extrabold text-[10px] uppercase hidden md:inline-block">
                   ATS {activeTemplate.atsScore}%
                 </span>
               </h1>
-              <p className="text-[10px] text-slate-500 font-medium hidden sm:block">
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium hidden sm:block">
                 {activeTemplate.category} Layout
               </p>
             </div>
 
             <button
               onClick={() => setIsTemplateModalOpen(true)}
-              className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-extrabold border border-emerald-200 transition-colors flex items-center gap-1 cursor-pointer min-h-[36px]"
+              className="px-2.5 py-1.5 rounded-xl glass-emerald hover:bg-emerald-100/60 dark:hover:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-extrabold transition-colors flex items-center gap-1 cursor-pointer min-h-[36px]"
               title="Change template without losing data"
             >
               <Layout className="w-3.5 h-3.5" />
@@ -390,11 +391,11 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
         </div>
 
         {/* Center: Save Status & Completion Meter */}
-        <div className="hidden lg:flex items-center gap-4 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200">
+        <div className="hidden lg:flex items-center gap-4 glass-panel px-4 py-1.5 rounded-full">
           <div className="flex items-center gap-2 text-xs font-bold">
-            <span className="text-slate-500">Completion:</span>
-            <span className="text-emerald-700">{completionPercentage}%</span>
-            <div className="w-20 bg-slate-200 h-2 rounded-full overflow-hidden">
+            <span className="text-slate-500 dark:text-slate-400">Completion:</span>
+            <span className="text-emerald-700 dark:text-emerald-300">{completionPercentage}%</span>
+            <div className="w-20 bg-slate-200/70 dark:bg-slate-800/70 h-2 rounded-full overflow-hidden">
               <div
                 className="bg-emerald-600 h-full rounded-full transition-all duration-300"
                 style={{ width: `${completionPercentage}%` }}
@@ -402,18 +403,18 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
             </div>
           </div>
 
-          <div className="h-4 w-[1px] bg-slate-200" />
+          <div className="h-4 w-[1px] bg-slate-200/70 dark:bg-slate-800/70" />
 
           <div className="flex items-center gap-1.5 text-xs font-bold">
             {saveStatus === 'saving' ? (
               <>
                 <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-                <span className="text-amber-600">Saving...</span>
+                <span className="text-amber-600 dark:text-amber-400">Saving...</span>
               </>
             ) : (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-emerald-700">Saved ✓</span>
+                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-emerald-700 dark:text-emerald-300">Saved ✓</span>
               </>
             )}
           </div>
@@ -467,35 +468,37 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
       )}
 
       {/* Mobile Mode Switcher Bar */}
-      <div className="md:hidden flex bg-white p-2 border-b border-slate-200 gap-2 text-xs font-extrabold text-slate-800">
+      <div className="md:hidden flex bg-white p-2 border-b border-slate-200 gap-2 text-xs font-bold text-slate-800">
         <button
           onClick={() => setMobileViewMode('edit')}
-          className={`flex-1 py-2.5 rounded-xl transition-colors min-h-[44px] cursor-pointer ${
-            mobileViewMode === 'edit' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700'
+          className={`flex-1 py-2.5 rounded-lg transition-colors min-h-[44px] cursor-pointer flex items-center justify-center gap-1.5 ${
+            mobileViewMode === 'edit' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'
           }`}
         >
-          ✏️ Edit Content
+          <Edit3 className="w-3.5 h-3.5" />
+          <span>Edit Content</span>
         </button>
         <button
           onClick={() => setMobileViewMode('preview')}
-          className={`flex-1 py-2.5 rounded-xl transition-colors min-h-[44px] cursor-pointer ${
-            mobileViewMode === 'preview' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700'
+          className={`flex-1 py-2.5 rounded-lg transition-colors min-h-[44px] cursor-pointer flex items-center justify-center gap-1.5 ${
+            mobileViewMode === 'preview' ? 'bg-emerald-600 text-white shadow-xs' : 'glass-pill text-slate-700 dark:text-slate-300'
           }`}
         >
-          👁️ Live Preview
+          <Eye className="w-3.5 h-3.5" />
+          <span>Live Preview</span>
         </button>
       </div>
 
       {/* Main Workspace Split */}
       <div className="flex-1 flex overflow-hidden relative">
 
-        {/* ── LEFT SIDEBAR EDITOR CONTROLS (LIGHT / WHITE THEME) ── */}
-        <div className={`w-full md:w-[480px] lg:w-[520px] bg-white border-r border-slate-200 flex flex-col flex-shrink-0 z-10 ${
+        {/* ── LEFT SIDEBAR EDITOR CONTROLS ── */}
+        <div className={`w-full md:w-[480px] lg:w-[520px] glass-sidebar border-r border-slate-200/70 dark:border-slate-800/70 flex flex-col flex-shrink-0 z-10 ${
           mobileViewMode === 'preview' ? 'hidden md:flex' : 'flex'
         }`}>
           
           {/* Main Control Tabs */}
-          <div className="flex bg-slate-50 border-b border-slate-200 p-2 gap-1 overflow-x-auto no-scrollbar">
+          <div className="flex glass-card border-b border-slate-200/70 dark:border-slate-800/70 p-2 gap-1 overflow-x-auto no-scrollbar">
             {[
               { id: 'content', label: 'Content', icon: FileText },
               { id: 'design', label: 'Typography', icon: Type },
@@ -510,8 +513,8 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
                   onClick={() => setEditorTab(tab.id as any)}
                   className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[40px] whitespace-nowrap ${
                     editorTab === tab.id
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -1181,25 +1184,27 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
             {/* 5. AI OPTIMIZER TAB */}
             {editorTab === 'ai' && (
               <div className="space-y-4 animate-fadeIn">
-                <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl space-y-3">
-                  <span className="font-bold text-emerald-900 flex items-center gap-1.5 text-xs">
-                    <Sparkles className="w-4 h-4 text-emerald-600" />
-                    <span>1-Click AI Resume Optimizer</span>
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                  <span className="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
+                    <Sparkles className="w-4 h-4 text-slate-700" />
+                    <span>AI Resume Optimization</span>
                   </span>
                   <p className="text-slate-600 text-xs font-medium leading-relaxed">
-                    Auto-tune your resume with AI keyword injection, active verbs, and executive phrasing.
+                    Targeted phrasing enhancements, ATS keyword alignments, and executive metric formatting.
                   </p>
                   <button
                     onClick={() => handleAiAction('summary')}
-                    className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-left shadow-sm text-xs min-h-[44px] cursor-pointer"
+                    className="w-full py-2.5 px-3.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg text-left shadow-xs text-xs min-h-[40px] cursor-pointer flex items-center gap-2"
                   >
-                    ✨ Enhance Executive Summary
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Enhance Executive Summary</span>
                   </button>
                   <button
                     onClick={() => handleAiAction('skills')}
-                    className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-left shadow-sm text-xs min-h-[44px] cursor-pointer"
+                    className="w-full py-2.5 px-3.5 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-lg text-left shadow-xs text-xs min-h-[40px] cursor-pointer flex items-center gap-2"
                   >
-                    🎯 Inject Top ATS Keywords
+                    <Target className="w-3.5 h-3.5" />
+                    <span>Inject Recommended ATS Keywords</span>
                   </button>
                 </div>
               </div>

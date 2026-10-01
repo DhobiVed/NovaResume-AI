@@ -1,0 +1,12 @@
+# Robots.txt for NovaResume AI (https://novaresumeai.web.app)
+# Allow all search engines and crawlers (Googlebot, Bingbot, Slurp, DuckDuckBot, Baiduspider, Yandex)
+
+User-agent: *
+Allow: /
+
+# Prevent crawling of scratch or private API endpoints if any
+Disallow: /api/private/
+
+# Sitemap Location for Google Search Console & Webmaster Tools
+Sitemap: https://novaresumeai.web.app/sitemap.xml
+Host: https://novaresumeai.web.app
