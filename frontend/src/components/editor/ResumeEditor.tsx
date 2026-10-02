@@ -1277,6 +1277,9 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
           >
             <div
               ref={canvasRef}
+              data-canvas="true"
+              data-paper="true"
+              className="resume-document-canvas"
               style={{
                 width: 794,
                 minHeight: 1123,
@@ -1334,6 +1337,9 @@ export const ResumeEditor: React.FC<Props> = ({ template: initialTemplate, onBac
               }}
             >
               <div
+                data-canvas="true"
+                data-paper="true"
+                className="resume-document-canvas"
                 style={{
                   width: 794,
                   minHeight: 1123,
