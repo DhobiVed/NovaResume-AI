@@ -551,8 +551,8 @@ export const IndustryRecruiterPortal: React.FC<Props> = ({
                 No candidate applications received yet. Posts published to the Student Industry Feed will appear here automatically.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full min-w-[550px] text-left text-xs">
                   <thead>
                     <tr className="border-b border-slate-200/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                       <th className="pb-2.5">Candidate</th>

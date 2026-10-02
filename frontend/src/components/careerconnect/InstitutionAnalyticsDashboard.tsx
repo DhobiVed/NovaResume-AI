@@ -738,8 +738,8 @@ export const InstitutionAnalyticsDashboard: React.FC<Props> = ({
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full min-w-[650px] text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase">
                       <th className="py-2.5 px-3">Skill / Tool</th>
@@ -1095,8 +1095,8 @@ export const InstitutionAnalyticsDashboard: React.FC<Props> = ({
                 No students enrolled under this institution matching the selected filter.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full min-w-[600px] text-left text-xs">
                   <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200/90">
                     <tr>
                       <th className="py-3 px-4">Student</th>
@@ -1394,8 +1394,8 @@ export const InstitutionAnalyticsDashboard: React.FC<Props> = ({
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full min-w-[650px] text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase">
                       <th className="py-2.5 px-3">Company</th>
@@ -1742,30 +1742,32 @@ export const InstitutionAnalyticsDashboard: React.FC<Props> = ({
 
             <div className="space-y-3 pt-2">
               <h3 className="font-black text-xs text-slate-900 uppercase">Language Proficiency Summary</h3>
-              <table className="w-full text-left text-xs border border-slate-100 rounded-xl overflow-hidden">
-                <thead className="bg-slate-50 text-slate-700 font-bold">
-                  <tr>
-                    <th className="py-2.5 px-3">Subject / Technology</th>
-                    <th className="py-2.5 px-3">Assessment Count</th>
-                    <th className="py-2.5 px-3">Average Mastery Score</th>
-                    <th className="py-2.5 px-3">Readiness Category</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {skillAnalytics.languageAverages.map((lang, idx) => (
-                    <tr key={idx}>
-                      <td className="py-2.5 px-3 font-bold text-slate-800">{lang.language}</td>
-                      <td className="py-2.5 px-3 font-mono text-slate-600">{lang.testCount}</td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-emerald-700">{lang.avgScore}%</td>
-                      <td className="py-2.5 px-3">
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700">
-                          {lang.avgScore >= 70 ? 'Industry Ready' : lang.avgScore >= 40 ? 'Moderate Proficiency' : 'Requires Remediation'}
-                        </span>
-                      </td>
+              <div className="overflow-x-auto w-full custom-scrollbar">
+                <table className="w-full min-w-[500px] text-left text-xs border border-slate-100 rounded-xl overflow-hidden">
+                  <thead className="bg-slate-50 text-slate-700 font-bold">
+                    <tr>
+                      <th className="py-2.5 px-3">Subject / Technology</th>
+                      <th className="py-2.5 px-3">Assessment Count</th>
+                      <th className="py-2.5 px-3">Average Mastery Score</th>
+                      <th className="py-2.5 px-3">Readiness Category</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {skillAnalytics.languageAverages.map((lang, idx) => (
+                      <tr key={idx}>
+                        <td className="py-2.5 px-3 font-bold text-slate-800">{lang.language}</td>
+                        <td className="py-2.5 px-3 font-mono text-slate-600">{lang.testCount}</td>
+                        <td className="py-2.5 px-3 font-mono font-bold text-emerald-700">{lang.avgScore}%</td>
+                        <td className="py-2.5 px-3">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700">
+                            {lang.avgScore >= 70 ? 'Industry Ready' : lang.avgScore >= 40 ? 'Moderate Proficiency' : 'Requires Remediation'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div className="pt-4 border-t border-slate-100 text-[10px] text-slate-400 flex justify-between">

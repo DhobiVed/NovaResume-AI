@@ -883,23 +883,24 @@ export const AppContent: React.FC = () => {
               <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Theme</span>
               <ThemeToggle showLabel />
             </div>
+
             {/* Mobile User Profile Section */}
             {user && (
-              <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg mb-2">
+              <div className="flex items-center justify-between p-3 glass-card rounded-xl mb-2">
                 <div className="flex items-center gap-2.5">
                   {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full border border-slate-300 object-cover" />
+                    <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 object-cover" />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white font-semibold text-xs border border-slate-700 flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-slate-900 dark:bg-indigo-600 flex items-center justify-center text-white font-semibold text-xs border border-slate-700 flex-shrink-0">
                       {user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
                     </div>
                   )}
                   <div>
-                    <span className="font-semibold text-xs text-slate-900 block">{user.name}</span>
-                    <span className="text-[10px] text-slate-500 font-mono block truncate max-w-[150px]">{user.email}</span>
+                    <span className="font-semibold text-xs text-slate-900 dark:text-white block">{user.name}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono block truncate max-w-[150px]">{user.email}</span>
                   </div>
                 </div>
-                <button onClick={handleLogout} className="px-2.5 py-1 text-xs font-semibold text-rose-600 bg-rose-50 rounded-lg">
+                <button onClick={handleLogout} className="px-2.5 py-1 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 rounded-lg">
                   Logout
                 </button>
               </div>
@@ -911,14 +912,14 @@ export const AppContent: React.FC = () => {
                 setSelectedTemplate(null);
                 navigateToRoute('dashboard');
               }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-semibold text-sm min-h-[42px] ${
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px] cursor-pointer ${
                 currentRoute === 'dashboard' && !selectedTemplate
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-50 text-slate-800 border border-slate-200'
+                  ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow-xs'
+                  : 'glass-card text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
-              <Layout className="w-4 h-4 text-slate-700" />
-              <span>Dashboard</span>
+              <Layout className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+              <span>Saved Resumes Dashboard</span>
             </button>
 
             <button
@@ -927,24 +928,87 @@ export const AppContent: React.FC = () => {
                 setSelectedTemplate(null);
                 navigateToRoute('gallery');
               }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-semibold text-sm min-h-[42px] ${
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-semibold text-sm min-h-[44px] cursor-pointer ${
                 currentRoute === 'gallery' && !selectedTemplate
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-50 text-slate-800 border border-slate-200'
+                  ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow-xs'
+                  : 'glass-card text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
-              <LayoutGrid className="w-4 h-4 text-slate-700" />
-              <span>Templates</span>
+              <LayoutGrid className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+              <span>Resume Templates Gallery</span>
             </button>
 
-            {/* SIH26044 Role Portals in Mobile Menu */}
-            <div className="p-3 bg-white border border-slate-200 rounded-lg space-y-2 text-slate-900 shadow-xs">
-              <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 font-bold uppercase">
+            <button
+              onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setSelectedTemplate(ALL_TEMPLATES[0])); }}
+              className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white font-bold text-sm min-h-[44px] shadow-sm cursor-pointer"
+            >
+              <Plus className="w-4 h-4 text-white" />
+              <span>Create New Resume</span>
+            </button>
+
+            {/* AI Tools Suite in Mobile Drawer */}
+            <div className="p-3 glass-card rounded-2xl space-y-2 text-slate-900 dark:text-slate-100 shadow-xs">
+              <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-slate-400 font-bold uppercase">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  AI & Career Tools
+                </span>
+                <span className="px-1.5 py-0.5 rounded glass-pill text-indigo-700 dark:text-indigo-300 font-semibold text-[9px]">Pro Suite</span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 pt-0.5 text-xs">
+                <button
+                  onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setIsAtsOpen(true)); }}
+                  className="py-2 px-2.5 rounded-xl glass-pill hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 text-left truncate font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Target className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                  <span className="truncate">ATS Matcher</span>
+                </button>
+                <button
+                  onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setIsJobTrackerOpen(true)); }}
+                  className="py-2 px-2.5 rounded-xl glass-pill hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-800 dark:text-blue-300 text-left truncate font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Briefcase className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                  <span className="truncate">Job Tracker</span>
+                </button>
+                <button
+                  onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setIsMentorOpen(true)); }}
+                  className="py-2 px-2.5 rounded-xl glass-pill hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-left truncate font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                  <span className="truncate">AI Mentor</span>
+                </button>
+                <button
+                  onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setIsPortfolioOpen(true)); }}
+                  className="py-2 px-2.5 rounded-xl glass-pill hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-800 dark:text-purple-300 text-left truncate font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Globe className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                  <span className="truncate">Web Portfolio</span>
+                </button>
+                <button
+                  onClick={() => { setIsMobileMenuOpen(false); setIsImportOpen(true); }}
+                  className="py-2 px-2.5 rounded-xl glass-pill hover:bg-cyan-50 dark:hover:bg-cyan-950/40 text-cyan-800 dark:text-cyan-300 text-left truncate font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 flex-shrink-0" />
+                  <span className="truncate">Import Resume</span>
+                </button>
+                <button
+                  onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setIsHistoryOpen(true)); }}
+                  className="py-2 px-2.5 rounded-xl glass-pill hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-left truncate font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <History className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 flex-shrink-0" />
+                  <span className="truncate">Version History</span>
+                </button>
+              </div>
+            </div>
+
+            {/* SIH26044 Role Portals in Mobile Menu */}
+            <div className="p-3 glass-card rounded-2xl space-y-2 text-slate-900 dark:text-slate-100 shadow-xs">
+              <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-slate-400 font-bold uppercase">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   Ecosystem Roles
                 </span>
-                <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold border border-slate-200">5 Portals</span>
+                <span className="px-1.5 py-0.5 rounded glass-pill text-slate-700 dark:text-slate-300 font-semibold text-[9px]">5 Portals</span>
               </div>
               <button
                 onClick={() => {
@@ -952,53 +1016,37 @@ export const AppContent: React.FC = () => {
                   setSelectedTemplate(null);
                   navigateToRoute('auth/choose-role');
                 }}
-                className="w-full py-2 px-3 text-center rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-xs"
+                className="w-full py-2 px-3 text-center rounded-xl bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white font-semibold text-xs shadow-xs cursor-pointer"
               >
-                Switch Persona / Test Accounts
+                Switch Persona / Test Accounts →
               </button>
               <div className="grid grid-cols-2 gap-1.5 pt-1 text-xs">
                 <button
                   onClick={() => { setIsMobileMenuOpen(false); setSelectedTemplate(null); navigateToRoute('student/dashboard'); }}
-                  className="py-1.5 px-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 text-left truncate font-medium transition-colors"
+                  className="py-2 px-2 rounded-xl glass-pill text-slate-800 dark:text-slate-200 text-left truncate font-medium transition-colors cursor-pointer"
                 >
                   Student Portal
                 </button>
                 <button
                   onClick={() => { setIsMobileMenuOpen(false); setSelectedTemplate(null); navigateToRoute('faculty/dashboard'); }}
-                  className="py-1.5 px-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 text-left truncate font-medium transition-colors"
+                  className="py-2 px-2 rounded-xl glass-pill text-slate-800 dark:text-slate-200 text-left truncate font-medium transition-colors cursor-pointer"
                 >
                   Faculty Hub
                 </button>
                 <button
                   onClick={() => { setIsMobileMenuOpen(false); setSelectedTemplate(null); navigateToRoute('industry/dashboard'); }}
-                  className="py-1.5 px-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 text-left truncate font-medium transition-colors"
+                  className="py-2 px-2 rounded-xl glass-pill text-slate-800 dark:text-slate-200 text-left truncate font-medium transition-colors cursor-pointer"
                 >
                   Recruiter Hub
                 </button>
                 <button
                   onClick={() => { setIsMobileMenuOpen(false); setSelectedTemplate(null); navigateToRoute('institution/dashboard'); }}
-                  className="py-1.5 px-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 text-left truncate font-medium transition-colors"
+                  className="py-2 px-2 rounded-xl glass-pill text-slate-800 dark:text-slate-200 text-left truncate font-medium transition-colors cursor-pointer"
                 >
                   Institution Analytics
                 </button>
               </div>
             </div>
-
-            <button
-              onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setSelectedTemplate(ALL_TEMPLATES[0])); }}
-              className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-lg bg-slate-900 text-white font-semibold text-sm min-h-[42px]"
-            >
-              <Plus className="w-4 h-4 text-white" />
-              <span>Create New Resume</span>
-            </button>
-
-            <button
-              onClick={() => { setIsMobileMenuOpen(false); requireAuth(() => setIsMentorOpen(true)); }}
-              className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 font-semibold text-sm min-h-[42px] transition-colors"
-            >
-              <Sparkles className="w-4 h-4 text-slate-700" />
-              <span>AI Resume Mentor</span>
-            </button>
           </div>
         </div>
       )}

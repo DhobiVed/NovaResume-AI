@@ -1225,8 +1225,8 @@ export const SuperAdminPortal: React.FC<Props> = ({
                 <p className="text-xs text-slate-400">Try adjusting your filters or import a college batch.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full min-w-[600px] text-left text-xs">
                   <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200/90">
                     <tr>
                       <th className="py-3 px-4">Code</th>
@@ -1403,8 +1403,8 @@ export const SuperAdminPortal: React.FC<Props> = ({
                     <span>Parsed Records Preview (Showing first {importPreviewRows.length})</span>
                     <span className="text-emerald-700">Ready for atomic Firestore write</span>
                   </div>
-                  <div className="max-h-64 overflow-y-auto">
-                    <table className="w-full text-left text-xs">
+                  <div className="max-h-64 overflow-x-auto overflow-y-auto w-full custom-scrollbar">
+                    <table className="w-full min-w-[500px] text-left text-xs">
                       <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-100">
                         <tr>
                           <th className="py-2 px-3">Code</th>
@@ -1510,8 +1510,8 @@ export const SuperAdminPortal: React.FC<Props> = ({
                 No users found matching query.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full min-w-[550px] text-left text-xs">
                   <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200/90">
                     <tr>
                       <th className="py-3 px-4">User</th>
@@ -2119,8 +2119,8 @@ export const SuperAdminPortal: React.FC<Props> = ({
                 No audit entries found.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full min-w-[600px] text-left text-xs">
                   <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200/90">
                     <tr>
                       <th className="py-3 px-4">Timestamp</th>

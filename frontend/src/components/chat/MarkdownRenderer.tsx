@@ -80,8 +80,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) =
           },
           table({ children }) {
             return (
-              <div className="overflow-x-auto my-4 rounded-xl border border-slate-300 dark:border-slate-700/80 shadow-sm">
-                <table className="min-w-full divide-y divide-slate-300 dark:divide-slate-700 text-xs md:text-sm">
+              <div className="overflow-x-auto custom-scrollbar my-4 rounded-xl border border-slate-300 dark:border-slate-700/80 shadow-sm">
+                <table className="min-w-full min-w-[400px] divide-y divide-slate-300 dark:divide-slate-700 text-xs md:text-sm">
                   {children}
                 </table>
               </div>

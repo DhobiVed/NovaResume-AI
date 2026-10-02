@@ -155,27 +155,27 @@ export const ReturningUserLoginPage: React.FC<Props> = ({
   return (
     <div className="min-h-screen glass-canvas text-slate-900 dark:text-slate-100 flex flex-col justify-between select-none">
       {/* ── TOP HEADER ── */}
-      <header className="h-16 px-6 md:px-10 glass-header flex items-center justify-between z-20 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-slate-900 to-indigo-900 dark:from-indigo-600 dark:to-violet-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
+      <header className="h-16 px-3 sm:px-6 md:px-10 glass-header flex items-center justify-between z-20 flex-shrink-0 w-full max-w-full overflow-hidden">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-slate-900 to-indigo-900 dark:from-indigo-600 dark:to-violet-600 flex items-center justify-center text-white font-bold text-base shadow-sm flex-shrink-0">
             N
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-900 dark:text-white text-sm tracking-tight">Nova CareerConnect</span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase glass-pill ${meta.accentColor}`}>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm tracking-tight truncate">Nova CareerConnect</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase glass-pill flex-shrink-0 ${meta.accentColor}`}>
                 {savedRole.replace('_', ' ')}
               </span>
             </div>
-            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">SIH 26044 · Academia–Industry Integrated Platform</div>
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate hidden sm:block">SIH 26044 · Academia–Industry Integrated Platform</div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
           <ThemeToggle />
           <button
             onClick={onNavigateToNova}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl glass-pill hover:bg-white/80 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all shadow-2xs cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl glass-pill hover:bg-white/80 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all shadow-2xs cursor-pointer"
           >
             <span>Nova AI</span>
             <ExternalLink className="w-3.5 h-3.5 text-slate-400" />

@@ -50,31 +50,32 @@ export const RoleSelectionPage: React.FC<Props> = ({ onAuthSuccess, onNavigateTo
   return (
     <div className="min-h-screen glass-canvas text-slate-900 dark:text-slate-100 font-sans relative overflow-x-hidden flex flex-col justify-between">
       {/* Top Header */}
-      <header className="glass-header px-6 py-4 flex items-center justify-between z-20">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-slate-900 to-indigo-900 dark:from-indigo-600 dark:to-violet-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
+      <header className="glass-header px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between z-20 w-full max-w-full overflow-hidden">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-slate-900 to-indigo-900 dark:from-indigo-600 dark:to-violet-600 flex items-center justify-center text-white font-bold text-base shadow-sm flex-shrink-0">
             N
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-900 dark:text-white text-base tracking-tight">Nova CareerConnect</span>
-              <span className="px-2 py-0.5 rounded-md glass-pill text-slate-700 dark:text-slate-300 text-[10px] font-mono font-semibold">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="font-bold text-slate-900 dark:text-white text-sm sm:text-base tracking-tight truncate">Nova CareerConnect</span>
+              <span className="px-2 py-0.5 rounded-md glass-pill text-slate-700 dark:text-slate-300 text-[10px] font-mono font-semibold hidden xs:inline-block flex-shrink-0">
                 SIH 26044
               </span>
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate hidden sm:block">
               Ministry of Ayush / AIIA • Academia–Industry Collaboration Platform
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
           <ThemeToggle />
           <button
             onClick={onNavigateToNova}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass-pill hover:bg-white/80 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all shadow-xs cursor-pointer"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl glass-pill hover:bg-white/80 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all shadow-xs cursor-pointer"
           >
-            <span>Nova Resume AI</span>
+            <span className="hidden sm:inline">Nova Resume AI</span>
+            <span className="sm:hidden">Nova AI</span>
             <ExternalLink className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
           </button>
         </div>

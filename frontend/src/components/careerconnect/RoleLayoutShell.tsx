@@ -219,8 +219,8 @@ export const RoleLayoutShell: React.FC<Props> = ({
       {/* ── MAIN WORKSPACE AREA ── */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Top Header — strict horizontal containment & frosted glass */}
-        <header className="h-14 glass-header px-4 md:px-6 flex items-center justify-between flex-shrink-0 z-10 w-full max-w-full overflow-hidden">
-          <div className="flex items-center gap-3 min-w-0">
+        <header className="h-14 glass-header px-3 sm:px-4 md:px-6 flex items-center justify-between flex-shrink-0 z-10 w-full max-w-full overflow-hidden">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-w-[65%] sm:max-w-none">
             {/* Mobile Hamburger */}
             <button
               onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
@@ -231,8 +231,8 @@ export const RoleLayoutShell: React.FC<Props> = ({
             </button>
 
             {/* Current Active Breadcrumb */}
-            <div className="flex items-center gap-2 text-xs min-w-0 truncate">
-              <span className={`px-2.5 py-0.5 rounded-full font-mono text-[10px] font-bold border uppercase flex-shrink-0 ${currentRoleMeta.badgeClass}`}>
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs min-w-0 truncate">
+              <span className={`px-2 sm:px-2.5 py-0.5 rounded-full font-mono text-[9px] sm:text-[10px] font-bold border uppercase flex-shrink-0 truncate max-w-[100px] sm:max-w-none ${currentRoleMeta.badgeClass}`}>
                 {session.role === 'academician' ? 'Faculty' : session.role.replace('_', ' ')}
               </span>
               <span className="text-slate-300 dark:text-slate-600 hidden sm:inline">•</span>
