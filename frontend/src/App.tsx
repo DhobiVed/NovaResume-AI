@@ -566,21 +566,17 @@ export const AppContent: React.FC = () => {
                 setIsPortalsDropdownOpen(!isPortalsDropdownOpen);
                 setIsToolsDropdownOpen(false);
               }}
-              className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-xl text-xs font-bold transition-all min-h-[36px] cursor-pointer shadow-xs ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all min-h-[34px] cursor-pointer shadow-2xs ${
                 isPortalsDropdownOpen
                   ? 'bg-emerald-600 text-white border border-emerald-500 shadow-md shadow-emerald-500/20'
-                  : 'glass-emerald text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-950/60'
+                  : 'bg-emerald-50/80 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/70'
               }`}
               title="CareerConnect SIH Portals"
             >
               <Target className={`w-3.5 h-3.5 flex-shrink-0 ${isPortalsDropdownOpen ? 'text-white' : 'text-emerald-600 dark:text-emerald-400'}`} />
               <span className="truncate">CareerConnect</span>
-              <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold border hidden xl:inline ${
-                isPortalsDropdownOpen
-                  ? 'bg-emerald-700/60 text-white border-emerald-400/40'
-                  : 'bg-emerald-100/80 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 border-emerald-300/80 dark:border-emerald-700/60'
-              }`}>
-                SIH
+              <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-white text-[9px] font-bold">
+                ON
               </span>
               <ChevronDown className={`w-3 h-3 transition-transform flex-shrink-0 ${
                 isPortalsDropdownOpen ? 'rotate-180 text-white' : 'text-emerald-600 dark:text-emerald-400'

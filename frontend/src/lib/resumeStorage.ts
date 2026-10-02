@@ -82,17 +82,110 @@ export function getSmartStatus(completion: number, explicitStatus?: ResumeStatus
   return 'draft';
 }
 
+const DEFAULT_SAVED_RESUMES: SavedResumeItem[] = [
+  {
+    id: 'res_default_1',
+    title: "Alex Vance's Resume",
+    targetRole: 'Senior AI & Systems Engineer',
+    status: 'ready',
+    completionPercentage: 93,
+    templateId: 'modern-emerald',
+    data: {
+      fullName: 'Alex Vance',
+      title: 'Senior AI & Systems Engineer',
+      email: 'alex.vance@example.com',
+      phone: '+1 (555) 019-2834',
+      location: 'San Francisco, CA',
+      summary: 'Senior AI Engineer with 6+ years of experience designing scalable LLM pipelines, RAG vector architectures, and high-performance FastAPI backends.',
+      experience: [
+        { role: 'Lead AI Engineer', company: 'NeuralTech AI', dates: '2022 - Present', bullets: 'Architected enterprise RAG document retrieval engines, scaling query throughput by 300%.' }
+      ],
+      education: [
+        { degree: 'B.S. in Computer Science', school: 'UC Berkeley', year: '2019', gpa: '3.9 GPA' }
+      ],
+      projects: [],
+      skills: 'Python, FastAPI, PyTorch, LangChain, React, TypeScript, Docker, Kubernetes',
+      customSections: []
+    },
+    createdAt: '2026-10-21T08:00:00Z',
+    updatedAt: '2026-10-21T10:44:00Z',
+    isFavorite: false,
+    isPinned: false,
+    atsScore: 93
+  },
+  {
+    id: 'res_default_2',
+    title: "Alex Vance's Resume",
+    targetRole: 'Senior AI & Systems Engineer',
+    status: 'ready',
+    completionPercentage: 93,
+    templateId: 'ats-teal',
+    data: {
+      fullName: 'Alex Vance',
+      title: 'Senior AI & Systems Engineer',
+      email: 'alex.vance@example.com',
+      phone: '+1 (555) 019-2834',
+      location: 'San Francisco, CA',
+      summary: 'Senior AI Engineer specializing in distributed system design, vector search engines, and real-time cloud microservices.',
+      experience: [
+        { role: 'Software Engineer', company: 'DataFlow Systems', dates: '2019 - 2022', bullets: 'Developed React & TypeScript dashboards for real-time model monitoring.' }
+      ],
+      education: [
+        { degree: 'B.S. in Computer Science', school: 'UC Berkeley', year: '2019', gpa: '3.9 GPA' }
+      ],
+      projects: [],
+      skills: 'Python, FastAPI, React, PostgreSQL, Docker, AWS, Git',
+      customSections: []
+    },
+    createdAt: '2026-10-21T07:30:00Z',
+    updatedAt: '2026-10-21T09:15:00Z',
+    isFavorite: false,
+    isPinned: false,
+    atsScore: 93
+  },
+  {
+    id: 'res_default_3',
+    title: "Alex Vance's Resume",
+    targetRole: 'Senior AI & Systems Engineer',
+    status: 'ready',
+    completionPercentage: 93,
+    templateId: 'executive-lead',
+    data: {
+      fullName: 'Alex Vance',
+      title: 'Senior AI & Systems Engineer',
+      email: 'alex.vance@example.com',
+      phone: '+1 (555) 019-2834',
+      location: 'San Francisco, CA',
+      summary: 'Senior AI Engineer with extensive experience in enterprise LLM deployments and cloud infrastructure.',
+      experience: [
+        { role: 'Backend Systems Engineer', company: 'Stripe', dates: '2018 - 2021', bullets: 'Optimized high-throughput transaction pipelines processing 1M+ queries daily.' }
+      ],
+      education: [
+        { degree: 'B.S. in Computer Science', school: 'UC Berkeley', year: '2019', gpa: '3.9 GPA' }
+      ],
+      projects: [],
+      skills: 'Python, Go, Distributed Systems, Kubernetes, Kafka',
+      customSections: []
+    },
+    createdAt: '2026-09-26T06:00:00Z',
+    updatedAt: '2026-09-26T14:20:00Z',
+    isFavorite: false,
+    isPinned: false,
+    atsScore: 93
+  }
+];
+
 /**
  * Load all saved resumes from LocalStorage
  */
 export function getSavedResumes(): SavedResumeItem[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
+    if (!raw) return DEFAULT_SAVED_RESUMES;
     const list: SavedResumeItem[] = JSON.parse(raw);
-    return Array.isArray(list) ? list : [];
+    return Array.isArray(list) && list.length > 0 ? list : DEFAULT_SAVED_RESUMES;
   } catch {
-    return [];
+    return DEFAULT_SAVED_RESUMES;
   }
 }
 
@@ -241,13 +334,22 @@ export function togglePinResume(id: string): SavedResumeItem[] {
 /**
  * Activity Logging
  */
+const DEFAULT_ACTIVITY_LOGS: ActivityLogItem[] = [
+  { id: 'act_1', type: 'template_change', description: 'Switched template to "Modern Emerald"', timestamp: '2026-10-21T08:44:00Z' },
+  { id: 'act_2', type: 'template_change', description: 'Switched template to "Modern Emerald"', timestamp: '2026-10-21T15:59:00Z' },
+  { id: 'act_3', type: 'template_change', description: 'Switched template to "ATS Teal"', timestamp: '2026-10-21T13:44:00Z' },
+  { id: 'act_4', type: 'pdf_download', description: 'Downloaded PDF for "Alex Vance"', timestamp: '2026-10-21T13:06:00Z' },
+  { id: 'act_5', type: 'pdf_download', description: 'Downloaded PDF for "Alex Vance"', timestamp: '2026-10-21T13:06:00Z' },
+];
+
 export function getActivityLogs(): ActivityLogItem[] {
   try {
     const raw = localStorage.getItem(ACTIVITY_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw);
+    if (!raw) return DEFAULT_ACTIVITY_LOGS;
+    const list = JSON.parse(raw);
+    return Array.isArray(list) && list.length > 0 ? list : DEFAULT_ACTIVITY_LOGS;
   } catch {
-    return [];
+    return DEFAULT_ACTIVITY_LOGS;
   }
 }
 
