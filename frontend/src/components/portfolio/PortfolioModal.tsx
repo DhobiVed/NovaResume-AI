@@ -414,27 +414,27 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
   <!-- Header Navigation -->
   <header>
     <div class="nav-container">
-      <a href="#" class="logo">
+      <a href="javascript:void(0)" onclick="return scrollToSection(event, 'top')" class="logo">
         <span class="logo-badge"></span>
         <span>${portfolio.fullName}</span>
       </a>
       <ul class="nav-links">
-        <li><a href="#about">About</a></li>
-        <li><a href="#projects">Projects</a></li>
-        <li><a href="#experience">Experience</a></li>
-        <li><a href="#contact">Contact</a></li>
+        <li><a href="javascript:void(0)" onclick="return scrollToSection(event, 'about')">About</a></li>
+        <li><a href="javascript:void(0)" onclick="return scrollToSection(event, 'projects')">Projects</a></li>
+        <li><a href="javascript:void(0)" onclick="return scrollToSection(event, 'experience')">Experience</a></li>
+        <li><a href="javascript:void(0)" onclick="return scrollToSection(event, 'contact')">Contact</a></li>
         <li>
-          <button onclick="toggleTheme()" class="theme-toggle-btn" id="theme-btn">Dark Mode</button>
+          <button type="button" onclick="toggleTheme()" class="theme-toggle-btn" id="theme-btn">Dark Mode</button>
         </li>
       </ul>
-      <button onclick="toggleMobileNav()" class="mobile-menu-btn" id="mobile-toggle" aria-label="Toggle Menu">Menu</button>
+      <button type="button" onclick="toggleMobileNav()" class="mobile-menu-btn" id="mobile-toggle" aria-label="Toggle Menu">Menu</button>
     </div>
     <div class="mobile-nav-drawer" id="mobile-drawer">
-      <a href="#about" onclick="closeMobileNav()">About</a>
-      <a href="#projects" onclick="closeMobileNav()">Projects</a>
-      <a href="#experience" onclick="closeMobileNav()">Experience</a>
-      <a href="#contact" onclick="closeMobileNav()">Contact</a>
-      <button onclick="toggleTheme()" class="theme-toggle-btn" style="width: 100%; margin-top: 4px;">Dark Mode</button>
+      <a href="javascript:void(0)" onclick="closeMobileNav(); return scrollToSection(event, 'about')">About</a>
+      <a href="javascript:void(0)" onclick="closeMobileNav(); return scrollToSection(event, 'projects')">Projects</a>
+      <a href="javascript:void(0)" onclick="closeMobileNav(); return scrollToSection(event, 'experience')">Experience</a>
+      <a href="javascript:void(0)" onclick="closeMobileNav(); return scrollToSection(event, 'contact')">Contact</a>
+      <button type="button" onclick="toggleTheme()" class="theme-toggle-btn" style="width: 100%; margin-top: 4px;">Dark Mode</button>
     </div>
   </header>
 
@@ -450,10 +450,10 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
         <p class="hero-about">${portfolio.about}</p>
 
         <div class="hero-actions">
-          <a href="#contact" class="btn btn-primary">Contact Direct</a>
+          <a href="javascript:void(0)" onclick="return scrollToSection(event, 'contact')" class="btn btn-primary">Contact Direct</a>
           ${portfolio.resumeUrl && portfolio.resumeUrl !== '#' 
-            ? `<a href="${portfolio.resumeUrl}" class="btn btn-secondary" target="_blank" download="${portfolio.fullName.toLowerCase().replace(/ /g, '_')}_resume">Download Resume</a>` 
-            : `<a href="#contact" class="btn btn-secondary">Request Resume</a>`}
+            ? `<a href="${portfolio.resumeUrl}" class="btn btn-secondary" target="_blank" rel="noopener noreferrer" download="${portfolio.fullName.toLowerCase().replace(/ /g, '_')}_resume">Download Resume</a>` 
+            : `<a href="javascript:void(0)" onclick="return scrollToSection(event, 'contact')" class="btn btn-secondary">Request Resume</a>`}
         </div>
       </div>
 
@@ -463,8 +463,8 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
         <p style="font-size: 12px; color: var(--primary); font-weight: 700;">${portfolio.location}</p>
         
         <div class="social-row">
-          ${portfolio.github ? `<a href="https://${portfolio.github.replace(/^https?:\/\//, '')}" target="_blank" class="social-icon">GH</a>` : ''}
-          ${portfolio.linkedin ? `<a href="https://${portfolio.linkedin.replace(/^https?:\/\//, '')}" target="_blank" class="social-icon">IN</a>` : ''}
+          ${portfolio.github ? `<a href="https://${portfolio.github.replace(/^https?:\/\//, '')}" target="_blank" rel="noopener noreferrer" class="social-icon">GH</a>` : ''}
+          ${portfolio.linkedin ? `<a href="https://${portfolio.linkedin.replace(/^https?:\/\//, '')}" target="_blank" rel="noopener noreferrer" class="social-icon">IN</a>` : ''}
           ${portfolio.email ? `<a href="mailto:${portfolio.email}" class="social-icon">@</a>` : ''}
         </div>
       </div>
@@ -501,8 +501,8 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
               </div>
               
               <div class="project-links">
-                ${p.demoUrl ? `<a href="${p.demoUrl}" target="_blank" class="link-btn">Live Demo ↗</a>` : ''}
-                ${p.githubUrl ? `<a href="${p.githubUrl}" target="_blank" class="link-btn">Source Code ↗</a>` : ''}
+                ${p.demoUrl ? `<a href="${p.demoUrl}" target="_blank" rel="noopener noreferrer" class="link-btn">Live Demo ↗</a>` : ''}
+                ${p.githubUrl ? `<a href="${p.githubUrl}" target="_blank" rel="noopener noreferrer" class="link-btn">Source Code ↗</a>` : ''}
               </div>
             </div>
           </div>
@@ -549,11 +549,14 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
         <h2 class="section-title" style="margin-bottom: 12px;">Get In Touch</h2>
         <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 24px;">Have a project inquiry or interested in hiring? Send a message directly.</p>
 
-        <form onsubmit="handleContactSubmit(event)" class="contact-grid">
+        <form onsubmit="return handleContactSubmit(event)" class="contact-grid">
           <input type="text" placeholder="Your Name" required class="form-input">
           <input type="email" placeholder="Your Email" required class="form-input">
           <textarea placeholder="Your Message" rows="3" required class="form-input" style="grid-column: span 2;"></textarea>
           <button type="submit" class="btn btn-primary" style="grid-column: span 2; justify-content: center;">Send Direct Message</button>
+          <div id="contact-success-msg" style="display:none; grid-column: span 2; padding: 12px 16px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; font-weight: 700; font-size: 13px; text-align: center;">
+            ✓ Thank you! Your message has been sent successfully.
+          </div>
         </form>
 
         <div style="font-size: 13px; color: var(--text-muted); margin-top: 16px;">
@@ -568,10 +571,50 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
   </footer>
 
   <script>
+    // Smooth In-Page Section Scroll Handler (prevents any iframe URL navigation or parent reloading)
+    function scrollToSection(e, id) {
+      if (e) {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+      }
+      if (!id || id === 'top' || id === '#') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return false;
+      }
+      const cleanId = String(id).replace(/^#/, '');
+      const el = document.getElementById(cleanId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      return false;
+    }
+
+    // Capture-phase link click interceptor - 100% blocks iframe navigation for relative/anchor URLs
+    document.addEventListener('click', function(e) {
+      const link = e.target && e.target.closest ? e.target.closest('a') : null;
+      if (!link) return;
+      const href = link.getAttribute('href');
+      if (!href) return;
+
+      if (href.startsWith('#')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = href.replace(/^#/, '');
+        scrollToSection(e, id || 'top');
+        return false;
+      }
+
+      if (href.startsWith('http://') || href.startsWith('https://')) {
+        link.setAttribute('target', '_blank');
+        link.setAttribute('rel', 'noopener noreferrer');
+      }
+    }, true);
+
     // Mobile Drawer Navigation Toggle
     function toggleMobileNav() {
       const drawer = document.getElementById('mobile-drawer');
       const btn = document.getElementById('mobile-toggle');
+      if (!drawer) return;
       if (drawer.classList.contains('open')) {
         drawer.classList.remove('open');
         if (btn) btn.innerText = 'Menu';
@@ -593,8 +636,9 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
     window.onscroll = function() {
       const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
       const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      const scrolled = (winScroll / height) * 100;
-      document.getElementById("progress-bar").style.width = scrolled + "%";
+      const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
+      const bar = document.getElementById("progress-bar");
+      if (bar) bar.style.width = scrolled + "%";
     };
 
     // Dark / Light Theme Toggle
@@ -604,11 +648,11 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
       if (html.classList.contains('dark')) {
         html.classList.remove('dark');
         html.classList.add('light');
-        btn.innerText = 'Dark Mode';
+        if (btn) btn.innerText = 'Dark Mode';
       } else {
         html.classList.remove('light');
         html.classList.add('dark');
-        btn.innerText = 'Light Mode';
+        if (btn) btn.innerText = 'Light Mode';
       }
     }
 
@@ -623,11 +667,21 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
 
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-    // Contact Form Simulation
+    // Contact Form Simulation without alert()
     function handleContactSubmit(e) {
-      e.preventDefault();
-      alert('Thank you! Your message has been sent successfully to ${portfolio.fullName}.');
-      e.target.reset();
+      if (e) {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+      }
+      const msg = document.getElementById('contact-success-msg');
+      if (msg) {
+        msg.style.display = 'block';
+        setTimeout(function() { msg.style.display = 'none'; }, 4000);
+      }
+      if (e && e.target && typeof e.target.reset === 'function') {
+        e.target.reset();
+      }
+      return false;
     }
   </script>
 </body>
@@ -780,7 +834,7 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose,
                 <iframe
                   srcDoc={generatedHtml}
                   title="Portfolio Live Preview"
-                  sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                  sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms"
                   className={`w-full h-full border-0 transition-all duration-300 ${
                     previewDeviceMode === 'mobile' ? 'max-w-[375px] rounded-3xl border-4 border-slate-800 shadow-2xl' : ''
                   }`}
