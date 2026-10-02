@@ -40,11 +40,11 @@ export const RoleSelectionPage: React.FC<Props> = ({ onAuthSuccess, onNavigateTo
   };
 
   const roleIcons: Record<string, React.ReactNode> = {
-    student: <GraduationCap className="w-8 h-8 text-emerald-700" />,
-    academician: <BookOpen className="w-8 h-8 text-purple-700" />,
-    industry: <Building2 className="w-8 h-8 text-blue-700" />,
-    institution: <BarChart3 className="w-8 h-8 text-amber-700" />,
-    super_admin: <ShieldAlert className="w-8 h-8 text-rose-700" />
+    student: <GraduationCap className="w-8 h-8 text-emerald-700 dark:text-emerald-400" />,
+    academician: <BookOpen className="w-8 h-8 text-purple-700 dark:text-purple-400" />,
+    industry: <Building2 className="w-8 h-8 text-blue-700 dark:text-blue-400" />,
+    institution: <BarChart3 className="w-8 h-8 text-amber-700 dark:text-amber-400" />,
+    super_admin: <ShieldAlert className="w-8 h-8 text-rose-700 dark:text-rose-400" />
   };
 
   return (

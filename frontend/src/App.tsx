@@ -538,7 +538,7 @@ export const AppContent: React.FC = () => {
             navigateToRoute('gallery');
           }}
         >
-          <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gradient-to-tr from-slate-900 to-indigo-900 dark:from-indigo-600 dark:to-violet-600 flex items-center justify-center text-white font-bold text-sm md:text-base shadow-sm flex-shrink-0">
+          <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gradient-to-tr from-slate-900 to-indigo-900 dark:bg-[#4f46e5] dark:from-[#4f46e5] dark:to-[#6366f1] flex items-center justify-center text-white font-bold text-sm md:text-base shadow-sm flex-shrink-0">
             N
           </div>
           <div className="min-w-0">
@@ -546,7 +546,7 @@ export const AppContent: React.FC = () => {
               <h1 className="font-bold text-xs md:text-base tracking-tight text-slate-900 dark:text-white leading-none truncate">
                 NovaResume AI
               </h1>
-              <span className="px-1.5 py-0.5 rounded-md glass-pill text-indigo-700 dark:text-indigo-300 font-semibold text-[9px] hidden sm:inline-block flex-shrink-0">
+              <span className="px-2 py-0.5 rounded-full dark:bg-[#131b2e] dark:border dark:border-[#222d44] dark:text-slate-300 text-indigo-700 font-semibold text-[9px] hidden sm:inline-block flex-shrink-0">
                 Enterprise
               </span>
             </div>
@@ -569,7 +569,7 @@ export const AppContent: React.FC = () => {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all min-h-[34px] cursor-pointer shadow-2xs ${
                 isPortalsDropdownOpen
                   ? 'bg-emerald-600 text-white border border-emerald-500 shadow-md shadow-emerald-500/20'
-                  : 'bg-emerald-50/80 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/70'
+                  : 'bg-emerald-50/80 dark:bg-[#062017] border border-emerald-300 dark:border-emerald-800/80 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/70 dark:hover:bg-[#0a2e22]'
               }`}
               title="CareerConnect SIH Portals"
             >
@@ -608,14 +608,14 @@ export const AppContent: React.FC = () => {
                     setSelectedTemplate(null);
                     navigateToRoute('student/dashboard');
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-left transition-colors hover:bg-slate-50 group cursor-pointer"
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60 group cursor-pointer"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200/70 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-100/80 group-hover:border-emerald-300 transition-colors">
-                    <Target className="w-4 h-4 text-emerald-600" />
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/70 dark:border-emerald-800/60 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-100/80 transition-colors">
+                    <Target className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div className="min-w-0">
-                    <div className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">Student Career Portal</div>
-                    <div className="text-[10px] text-slate-500 truncate">Skill assessment, gaps &amp; jobs</div>
+                    <div className="font-bold text-slate-900 dark:text-white group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">Student Career Portal</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Skill assessment, gaps &amp; jobs</div>
                   </div>
                 </button>
 
@@ -625,14 +625,14 @@ export const AppContent: React.FC = () => {
                     setSelectedTemplate(null);
                     navigateToRoute('faculty/dashboard');
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-left transition-colors hover:bg-slate-50 group cursor-pointer"
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60 group cursor-pointer"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200/70 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-100/80 group-hover:border-indigo-300 transition-colors">
-                    <GraduationCap className="w-4 h-4 text-indigo-600" />
+                  <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/70 dark:border-indigo-800/60 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-100/80 transition-colors">
+                    <GraduationCap className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                   </div>
                   <div className="min-w-0">
-                    <div className="font-bold text-slate-900 group-hover:text-indigo-700 transition-colors">Faculty Mentorship Hub</div>
-                    <div className="text-[10px] text-slate-500 truncate">Mentees, FDPs &amp; endorsements</div>
+                    <div className="font-bold text-slate-900 dark:text-white group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors">Faculty Mentorship Hub</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Mentees, FDPs &amp; endorsements</div>
                   </div>
                 </button>
 
@@ -642,14 +642,14 @@ export const AppContent: React.FC = () => {
                     setSelectedTemplate(null);
                     navigateToRoute('industry/dashboard');
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-left transition-colors hover:bg-slate-50 group cursor-pointer"
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60 group cursor-pointer"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200/70 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100/80 group-hover:border-blue-300 transition-colors">
-                    <Building2 className="w-4 h-4 text-blue-600" />
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200/70 dark:border-blue-800/60 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100/80 transition-colors">
+                    <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="min-w-0">
-                    <div className="font-bold text-slate-900 group-hover:text-blue-700 transition-colors">Industry Recruiter Hub</div>
-                    <div className="text-[10px] text-slate-500 truncate">Post opps &amp; candidate pipeline</div>
+                    <div className="font-bold text-slate-900 dark:text-white group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">Industry Recruiter Hub</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Post opps &amp; candidate pipeline</div>
                   </div>
                 </button>
 
@@ -659,14 +659,14 @@ export const AppContent: React.FC = () => {
                     setSelectedTemplate(null);
                     navigateToRoute('institution/dashboard');
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-left transition-colors hover:bg-slate-50 group cursor-pointer"
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60 group cursor-pointer"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200/70 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-100/80 group-hover:border-amber-300 transition-colors">
-                    <BarChart3 className="w-4 h-4 text-amber-600" />
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/60 border border-amber-200/70 dark:border-amber-800/60 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-100/80 transition-colors">
+                    <BarChart3 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div className="min-w-0">
-                    <div className="font-bold text-slate-900 group-hover:text-amber-700 transition-colors">Institution Analytics</div>
-                    <div className="text-[10px] text-slate-500 truncate">Heatmaps, verification &amp; audits</div>
+                    <div className="font-bold text-slate-900 dark:text-white group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors">Institution Analytics</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Heatmaps, verification &amp; audits</div>
                   </div>
                 </button>
 
@@ -676,25 +676,25 @@ export const AppContent: React.FC = () => {
                     setSelectedTemplate(null);
                     navigateToRoute('admin/dashboard');
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-left transition-colors hover:bg-slate-50 group cursor-pointer"
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60 group cursor-pointer"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-200/70 flex items-center justify-center flex-shrink-0 group-hover:bg-rose-100/80 group-hover:border-rose-300 transition-colors">
-                    <ShieldAlert className="w-4 h-4 text-rose-600" />
+                  <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200/70 dark:border-rose-800/60 flex items-center justify-center flex-shrink-0 group-hover:bg-rose-100/80 transition-colors">
+                    <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                   </div>
                   <div className="min-w-0">
-                    <div className="font-bold text-slate-900 group-hover:text-rose-700 transition-colors">Super Admin Console</div>
-                    <div className="text-[10px] text-slate-500 truncate">Taxonomy &amp; governance logs</div>
+                    <div className="font-bold text-slate-900 dark:text-white group-hover:text-rose-700 dark:group-hover:text-rose-300 transition-colors">Super Admin Console</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Taxonomy &amp; governance logs</div>
                   </div>
                 </button>
 
-                <div className="pt-2 border-t border-slate-100">
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                   <button
                     onClick={() => {
                       setIsPortalsDropdownOpen(false);
                       setSelectedTemplate(null);
                       navigateToRoute('auth/choose-role');
                     }}
-                    className="w-full py-2 px-3 text-center rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                    className="w-full py-2 px-3 text-center rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                   >
                     <span>Switch Persona / Test Demo Accounts</span>
                   </button>
@@ -711,8 +711,8 @@ export const AppContent: React.FC = () => {
             }}
             className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-xl text-xs font-semibold transition-all min-h-[34px] cursor-pointer ${
               currentRoute === 'gallery' && !selectedTemplate
-                ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow-sm'
-                : 'glass-pill text-slate-700 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-800/80'
+                ? 'bg-slate-900 dark:bg-[#4f46e5] text-white shadow-sm'
+                : 'glass-pill dark:bg-[#0e1422] dark:border dark:border-[#1a2336] text-slate-700 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-[#141d30] dark:hover:text-white'
             }`}
             title="Resume Templates"
           >
@@ -727,8 +727,8 @@ export const AppContent: React.FC = () => {
             }}
             className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-xl text-xs font-semibold transition-all min-h-[34px] cursor-pointer ${
               currentRoute === 'dashboard' && !selectedTemplate
-                ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow-sm'
-                : 'glass-pill text-slate-700 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-800/80'
+                ? 'bg-slate-900 dark:bg-[#4f46e5] text-white shadow-sm shadow-indigo-500/25'
+                : 'glass-pill dark:bg-[#0e1422] dark:border dark:border-[#1a2336] text-slate-700 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-[#141d30] dark:hover:text-white'
             }`}
             title="Saved Resumes Dashboard"
           >
@@ -744,10 +744,10 @@ export const AppContent: React.FC = () => {
                 setIsToolsDropdownOpen(!isToolsDropdownOpen);
                 setIsPortalsDropdownOpen(false);
               }}
-              className="flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-xl glass-pill text-xs font-bold text-slate-900 dark:text-slate-100 hover:bg-white/80 dark:hover:bg-slate-800/80 transition-all min-h-[36px] cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-xl glass-pill dark:bg-[#0e1422] dark:border dark:border-[#1a2336] text-xs font-bold text-slate-900 dark:text-slate-200 hover:bg-white/80 dark:hover:bg-[#141d30] dark:hover:text-white transition-all min-h-[36px] cursor-pointer"
               title="Resume AI Tools"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />
               <span className="hidden lg:inline">AI Tools</span>
               <ChevronDown className={`w-3 h-3 transition-transform flex-shrink-0 ${isToolsDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -833,7 +833,7 @@ export const AppContent: React.FC = () => {
           {/* 5. Primary CTA */}
           <button
             onClick={() => requireAuth(() => setSelectedTemplate(ALL_TEMPLATES[0]))}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 dark:bg-indigo-600 text-white text-xs font-semibold shadow-sm hover:bg-slate-800 dark:hover:bg-indigo-500 transition-all min-h-[34px] flex-shrink-0 cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 dark:bg-[#4f46e5] text-white text-xs font-semibold shadow-sm hover:bg-slate-800 dark:hover:bg-[#4338ca] transition-all min-h-[34px] flex-shrink-0 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 text-white flex-shrink-0" />
             <span>Create</span>
